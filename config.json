@@ -64,11 +64,12 @@
       "cover_crop_y": 0.0,
       "placeholder_color": "#3d4a2a",
       "popular": {"song": "FE!N", "rating": "9.5/10", "color": "#ff5f3a",
-                  "clip": "assets/clips/fein.mp4", "clip_start": 0,
-                  "audio": "assets/audio/fein.mp3", "audio_start": 0},
+                  "clip": "assets/clips/fein.mp4", "clip_start": 29.05,
+                  "clip_zoom": 1.6, "clip_brightness": 0.08,
+                  "audio": "assets/clips/fein.mp4", "audio_start": 29.05},
       "best":    {"song": "My Eyes", "rating": "9.9/10", "color": "#c8f06a",
-                  "clip": "assets/clips/my_eyes.mp4", "clip_start": 0,
-                  "audio": "assets/audio/my_eyes.mp3", "audio_start": 0}
+                  "clip": "", "clip_start": 0,
+                  "audio": "assets/audio/my_eyes.mp4", "audio_start": 131.2}
     }
   ]
 }

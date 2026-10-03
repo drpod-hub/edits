@@ -246,7 +246,13 @@ def build_segment(i, song, cover, cfg, tmp):
     cmd = ["ffmpeg", "-y", "-v", "error"]
     if clip:
         cmd += ["-ss", str(song.get("clip_start", 0)), "-t", str(dur), "-i", clip]
-        vf = f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},{vf_tail}"
+        # clip_zoom > 1 punches in on the centre; clip_brightness lifts dark footage
+        z = song.get("clip_zoom", 1.0)
+        vf = (f"scale={int(W * z)}:{int(H * z)}:force_original_aspect_ratio=increase,"
+              f"crop={W}:{H},")
+        if song.get("clip_brightness"):
+            vf += f"eq=brightness={song['clip_brightness']}:contrast=1.1:saturation=1.1,"
+        vf += vf_tail
     else:
         print(f"  ! clip missing for {song['song']} -> blurred cover background")
         cpath = os.path.join(tmp, f"cover{i:02d}.png")
