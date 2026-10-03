@@ -27,11 +27,11 @@
       "cover": "assets/covers/4_44.jpg",
       "placeholder_color": "#2b2d6e",
       "popular": {"song": "The Story of O.J.", "rating": "9.6/10", "color": "#1fa0ff",
-                  "clip": "assets/clips/the_story_of_oj.mp4", "clip_start": 0,
-                  "audio": "assets/audio/the_story_of_oj.mp3", "audio_start": 0},
+                  "clip": "assets/clips/the_story_of_oj.mp4", "clip_start": 15.65,
+                  "audio": "assets/clips/the_story_of_oj.mp4", "audio_start": 15.65},
       "best":    {"song": "4:44", "rating": "10/10", "color": "#f6d36b",
-                  "clip": "assets/clips/4_44.mp4", "clip_start": 0,
-                  "audio": "assets/audio/4_44.mp3", "audio_start": 0}
+                  "clip": "", "clip_start": 0,
+                  "audio": "assets/clips/4_44.mp4", "audio_start": 27.25}
     },
     {
       "title": "Donda",
