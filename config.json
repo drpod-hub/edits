@@ -39,11 +39,11 @@
       "cover": "assets/covers/donda.jpg",
       "placeholder_color": "#050505",
       "popular": {"song": "Hurricane", "rating": "9.6/10", "color": "#8ee36a",
-                  "clip": "assets/clips/hurricane.mp4", "clip_start": 0,
-                  "audio": "assets/audio/hurricane.mp3", "audio_start": 0},
+                  "clip": "assets/clips/hurricane.mp4", "clip_start": 21.7,
+                  "audio": "assets/clips/hurricane.mp4", "audio_start": 21.7},
       "best":    {"song": "Off The Grid", "rating": "9.9/10", "color": "#9ce0d0",
-                  "clip": "assets/clips/off_the_grid.mp4", "clip_start": 0,
-                  "audio": "assets/audio/off_the_grid.mp3", "audio_start": 0}
+                  "clip": "", "clip_start": 0,
+                  "audio": "assets/audio/off_the_grid.mp4", "audio_start": 13.65}
     },
     {
       "title": "My Beautiful Dark Twisted Fantasy",
@@ -51,11 +51,11 @@
       "cover": "assets/covers/mbdtf.jpg",
       "placeholder_color": "#b3121b",
       "popular": {"song": "Power", "rating": "9.8/10", "color": "#b9a6ff",
-                  "clip": "assets/clips/power.mp4", "clip_start": 0,
-                  "audio": "assets/audio/power.mp3", "audio_start": 0},
+                  "clip": "assets/clips/power.mp4", "clip_start": 37.2,
+                  "audio": "assets/clips/power.mp4", "audio_start": 37.2},
       "best":    {"song": "Runaway", "rating": "10/10", "color": "#ff9ec4",
-                  "clip": "assets/clips/runaway.mp4", "clip_start": 0,
-                  "audio": "assets/audio/runaway.mp3", "audio_start": 0}
+                  "clip": "assets/clips/runaway.mp4", "clip_start": 55.7,
+                  "audio": "assets/clips/runaway.mp4", "audio_start": 55.7}
     },
     {
       "title": "Utopia",

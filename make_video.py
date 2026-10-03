@@ -267,7 +267,8 @@ def build_segment(i, song, cover, cfg, tmp):
         cmd += ["-f", "lavfi", "-t", str(dur), "-i", "anullsrc=r=44100:cl=stereo"]
         amap = "1:a:0"
 
-    af = f"afade=t=in:d=0.05,afade=t=out:st={dur - 0.08}:d=0.08,aresample=44100,apad"
+    # loudness-match songs so no segment jumps out
+    af = f"loudnorm=I=-14:TP=-1.5:LRA=11,afade=t=in:d=0.05,afade=t=out:st={dur - 0.08}:d=0.08,aresample=44100,apad"
     cmd += ["-map", "0:v:0", "-map", amap, "-vf", vf, "-af", af, "-t", str(dur),
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "16",
             "-c:a", "aac", "-b:a", "192k", "-ac", "2", out]
