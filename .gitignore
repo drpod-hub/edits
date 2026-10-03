@@ -9,3 +9,4 @@ assets/**/*.jpg
 assets/**/*.jpeg
 assets/**/*.png
 __pycache__/
+clash_short/*.mp4

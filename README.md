@@ -26,3 +26,15 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 ## Customize
 
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
+
+---
+
+# Clash Royale TV Royale → YouTube Short
+
+`clash_short/` turns the 16:9 TV Royale video into a ~32 s 1080×1920 Short: a hook on the Evo Electro Giant, then four numbered beats (Hero Electro Wizard, Season 3 C.H.A.O.S, Keep The Lights On, Evo Electro Giant), a comment CTA, and a loop back to the hook.
+
+```bash
+python3 clash_short/make_short.py --source path/to/tv_royale.mp4   # -> output/clash_royale_short.mp4
+```
+
+Edit `clash_short/edit.json` to change cuts (`src`, `dur`), framing (`mode` square/wide, `cx` crop centre, `zoom`), chapter headers and captions (`*word*` = yellow, `|` = line break).

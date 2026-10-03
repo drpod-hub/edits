@@ -1,0 +1,39 @@
+{
+  "source": "clash_short/source.mp4",
+  "output": "output/clash_royale_short.mp4",
+  "fps": 30,
+
+  "_doc": "Each clip: src start (s), dur (s), mode square|wide, cx = crop centre (0..1 of source width, [from,to] pans), zoom, chapter header (changes trigger flash+boom), caption runs ('*word*' = yellow, '|' = line break), shake.",
+
+  "chapters": {
+    "hook": {"header": "CLASH ROYALE|JUST DROPPED *4 THINGS*", "badge": null},
+    "1": {"header": "HERO *ELECTRO WIZARD*", "badge": "#1"},
+    "2": {"header": "SEASON 3: *C.H.A.O.S*", "badge": "#2"},
+    "3": {"header": "*KEEP THE LIGHTS ON*", "badge": "#3"},
+    "4": {"header": "EVO *ELECTRO GIANT*", "badge": "#4"}
+  },
+
+  "clips": [
+    {"chapter": "hook", "src": 128.3, "dur": 1.9, "mode": "square", "cx": [0.53, 0.58], "zoom": 1.05, "shake": true,  "caption": "WAIT FOR *#4*..."},
+    {"chapter": "hook", "src": 132.0, "dur": 1.6, "mode": "square", "cx": 0.6,  "zoom": 1.0,  "shake": true,  "caption": "THIS IS *INSANE*"},
+
+    {"chapter": "1", "src": 14.9, "dur": 1.5, "mode": "wide",   "cx": 0.5,  "zoom": 1.0,  "caption": "NEW *HERO*!"},
+    {"chapter": "1", "src": 15.9, "dur": 1.5, "mode": "square", "cx": 0.45, "zoom": 1.0,  "caption": "HE DROPS IN..."},
+    {"chapter": "1", "src": 22.7, "dur": 2.6, "mode": "square", "cx": 0.5,  "zoom": 1.0,  "caption": "AND *CHAINS* EVERYTHING"},
+    {"chapter": "1", "src": 30.0, "dur": 1.9, "mode": "square", "cx": 0.42, "zoom": 1.05, "caption": "ZAP. ZAP. *ZAP.*"},
+
+    {"chapter": "2", "src": 54.0, "dur": 1.6, "mode": "wide",   "cx": 0.5,  "zoom": 1.0,  "caption": "NEW *SEASON*"},
+    {"chapter": "2", "src": 58.4, "dur": 2.0, "mode": "square", "cx": 0.45, "zoom": 1.0,  "caption": "NEW *ARENA*"},
+    {"chapter": "2", "src": 60.4, "dur": 1.8, "mode": "square", "cx": 0.48, "zoom": 1.0,  "caption": "PURE *CHAOS*"},
+
+    {"chapter": "3", "src": 103.2, "dur": 2.0, "mode": "wide",  "cx": 0.5,  "zoom": 1.0,  "caption": "NEW *EVENT*"},
+    {"chapter": "3", "src": 113.6, "dur": 2.0, "mode": "wide",  "cx": 0.5,  "zoom": 1.0,  "caption": "WITH *REWARDS*"},
+
+    {"chapter": "4", "src": 123.2, "dur": 1.8, "mode": "wide",   "cx": 0.5,  "zoom": 1.1,  "caption": "THE ONE YOU WAITED FOR"},
+    {"chapter": "4", "src": 125.9, "dur": 1.8, "mode": "square", "cx": 0.5,  "zoom": 1.0,  "caption": "*EVO* ELECTRO GIANT"},
+    {"chapter": "4", "src": 141.0, "dur": 2.4, "mode": "square", "cx": 0.38, "zoom": 1.0,  "caption": "LOOK AT THAT *RANGE*"},
+    {"chapter": "4", "src": 144.8, "dur": 2.2, "mode": "square", "cx": 0.48, "zoom": 1.0,  "caption": "SWARMS = *DELETED*"},
+    {"chapter": "4", "src": 147.3, "dur": 2.0, "mode": "square", "cx": 0.32, "zoom": 1.0,  "shake": true, "caption": "BROKEN|OR *BALANCED?*"},
+    {"chapter": "4", "src": 129.0, "dur": 1.6, "mode": "square", "cx": 0.55, "zoom": 1.05, "caption": "COMMENT *BELOW*"}
+  ]
+}
