@@ -1,0 +1,9 @@
+90 BPM, key Eb major (C +3 st); final hook lifts to E
+
+0:00.00  intro               4 bars
+0:10.67  hook1               8 bars
+0:32.00  verse1             16 bars
+1:14.67  hook2               8 bars
+1:36.00  verse2             16 bars
+2:18.67  hook3_keychange     8 bars
+2:40.00  outro               4 bars
