@@ -138,7 +138,9 @@ def load_cover(album):
     if p:
         img = Image.open(p).convert("RGB")
         s = min(img.size)
-        l, t = (img.width - s) // 2, (img.height - s) // 2
+        # cover_crop_y: 0 = keep top, 0.5 = centre, 1 = keep bottom (for non-square art)
+        fy = album.get("cover_crop_y", 0.5)
+        l, t = (img.width - s) // 2, int((img.height - s) * fy)
         return img.crop((l, t, l + s, t + s))
     print(f"  ! cover missing for {album['title']} -> placeholder")
     return placeholder_cover(album)
@@ -152,8 +154,9 @@ class Overlay:
         self.cfg = cfg
         base = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 
-        handle, _ = text_runs([(cfg["handle"], WHITE)], font("Bold", 30), stroke=2, shadow=5)
-        paste_centered(base, handle, W / 2, HANDLE_Y)
+        if cfg.get("handle"):
+            handle, _ = text_runs([(cfg["handle"], WHITE)], font("Bold", 30), stroke=2, shadow=5)
+            paste_centered(base, handle, W / 2, HANDLE_Y)
 
         colours = [GREEN, WHITE, GREEN]
         t1, _ = text_runs(list(zip(cfg["title_line1"], colours)), font("ExtraBold", 54), stroke=3)

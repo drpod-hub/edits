@@ -3,7 +3,7 @@
   "fps": 30,
   "segment_seconds": 5.5,
 
-  "handle": "@owneast",
+  "handle": "",
   "title_line1": ["Popular", " vs ", "Best"],
   "title_line2": "Songs of Iconic Rap Albums",
   "subtitle": "(in my opinion/part 5)",
@@ -61,6 +61,7 @@
       "title": "Utopia",
       "artist": "Travis Scott",
       "cover": "assets/covers/utopia.jpg",
+      "cover_crop_y": 0.0,
       "placeholder_color": "#3d4a2a",
       "popular": {"song": "FE!N", "rating": "9.5/10", "color": "#ff5f3a",
                   "clip": "assets/clips/fein.mp4", "clip_start": 0,
