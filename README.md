@@ -26,3 +26,25 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 ## Customize
 
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
+
+---
+
+# The Worst (Kanye Bars)
+
+`make_worst.py` + `worst_config.json` render a 1080×1920 "THE WORST (…) I'VE EVER HEARD" lyric edit in the RealjN freestyle format: crumpled-paper intro (title over a photo → zoom-blur → one word at a time), then one segment per bar with ARTIST / (YEAR) / "SONG" up top and karaoke lyrics underneath (next line waits in grey, turns white when rapped), plus grey caps commentary lines.
+
+Bars: Hold My Liquor ("When I park my Range Rover…") and Guilt Trip ("Star Wars fur…"), ~13.7 s.
+
+```bash
+pip install pillow numpy
+python3 make_worst.py       # -> output/worst_kanye_bars.mp4
+```
+
+| Path | What | Fallback |
+|---|---|---|
+| `assets/audio/hold_my_liquor.mp3`, `assets/audio/guilt_trip.mp3` | song audio (lyric times are song timestamps) | silence |
+| `assets/clips/hold_my_liquor.mp4`, `assets/clips/guilt_trip.mp4` | footage behind each bar, auto-cropped to 9:16 (`clip_start`, `clip_zoom`) | Yeezus-style disc pulsing to the beat |
+| `assets/intro/kanye.png` | transparent cut-out shown under the intro title | Yeezus-style disc |
+| `assets/intro/paper.jpg` | crumpled-paper texture | procedural paper |
+
+Lyric timings were located with an offline Whisper transcription of the two songs; nudge `t`, `start` and `end` in `worst_config.json` if you swap audio sources.

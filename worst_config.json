@@ -1,0 +1,94 @@
+{
+  "output": "output/worst_kanye_bars.mp4",
+  "fps": 30,
+  "fade_out": 0.25,
+  "intro": {
+    "title": "THE WORST",
+    "subtitle": "(KANYE BARS)",
+    "words": [
+      "KANYE BARS",
+      "I'VE",
+      "EVER",
+      "HEARD..."
+    ],
+    "image": "assets/intro/kanye.png",
+    "paper": "assets/intro/paper.jpg",
+    "audio": "assets/audio/hold_my_liquor.mp3",
+    "audio_start": 2.0,
+    "gain_db": -4
+  },
+  "segments": [
+    {
+      "artist": "Kanye West",
+      "year": "2013",
+      "song": "Hold My Liquor",
+      "tint": "#3a0d0d",
+      "audio": "assets/audio/hold_my_liquor.mp3",
+      "start": 69.3,
+      "end": 76.25,
+      "clip": "assets/clips/hold_my_liquor.mp4",
+      "clip_start": 0,
+      "lines": [
+        {
+          "t": 69.8,
+          "text": "When I park"
+        },
+        {
+          "t": 70.45,
+          "text": "my Range Rover"
+        },
+        {
+          "t": 71.9,
+          "text": "Slightly scratched"
+        },
+        {
+          "t": 72.6,
+          "text": "your Corolla"
+        },
+        {
+          "t": 73.95,
+          "text": "OK, I smashed"
+        },
+        {
+          "t": 74.95,
+          "text": "your Corolla"
+        },
+        {
+          "t": 75.4,
+          "text": "THAT'S NOT A SCRATCH",
+          "note": true
+        }
+      ]
+    },
+    {
+      "artist": "Kanye West",
+      "year": "2013",
+      "song": "Guilt Trip",
+      "tint": "#16202e",
+      "audio": "assets/audio/guilt_trip.mp3",
+      "start": 93.0,
+      "end": 97.55,
+      "clip": "assets/clips/guilt_trip.mp4",
+      "clip_start": 0,
+      "lines": [
+        {
+          "t": 93.6,
+          "text": "Star Wars fur"
+        },
+        {
+          "t": 94.95,
+          "text": "Yeah, I'm rockin'"
+        },
+        {
+          "t": 95.7,
+          "text": "Chewbacca"
+        },
+        {
+          "t": 96.55,
+          "text": "MAY THE FUR BE WITH YOU",
+          "note": true
+        }
+      ]
+    }
+  ]
+}
