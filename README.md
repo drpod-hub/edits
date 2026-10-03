@@ -43,8 +43,9 @@ python3 make_worst.py       # -> output/worst_kanye_bars.mp4
 | Path | What | Fallback |
 |---|---|---|
 | `assets/audio/hold_my_liquor.mp3`, `assets/audio/guilt_trip.mp3` | song audio (lyric times are song timestamps) | silence |
-| `assets/clips/hold_my_liquor.mp4`, `assets/clips/guilt_trip.mp4` | footage behind each bar, auto-cropped to 9:16 (`clip_start`, `clip_zoom`) | Yeezus-style disc pulsing to the beat |
-| `assets/intro/kanye.png` | transparent cut-out shown under the intro title | Yeezus-style disc |
+| `assets/clips/diet_coke.mp4` | Pusha T "Diet Coke" video (Kanye dancing); each bar's `clips` list cuts it into shots: `start`, `dur`, `x` = horizontal centre of the 9:16 window, `src_crop` trims the pillarbox | Yeezus-style disc pulsing to the beat |
+| `assets/intro/kanye.png` | transparent cut-out shown under the intro title (`image_width` scales it) | Yeezus-style disc |
+| `assets/stickers/kanye_blue_wig.png` | cut-out that pops in on "Chewbacca" (any line can take a `sticker`) | skipped |
 | `assets/intro/paper.jpg` | crumpled-paper texture | procedural paper |
 
 Lyric timings were located with an offline Whisper transcription of the two songs; nudge `t`, `start` and `end` in `worst_config.json` if you swap audio sources.

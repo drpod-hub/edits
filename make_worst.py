@@ -225,14 +225,20 @@ def envelope(path, start, dur, fps):
 
 
 class ClipReader:
-    """Streams a clip as 1080x1920 RGB frames (cover-cropped to 9:16)."""
+    """Streams a clip as 1080x1920 RGB frames (cover-cropped to 9:16).
 
-    def __init__(self, path, start, dur, fps, zoom=1.0):
-        vf = (f"scale={int(W * zoom)}:{int(H * zoom)}:force_original_aspect_ratio=increase,"
-              f"crop={W}:{H},fps={fps}")
+    src_crop trims letter/pillarboxing first ("w:h:x:y"); x is the horizontal
+    centre of the 9:16 window as a fraction of the frame (0.5 = middle).
+    """
+
+    def __init__(self, path, start, dur, fps, zoom=1.0, x=0.5, src_crop=None):
+        vf = f"crop={src_crop}," if src_crop else ""
+        vf += (f"scale={int(W * zoom)}:{int(H * zoom)}:force_original_aspect_ratio=increase,"
+               f"crop={W}:{H}:x='max(0,min(iw-ow,{x}*iw-ow/2))',"
+               f"unsharp=5:5:0.6,fps={fps}")
         self.p = subprocess.Popen(["ffmpeg", "-v", "error", "-ss", str(start), "-t", str(dur + 1),
                                    "-i", path, "-vf", vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
-                                  stdout=subprocess.PIPE)
+                                  stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         self.last = None
 
     def next(self):
@@ -263,7 +269,8 @@ class Intro:
             self.paper = crumpled_paper(c.get("paper_seed", 7))
         p = resolve(c.get("image"))
         if p:
-            self.photo = load_cutout(p, W * 0.95, H * 0.78)
+            k = c.get("image_width", 0.95)
+            self.photo = load_cutout(p, W * k, H * 0.85)
             self.photo_y = H - self.photo.height / 2
         else:
             print("  ! intro image missing -> Yeezus disc placeholder")
@@ -314,7 +321,14 @@ class Segment:
         self.dur = seg["end"] - seg["start"]
         self.audio = resolve(seg.get("audio"))
         self.env = envelope(self.audio, seg["start"], self.dur, self.fps)
-        self.clip_path = resolve(seg.get("clip"))
+        # "clips": a list of cuts {clip, start, dur, x, zoom}; a single "clip" still works.
+        self.cuts = []
+        for c in seg.get("clips") or ([{"clip": seg["clip"], "start": seg.get("clip_start", 0),
+                                         "dur": self.dur, "zoom": seg.get("clip_zoom", 1.0)}]
+                                       if seg.get("clip") else []):
+            if resolve(c["clip"]):
+                self.cuts.append(dict(c, path=resolve(c["clip"])))
+        self.clip_path = bool(self.cuts)
         self.disc = disc
         self.tint = hex_rgb(seg.get("tint", "#1a1a1a"))
         if not self.clip_path:
@@ -335,22 +349,61 @@ class Segment:
             prev = seg["lines"][i - 1]["t"] - seg["start"] + 0.15 if i else 0
             t = ln["t"] - seg["start"]
             self.lines.append((max(prev, t - PREVIEW), t, white, grey, bool(ln.get("note"))))
+        # Stickers: a cut-out that pops in on a line, like the reference's emoji drops.
+        self.stickers = []
+        for ln in seg["lines"]:
+            st = ln.get("sticker")
+            if st and resolve(st["image"]):
+                im = Image.open(resolve(st["image"])).convert("RGBA")
+                w = st.get("width", 520)
+                im = im.resize((w, int(im.height * w / im.width)), Image.LANCZOS)
+                shadow = Image.new("RGBA", (im.width + 60, im.height + 60), (0, 0, 0, 0))
+                shadow.putalpha(Image.new("L", shadow.size, 0))
+                a = Image.new("L", shadow.size, 0)
+                a.paste(im.getchannel("A"), (30, 30))
+                shadow.putalpha(a.filter(ImageFilter.GaussianBlur(14)).point(lambda v: int(v * 0.6)))
+                shadow.alpha_composite(im, (30, 22))
+                self.stickers.append((ln["t"] - seg["start"] + st.get("delay", 0), shadow,
+                                      st.get("x", 0.5) * W, st.get("y", 0.7) * H, st.get("angle", -6)))
         self._bg_cache = None
+        # Darken the top of bright footage so the white text keeps its punch.
+        self.scrim = None
+        if seg.get("scrim", 0.45) > 0:
+            k = seg.get("scrim", 0.45)
+            col = np.clip(1 - (np.arange(H) - 150) / 1250, 0, 1) ** 1.4
+            col = np.where(np.arange(H) < 150, 1, col) * 255 * k
+            a = Image.fromarray(np.repeat(col[:, None], W, 1).astype(np.uint8))
+            self.scrim = Image.new("RGBA", (W, H), (0, 0, 0, 255))
+            self.scrim.putalpha(a)
 
     # -- background ---------------------------------------------------------
     def open(self):
-        if self.clip_path:
-            self.reader = ClipReader(self.clip_path, self.s.get("clip_start", 0), self.dur, self.fps,
-                                     self.s.get("clip_zoom", 1.0))
+        self.cut_i, self.cut_n0, self.reader = -1, 0, None
 
     def close(self):
-        if self.clip_path:
+        if self.reader:
             self.reader.close()
+            self.reader = None
+
+    def clip_frame(self, n):
+        # advance to the cut that covers local frame n
+        t0 = sum(c.get("dur", self.dur) for c in self.cuts[:self.cut_i + 1])
+        while self.cut_i < 0 or (n / self.fps >= t0 - 1e-6 and self.cut_i + 1 < len(self.cuts)):
+            self.close()
+            self.cut_i += 1
+            c = self.cuts[self.cut_i]
+            self.reader = ClipReader(c["path"], c.get("start", 0), c.get("dur", self.dur), self.fps,
+                                     c.get("zoom", 1.0), c.get("x", 0.5), self.s.get("src_crop"))
+            t0 += c.get("dur", self.dur)
+        return self.reader.next()
 
     def background(self, t, n):
         pulse = float(self.env[min(n, len(self.env) - 1)])
         if self.clip_path:
-            return self.reader.next()
+            img = self.clip_frame(n)
+            if self.scrim:
+                img.alpha_composite(self.scrim)
+            return img
         if self._bg_cache is None:
             base = Image.new("RGBA", (W, H), (0, 0, 0, 255))
             d = ImageDraw.Draw(base)
@@ -397,6 +450,11 @@ class Segment:
 
     def frame(self, t, n, alpha=1.0):
         img = self.background(t, n)
+        for at, im, x, y, ang in self.stickers:
+            if t >= at:
+                p = clamp01((t - at) / 0.22)
+                im2 = im.rotate(ang * (1 + 2 * (1 - p)), resample=Image.BICUBIC, expand=True)
+                paste_c(img, im2, x, y, 0.4 + 0.6 * ease_out_back(p), clamp01(p * 3) * alpha)
         self.overlay(img, t, alpha)
         return img
 
