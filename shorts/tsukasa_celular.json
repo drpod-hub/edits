@@ -1,0 +1,33 @@
+{
+  "source": "assets/clips/tsukasa_celular.mp4",
+  "output": "output/tsukasa_celular_short.mp4",
+  "fps": 30,
+
+  "tag": "Tonikaku Kawaii • Dublado",
+  "header": ["TSUKASA GANHOU", "UM CELULAR NOVO 📱"],
+
+  "hook": {"start": 91.0, "end": 93.4,
+           "text": "Ele salvou ela no celular como... 😳", "highlight": ["CELULAR", "COMO"], "size": 80},
+
+  "trim_silence": {"threshold_db": -35, "min_silence": 0.9, "keep": 0.3},
+  "protect": [[86.0, 100.2], [103.9, 107.6]],
+  "remove": [[90.6, 91.0], [92.6, 94.0], [95.6, 96.6]],
+
+  "punch": [97.0],
+  "hit_volume": 0.45,
+
+  "captions": [
+    {"start": 0.0,  "end": 10.5,  "text": "O Nasa deu um CELULAR NOVO pra ela 📱", "highlight": ["CELULAR", "NOVO"]},
+    {"start": 10.5, "end": 23.5,  "text": "A reação dela... 👀", "highlight": ["REAÇÃO"]},
+    {"start": 23.5, "end": 31.0,  "text": "ELA AMOU 🤩", "highlight": ["AMOU"], "size": 92},
+    {"start": 31.0, "end": 50.0,  "text": "Configurando o celular novo 📲", "highlight": ["CELULAR"]},
+    {"start": 50.0, "end": 57.0,  "text": "Peraí... 😳", "highlight": ["PERAÍ"], "size": 88},
+    {"start": 57.0, "end": 68.8,  "text": "Hora de salvar os contatos 👀", "highlight": ["CONTATOS"]},
+    {"start": 68.8, "end": 86.0,  "text": "Trocando contatos 💕", "highlight": ["CONTATOS"]},
+    {"start": 86.0, "end": 96.9,  "text": "Mas ele escolheu a RELAÇÃO... 😏", "highlight": ["RELAÇÃO"]},
+    {"start": 96.9, "end": 99.4,  "text": "CÔNJUGE 💍😳", "highlight": ["CÔNJUGE"], "size": 120, "big": true},
+    {"start": 99.4, "end": 104.0, "text": "Salvou ela como ESPOSA 😭💕", "highlight": ["ESPOSA"]}
+  ],
+
+  "cta": {"text": "Você salvaria assim? Comenta 💍👇", "highlight": ["COMENTA"], "seconds": 3.4, "size": 72}
+}

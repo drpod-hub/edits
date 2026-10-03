@@ -26,3 +26,13 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 ## Customize
 
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
+
+## Shorts: horizontal clip → vertical Short
+
+`make_short.py` turns a 16:9 clip into a 1080×1920 YouTube Short: cold-open hook, dead-air trimming, blurred background, header + animated captions (with colour emoji), zoom punches on cuts, a bass hit on the reveal and a closing call-to-action. Audio is normalised for Shorts.
+
+```bash
+python3 make_short.py shorts/tsukasa_celular.json   # -> output/tsukasa_celular_short.mp4
+```
+
+Put the source clip at the config's `source` path (videos are git-ignored). Caption/punch times in the config are in **source** seconds.
