@@ -15,11 +15,11 @@
       "cover": "assets/covers/life_after_death.jpg",
       "placeholder_color": "#5a1a14",
       "popular": {"song": "Hypnotize", "rating": "9.7/10", "color": "#ff1a4b",
-                  "clip": "assets/clips/hypnotize.mp4", "clip_start": 0,
-                  "audio": "assets/audio/hypnotize.mp3", "audio_start": 0},
+                  "clip": "", "clip_start": 0,
+                  "audio": "assets/clips/hypnotize.mp4", "audio_start": 1.75},
       "best":    {"song": "Notorious Thugs", "rating": "10/10", "color": "#ff9a1f",
-                  "clip": "assets/clips/notorious_thugs.mp4", "clip_start": 0,
-                  "audio": "assets/audio/notorious_thugs.mp3", "audio_start": 0}
+                  "clip": "", "clip_start": 0,
+                  "audio": "assets/clips/notorious_thugs.mp4", "audio_start": 51.9}
     },
     {
       "title": "4:44",
