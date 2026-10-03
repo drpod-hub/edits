@@ -1,0 +1,73 @@
+{
+  "output": "output/popular_vs_best_part5.mp4",
+  "fps": 30,
+  "segment_seconds": 5.5,
+
+  "handle": "@owneast",
+  "title_line1": ["Popular", " vs ", "Best"],
+  "title_line2": "Songs of Iconic Rap Albums",
+  "subtitle": "(in my opinion/part 5)",
+
+  "albums": [
+    {
+      "title": "Life After Death",
+      "artist": "The Notorious B.I.G.",
+      "cover": "assets/covers/life_after_death.jpg",
+      "placeholder_color": "#5a1a14",
+      "popular": {"song": "Hypnotize", "rating": "9.7/10", "color": "#ff1a4b",
+                  "clip": "assets/clips/hypnotize.mp4", "clip_start": 0,
+                  "audio": "assets/audio/hypnotize.mp3", "audio_start": 0},
+      "best":    {"song": "Notorious Thugs", "rating": "10/10", "color": "#ff9a1f",
+                  "clip": "assets/clips/notorious_thugs.mp4", "clip_start": 0,
+                  "audio": "assets/audio/notorious_thugs.mp3", "audio_start": 0}
+    },
+    {
+      "title": "All Eyez On Me",
+      "artist": "2Pac",
+      "cover": "assets/covers/all_eyez_on_me.jpg",
+      "placeholder_color": "#2b2b2b",
+      "popular": {"song": "California Love", "rating": "10/10", "color": "#1fa0ff",
+                  "clip": "assets/clips/california_love.mp4", "clip_start": 0,
+                  "audio": "assets/audio/california_love.mp3", "audio_start": 0},
+      "best":    {"song": "Ambitionz Az A Ridah", "rating": "10/10", "color": "#f6d36b",
+                  "clip": "assets/clips/ambitionz_az_a_ridah.mp4", "clip_start": 0,
+                  "audio": "assets/audio/ambitionz_az_a_ridah.mp3", "audio_start": 0}
+    },
+    {
+      "title": "Donda",
+      "artist": "Kanye West",
+      "cover": "assets/covers/donda.jpg",
+      "placeholder_color": "#050505",
+      "popular": {"song": "Hurricane", "rating": "9.6/10", "color": "#8ee36a",
+                  "clip": "assets/clips/hurricane.mp4", "clip_start": 0,
+                  "audio": "assets/audio/hurricane.mp3", "audio_start": 0},
+      "best":    {"song": "Off The Grid", "rating": "9.9/10", "color": "#9ce0d0",
+                  "clip": "assets/clips/off_the_grid.mp4", "clip_start": 0,
+                  "audio": "assets/audio/off_the_grid.mp3", "audio_start": 0}
+    },
+    {
+      "title": "My Beautiful Dark Twisted Fantasy",
+      "artist": "Kanye West",
+      "cover": "assets/covers/mbdtf.jpg",
+      "placeholder_color": "#b3121b",
+      "popular": {"song": "Power", "rating": "9.8/10", "color": "#b9a6ff",
+                  "clip": "assets/clips/power.mp4", "clip_start": 0,
+                  "audio": "assets/audio/power.mp3", "audio_start": 0},
+      "best":    {"song": "Runaway", "rating": "10/10", "color": "#ff9ec4",
+                  "clip": "assets/clips/runaway.mp4", "clip_start": 0,
+                  "audio": "assets/audio/runaway.mp3", "audio_start": 0}
+    },
+    {
+      "title": "Utopia",
+      "artist": "Travis Scott",
+      "cover": "assets/covers/utopia.jpg",
+      "placeholder_color": "#3d4a2a",
+      "popular": {"song": "FE!N", "rating": "9.5/10", "color": "#ff5f3a",
+                  "clip": "assets/clips/fein.mp4", "clip_start": 0,
+                  "audio": "assets/audio/fein.mp3", "audio_start": 0},
+      "best":    {"song": "My Eyes", "rating": "9.9/10", "color": "#c8f06a",
+                  "clip": "assets/clips/my_eyes.mp4", "clip_start": 0,
+                  "audio": "assets/audio/my_eyes.mp3", "audio_start": 0}
+    }
+  ]
+}

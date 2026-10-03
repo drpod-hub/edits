@@ -1,0 +1,11 @@
+output/
+assets/**/*.mp4
+assets/**/*.mov
+assets/**/*.webm
+assets/**/*.mp3
+assets/**/*.m4a
+assets/**/*.wav
+assets/**/*.jpg
+assets/**/*.jpeg
+assets/**/*.png
+__pycache__/
