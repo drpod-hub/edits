@@ -26,3 +26,9 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 ## Customize
 
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
+
+---
+
+## Outro formato: Fofoca / Drama da Internet
+
+`fofoca/` gera shorts de "drama da internet": narração, cortes rápidos com memes e legenda laranja palavra por palavra. Veja [fofoca/README.md](fofoca/README.md).

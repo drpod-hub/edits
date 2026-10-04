@@ -1,0 +1,65 @@
+{
+  "output": "output/fofoca_ep01.mp4",
+  "fps": 30,
+  "handle": "@seuperfil",
+
+  "voice": {
+    "engine": "edge",
+    "name": "pt-BR-AntonioNeural",
+    "rate": "+12%",
+    "gap": 0.04
+  },
+
+  "music": "assets/fofoca/musica_suspense.mp3",
+  "music_volume": 0.10,
+
+  "card_bg": "#969696",
+  "caption": {"color": "#FFA500", "glow": "#FF7A00", "size": 80, "max_words": 3, "max_chars": 20},
+
+  "cta": {"text": "segue pra parte 2 que o final é pior", "start": 30, "end": 34},
+
+  "beats": [
+    {"text": "O cara que pediu a namorada em casamento no meio do churrasco",
+     "media": "assets/fofoca/hook_churrasco.mp4", "start": 0,
+     "sticker": {"path": "assets/fofoca/barata.png", "x": 0.15, "y": 0.68, "w": 150}},
+    {"text": "e foi recusado na frente de quarenta pessoas.",
+     "media": "assets/fofoca/meme_choque.mp4", "sfx": "assets/fofoca/vine_boom.mp3"},
+
+    {"text": "Pois é gente, já faz alguns dias", "media": "assets/fofoca/emoji_sombrio.png", "mode": "card"},
+    {"text": "que um vídeo chamado Jorginho do Churrasco", "media": "assets/fofoca/print_jorginho.png", "mode": "card"},
+    {"text": "virou o assunto da internet.", "media": "assets/fofoca/boneco_placa.png", "mode": "card"},
+
+    {"text": "E se você não viu, relaxa que eu te conto tudo.", "media": "assets/fofoca/cachorro_serio.mp4"},
+    {"text": "Tudo começou num domingo comum,", "media": "assets/fofoca/churrasco_broll.mp4"},
+    {"text": "carne na brasa, pagode tocando e a família toda reunida.", "media": "assets/fofoca/pagode.mp4"},
+    {"text": "Até que o Jorginho pediu silêncio", "media": "assets/fofoca/jorginho_microfone.mp4"},
+    {"text": "e se ajoelhou do lado da churrasqueira.", "media": "assets/fofoca/ajoelhado.png", "mode": "card"},
+
+    {"text": "Detalhe: ele tinha combinado tudo com a sogra,", "media": "assets/fofoca/sogra.png", "mode": "card"},
+    {"text": "mas esqueceu de combinar com a própria namorada.", "media": "assets/fofoca/coringa.mp4", "sfx": "assets/fofoca/vine_boom.mp3"},
+
+    {"text": "Ela olhou pro anel,", "media": "assets/fofoca/anel_zoom.mp4"},
+    {"text": "olhou pro Jorginho,", "media": "assets/fofoca/jorginho_ajoelhado.mp4"},
+    {"text": "olhou pra sogra,", "media": "assets/fofoca/sogra_sorrindo.png", "mode": "card"},
+    {"text": "e falou a frase que quebrou a internet:", "media": "assets/fofoca/suspense.mp4", "pause": 0.4},
+    {"text": "Amor, a gente tá junto faz três semanas.", "media": "assets/fofoca/namorada_print.png", "mode": "card", "sfx": "assets/fofoca/record_scratch.mp3"},
+
+    {"text": "Três semanas.", "media": "assets/fofoca/macaco_briga.mp4"},
+    {"text": "O primo filmou tudo,", "media": "assets/fofoca/celular_filmando.mp4"},
+    {"text": "postou no grupo da família,", "media": "assets/fofoca/print_grupo.png", "mode": "card"},
+    {"text": "e em duas horas o vídeo já tinha dois milhões de views.", "media": "assets/fofoca/numeros_subindo.mp4"},
+
+    {"text": "E aí a comunidade se dividiu.", "media": "assets/fofoca/divisao.png", "mode": "card"},
+    {"text": "Metade falou que ele foi corajoso,", "media": "assets/fofoca/print_comentario1.png", "mode": "card"},
+    {"text": "a outra metade falou que ele precisava de terapia.", "media": "assets/fofoca/print_comentario2.png", "mode": "card"},
+
+    {"text": "Só que ninguém esperava o que veio depois.", "media": "assets/fofoca/cachorro_branco.mp4", "pause": 0.3},
+    {"text": "Dois dias depois, o Jorginho reapareceu", "media": "assets/fofoca/jorginho_carro.mp4"},
+    {"text": "gravando um vídeo de dentro do carro", "media": "assets/fofoca/jorginho_carro2.mp4"},
+    {"text": "e anunciou que agora ia vender curso de pedido de casamento.", "media": "assets/fofoca/cj_dancando.mp4", "sfx": "assets/fofoca/vine_boom.mp3"},
+
+    {"text": "E o pior: já tem gente comprando.", "media": "assets/fofoca/dinheiro.mp4"},
+    {"text": "E você, aceitaria o pedido?", "media": "assets/fofoca/pergunta.png", "mode": "card"},
+    {"text": "Comenta aí e segue pra parte dois.", "media": "assets/fofoca/seguir.png", "mode": "card"}
+  ]
+}
