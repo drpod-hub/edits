@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NotaVisor — DANFE a partir do XML</title>
+  <meta name="description" content="Abra o XML da NF-e, NFC-e ou CT-e e gere o DANFE em PDF. Tudo no seu navegador: nenhum arquivo é enviado.">
+  <link rel="stylesheet" href="style.css">
+  <style id="page-size">@page { size: A4; margin: 6mm; }</style>
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect x="5" y="3" width="22" height="26" rx="3" fill="currentColor" opacity=".15"/><rect x="5" y="3" width="22" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 10h12M10 15h12M10 20h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>NotaVisor</span>
+    </div>
+    <nav class="abas" role="tablist">
+      <button role="tab" class="aba ativa" data-aba="xml" aria-selected="true">Abrir XML</button>
+      <button role="tab" class="aba" data-aba="chave" aria-selected="false">Consultar chave</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Abrir XML -->
+    <section id="aba-xml" class="painel">
+      <div class="intro">
+        <h1>Visualize e imprima o DANFE a partir do XML</h1>
+        <p>NF-e, NFC-e e CT-e. Os arquivos são lidos <b>somente no seu navegador</b>: nada é enviado para servidor nenhum.</p>
+      </div>
+
+      <label id="drop" class="drop" tabindex="0">
+        <input id="arquivo" type="file" accept=".xml,text/xml,application/xml" multiple hidden>
+        <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="drop-t">Arraste os arquivos XML aqui</span>
+        <span class="drop-s">ou clique para escolher (pode selecionar vários)</span>
+      </label>
+      <div class="ou">ou</div>
+      <details class="colar">
+        <summary>Colar o conteúdo do XML</summary>
+        <textarea id="xml-texto" rows="6" placeholder="&lt;nfeProc ...&gt; ... &lt;/nfeProc&gt;"></textarea>
+        <button id="btn-colar" class="btn">Gerar DANFE</button>
+      </details>
+      <p class="exemplo">Quer só testar? Abra uma <a href="#" data-exemplo="nfe">NF-e de exemplo</a> ou uma <a href="#" data-exemplo="nfce">NFC-e de exemplo</a>.</p>
+
+      <div id="erros" class="erros" hidden></div>
+
+      <div id="area" class="area" hidden>
+        <aside class="lista">
+          <div class="lista-cab"><b>Notas abertas</b><button id="btn-limpar" class="link">Limpar</button></div>
+          <ul id="notas"></ul>
+        </aside>
+        <div class="visor">
+          <div class="barra">
+            <button id="btn-imprimir" class="btn primario">Imprimir / Salvar PDF</button>
+            <button id="btn-baixar" class="btn">Baixar XML</button>
+            <button id="btn-copiar" class="btn">Copiar chave</button>
+            <a id="btn-consultar" class="btn" target="_blank" rel="noopener">Consultar na SEFAZ ↗</a>
+          </div>
+          <div id="resumo" class="resumo"></div>
+          <div class="folha-wrap"><div id="doc"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Consultar chave -->
+    <section id="aba-chave" class="painel" hidden>
+      <div class="intro">
+        <h1>Consultar chave de acesso</h1>
+        <p>Confira se a chave de 44 dígitos é válida e veja o que ela informa. Para baixar a nota, use o portal oficial da SEFAZ.</p>
+      </div>
+      <form id="form-chave" class="form-chave">
+        <input id="chave" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000" aria-label="Chave de acesso">
+        <button class="btn primario">Verificar</button>
+      </form>
+      <div id="chave-res"></div>
+      <div class="dica">
+        <b>Como obter o XML de uma nota?</b>
+        <ul>
+          <li>Peça ao emitente: ele é obrigado a enviar o XML ao destinatário.</li>
+          <li>Se a nota foi emitida para o seu CNPJ, baixe pelo portal da SEFAZ do seu estado ou pelo Portal Nacional da NF-e (exige certificado digital).</li>
+          <li>A consulta pública mostra a situação da nota sem certificado, mas não libera o download do XML.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">NotaVisor é uma ferramenta independente, sem vínculo com a Receita Federal ou com as SEFAZ. O DANFE gerado reproduz o XML enviado: confira a autenticidade no portal oficial.</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+  <script src="exemplos/exemplos.js" defer></script>
+  <script src="barcode.js" defer></script>
+  <script src="nfe.js" defer></script>
+  <script src="danfe.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

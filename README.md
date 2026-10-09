@@ -26,3 +26,9 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 ## Customize
 
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
+
+---
+
+## NotaVisor
+
+A pasta [`notavisor/`](notavisor/) traz um visualizador de DANFE (NF-e, NFC-e e CT-e) a partir do XML, que roda no navegador. Veja o [README](notavisor/README.md).
