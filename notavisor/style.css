@@ -200,3 +200,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 40px; }
   .danfe table.itens thead { display: table-header-group; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Servidor com certificado */
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.srv { margin-top: 20px; }
+.srv-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.srv-msg, #baixar-msg { margin-top: 10px; font-size: 14px; }
+.srv-notas { color: var(--text); list-style: none; padding: 0; margin: 12px 0 0; }
+.srv-notas li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }

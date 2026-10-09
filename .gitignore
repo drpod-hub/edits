@@ -9,3 +9,9 @@ assets/**/*.jpg
 assets/**/*.jpeg
 assets/**/*.png
 __pycache__/
+node_modules/
+notavisor/servidor/.env
+notavisor/servidor/dados/
+notavisor/servidor/*.pfx
+notavisor/servidor/*.p12
+notavisor/servidor/icp-brasil.pem

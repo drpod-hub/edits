@@ -222,10 +222,130 @@
           ${linha('Código numérico', r.cNF)}
           ${linha('Dígito verificador', r.dv + (r.dv === r.dvCalculado ? ' ✓' : ` (esperado ${r.dvCalculado})`))}
         </table>
-        ${r.valida ? `<p><a class="btn primario" href="${portal}" target="_blank" rel="noopener" id="ir-portal">Consultar no portal oficial ↗</a>
+        ${r.valida && srv.ativo && r.mod === '55' ? `<p><button class="btn primario" id="btn-baixar-sefaz">Baixar XML com meu certificado</button></p><div id="baixar-msg"></div>` : ''}
+        ${r.valida ? `<p><a class="btn${srv.ativo ? '' : ' primario'}" href="${portal}" target="_blank" rel="noopener" id="ir-portal">Consultar no portal oficial ↗</a>
           <span class="small">A chave já fica copiada: basta colar no campo do portal.</span></p>` : ''}
       </div>`;
     const ir = $('#ir-portal');
     if (ir) ir.addEventListener('click', () => copiar(r.chave));
+    const bx = $('#btn-baixar-sefaz');
+    if (bx) bx.addEventListener('click', () => baixarDaSefaz(r.chave, bx));
   });
+
+  // ---------- Servidor com certificado (opcional) ----------
+  // Quando o site é aberto pelo servidor/servidor.js, dá para baixar o XML direto da SEFAZ.
+  const srv = { ativo: false };
+
+  async function api(caminho, opcoes = {}) {
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, opcoes.headers || {});
+    const token = lerToken();
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch(caminho, Object.assign({}, opcoes, { headers }));
+    if (r.status === 401) {
+      const novo = prompt('Token de acesso do servidor NotaVisor:');
+      if (novo) { gravarToken(novo); return api(caminho, opcoes); }
+    }
+    const tipo = r.headers.get('content-type') || '';
+    return { status: r.status, dados: tipo.includes('json') ? await r.json() : await r.text() };
+  }
+  function lerToken() { try { return localStorage.getItem('notavisor-token') || ''; } catch (_) { return ''; } }
+  function gravarToken(t) { try { localStorage.setItem('notavisor-token', t); } catch (_) { /* sem storage */ } }
+
+  async function iniciarServidor() {
+    if (location.protocol === 'file:') return;
+    let st;
+    try {
+      const r = await fetch('api/status');
+      if (!r.ok) return;
+      st = await r.json();
+    } catch (_) { return; } // site estático, sem servidor
+    $('#srv').hidden = false;
+    if (!st.ativo) {
+      $('#srv-info').textContent = 'Servidor sem certificado configurado: ' + st.erro;
+      $('#btn-sincronizar').hidden = true;
+      return;
+    }
+    srv.ativo = true;
+    const venc = st.validade ? new Date(st.validade).toLocaleDateString('pt-BR') : '';
+    $('#srv-info').textContent = `${st.titular} · ${fmtDoc(st.doc)} · certificado válido até ${venc} · ${st.ambiente}`;
+    listarNotasServidor();
+  }
+
+  function msgServidor(el, tipo, texto) {
+    el.hidden = false;
+    el.innerHTML = `<span class="selo ${tipo}">${tipo === 'bom' ? 'Pronto' : tipo === 'alerta' ? 'Atenção' : 'Erro'}</span> ${esc(texto)}`;
+  }
+
+  async function baixarDaSefaz(chave, botao) {
+    const out = $('#baixar-msg');
+    botao.disabled = true;
+    const orig = botao.textContent;
+    botao.textContent = 'Consultando a SEFAZ…';
+    try {
+      const { status, dados } = await api('api/baixar', { method: 'POST', body: JSON.stringify({ chave }) });
+      if (status === 200 && dados.xml) {
+        msgServidor(out, 'bom', dados.origem === 'cache' ? 'XML já estava salvo no servidor.' : 'XML baixado da SEFAZ.');
+        abrirNoVisor(chave + '.xml', dados.xml);
+        listarNotasServidor();
+      } else if (dados.resumo) {
+        const x = dados.resumo;
+        msgServidor(out, 'alerta', `${dados.mensagem || ''} Resumo: ${x.emitente} · R$ ${money(x.valor)} · ${fmtData(x.emissao)} · ${x.situacao}`);
+        listarNotasServidor();
+      } else {
+        msgServidor(out, status === 429 ? 'alerta' : 'ruim', dados.mensagem || dados.erro || 'Falha desconhecida.');
+      }
+    } catch (err) {
+      msgServidor(out, 'ruim', 'Não foi possível falar com o servidor: ' + err.message);
+    } finally {
+      botao.disabled = false;
+      botao.textContent = orig;
+    }
+  }
+
+  $('#btn-sincronizar').addEventListener('click', async () => {
+    const b = $('#btn-sincronizar'), out = $('#srv-msg');
+    b.disabled = true;
+    b.textContent = 'Buscando…';
+    try {
+      const { status, dados } = await api('api/sincronizar', { method: 'POST' });
+      if (status === 200) {
+        const partes = [`${dados.novas.length} nota(s) completa(s) baixada(s)`];
+        if (dados.resumos.length) partes.push(`${dados.resumos.length} resumo(s)`);
+        if (dados.ciencias) partes.push(`ciência registrada em ${dados.ciencias}: os XMLs chegam na próxima busca`);
+        if (dados.proxima) partes.push('próxima busca liberada às ' + new Date(dados.proxima).toLocaleTimeString('pt-BR'));
+        msgServidor(out, 'bom', partes.join(' · ') + '.');
+      } else {
+        msgServidor(out, status === 429 ? 'alerta' : 'ruim', dados.mensagem || dados.erro);
+      }
+      listarNotasServidor();
+    } catch (err) {
+      msgServidor(out, 'ruim', err.message);
+    } finally {
+      b.disabled = false;
+      b.textContent = 'Buscar notas novas';
+    }
+  });
+
+  async function listarNotasServidor() {
+    const { status, dados } = await api('api/notas');
+    if (status !== 200) return;
+    const ul = $('#srv-notas');
+    ul.innerHTML = dados.notas.length ? dados.notas.map(n => `
+      <li>
+        <div><b>NF-e ${esc(n.numero)}</b> · ${esc(n.emitente)}<div class="small muted">${fmtData(n.emissao)} · R$ ${money(n.valor)}${n.completa ? '' : ' · só resumo (aguardando XML)'}</div></div>
+        ${n.completa ? `<button class="btn" data-chave="${esc(n.chave)}">Abrir</button>` : ''}
+      </li>`).join('') : '<li class="muted small">Nenhuma nota baixada ainda.</li>';
+    ul.querySelectorAll('[data-chave]').forEach(b => b.addEventListener('click', async () => {
+      const r = await api('api/notas/' + b.dataset.chave);
+      if (r.status === 200) abrirNoVisor(b.dataset.chave + '.xml', r.dados);
+    }));
+  }
+
+  function abrirNoVisor(nome, xml) {
+    document.querySelector('.aba[data-aba="xml"]').click();
+    limparErros();
+    adicionar(nome, xml);
+  }
+
+  iniciarServidor();
 })();

@@ -1,0 +1,16 @@
+{
+  "name": "notavisor-servidor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor do NotaVisor: baixa XMLs de NF-e da SEFAZ com certificado A1",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js",
+    "cadeia": "node baixar-cadeia.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "adm-zip": "0.5.16",
+    "node-forge": "1.3.1"
+  }
+}
