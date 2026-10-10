@@ -1,0 +1,61 @@
+{
+  "output": "output/popular_vs_best_part6.mp4",
+  "fps": 30,
+  "segment_seconds": 5.5,
+
+  "handle": "",
+  "title_line1": ["Popular", " vs ", "Best"],
+  "title_line2": "Songs of Iconic Rap Albums",
+  "subtitle": "(in my opinion/part 6)",
+
+  "albums": [
+    {
+      "title": "The Blueprint 3",
+      "artist": "JAY-Z",
+      "cover": "assets/covers/blueprint_3.jpg",
+      "placeholder_color": "#8a0f12",
+      "popular": {"song": "Empire State of Mind", "rating": "9.8/10", "color": "#ff1a4b",
+                  "clip": "assets/clips/empire_state_of_mind.mp4", "clip_start": 0,
+                  "audio": "assets/clips/empire_state_of_mind.mp4", "audio_start": 0},
+      "best":    {"song": "Run This Town", "rating": "9.8/10", "color": "#ff9a1f",
+                  "clip": "assets/clips/run_this_town.mp4", "clip_start": 0,
+                  "audio": "assets/clips/run_this_town.mp4", "audio_start": 0}
+    },
+    {
+      "title": "Graduation",
+      "artist": "Kanye West",
+      "cover": "assets/covers/graduation.jpg",
+      "placeholder_color": "#c2407f",
+      "popular": {"song": "Stronger", "rating": "9.7/10", "color": "#1fa0ff",
+                  "clip": "assets/clips/stronger.mp4", "clip_start": 0,
+                  "audio": "assets/clips/stronger.mp4", "audio_start": 0},
+      "best":    {"song": "Flashing Lights", "rating": "10/10", "color": "#f6d36b",
+                  "clip": "assets/clips/flashing_lights.mp4", "clip_start": 0,
+                  "audio": "assets/clips/flashing_lights.mp4", "audio_start": 0}
+    },
+    {
+      "title": "ASTROWORLD",
+      "artist": "Travis Scott",
+      "cover": "assets/covers/astroworld.jpg",
+      "placeholder_color": "#b58a2a",
+      "popular": {"song": "SICKO MODE", "rating": "10/10", "color": "#8ee36a",
+                  "clip": "assets/clips/sicko_mode.mp4", "clip_start": 0,
+                  "audio": "assets/clips/sicko_mode.mp4", "audio_start": 0},
+      "best":    {"song": "STARGAZING", "rating": "10/10", "color": "#9ce0d0",
+                  "clip": "assets/clips/stargazing.mp4", "clip_start": 0,
+                  "audio": "assets/clips/stargazing.mp4", "audio_start": 0}
+    },
+    {
+      "title": "Take Care",
+      "artist": "Drake",
+      "cover": "assets/covers/take_care.jpg",
+      "placeholder_color": "#6b4a1f",
+      "popular": {"song": "Headlines", "rating": "9.6/10", "color": "#b9a6ff",
+                  "clip": "assets/clips/headlines.mp4", "clip_start": 0,
+                  "audio": "assets/clips/headlines.mp4", "audio_start": 0},
+      "best":    {"song": "Marvins Room", "rating": "10/10", "color": "#ff9ec4",
+                  "clip": "assets/clips/marvins_room.mp4", "clip_start": 0,
+                  "audio": "assets/clips/marvins_room.mp4", "audio_start": 0}
+    }
+  ]
+}

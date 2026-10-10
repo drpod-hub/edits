@@ -31,11 +31,12 @@ TITLE1_Y = 226          # centre y of "Popular vs Best"
 TITLE2_Y = 292          # centre y of the yellow line
 SUB_Y = 340             # centre y of "(in my opinion/part N)"
 BLOCK_TOP = 410         # top of the first cover
-BLOCK_PITCH = 228       # distance between cover tops
-COVER_X, COVER_SIZE = 50, 216
-LABEL_X = 284
-POPULAR_DY = 48         # label centre y, relative to cover top
-BEST_DY = 185
+LIST_SPAN = 1140        # cover list height (5 albums x 228px pitch in the reference)
+COVER_GAP = 12          # space between covers
+COVER_X = 50
+LABEL_GAP_X = 18        # space between cover and "Popular:"/"Best:"
+POPULAR_DY = 48 / 216   # label centre y, as a fraction of cover size
+BEST_DY = 185 / 216
 LABEL_GAP = 16          # space between "Popular:" and the song name
 
 GREEN = (34, 230, 28)
@@ -172,21 +173,25 @@ class Overlay:
         paste_centered(base, sub, W / 2, SUB_Y)
 
         label_font = font("Bold", 34)
+        # fewer albums -> bigger covers, so the list always fills the same area
+        pitch = LIST_SPAN // len(cfg["albums"])
+        size = pitch - COVER_GAP
+        label_x = COVER_X + size + LABEL_GAP_X
         self.slots = []  # (x, cy, song_img, pad) in reveal order
         for i, (album, cover) in enumerate(zip(cfg["albums"], covers)):
-            top = BLOCK_TOP + i * BLOCK_PITCH
-            c = cover.resize((COVER_SIZE, COVER_SIZE), Image.LANCZOS)
-            sh = Image.new("RGBA", (COVER_SIZE + 24, COVER_SIZE + 24), (0, 0, 0, 0))
-            ImageDraw.Draw(sh).rectangle([12, 12, COVER_SIZE + 12, COVER_SIZE + 12], fill=(0, 0, 0, 140))
+            top = BLOCK_TOP + i * pitch
+            c = cover.resize((size, size), Image.LANCZOS)
+            sh = Image.new("RGBA", (size + 24, size + 24), (0, 0, 0, 0))
+            ImageDraw.Draw(sh).rectangle([12, 12, size + 12, size + 12], fill=(0, 0, 0, 140))
             base.alpha_composite(sh.filter(ImageFilter.GaussianBlur(8)), (COVER_X - 12, top - 8))
             base.paste(c, (COVER_X, top))
 
             for key, label, dy in (("popular", "Popular:", POPULAR_DY), ("best", "Best:", BEST_DY)):
-                cy = top + dy
+                cy = top + int(dy * size)
                 limg, lpad = text_runs([(label, WHITE)], label_font)
-                paste_left(base, limg, lpad, LABEL_X, cy)
+                paste_left(base, limg, lpad, label_x, cy)
                 s = album[key]
-                sx = LABEL_X + label_font.getlength(label) + LABEL_GAP
+                sx = label_x + label_font.getlength(label) + LABEL_GAP
                 sf = label_font
                 runs = [(s["song"], hex_rgb(s["color"])), (f" ({s['rating']})", WHITE)]
                 while sum(sf.getlength(t) for t, _ in runs) > W - sx - 24 and sf.size > 22:

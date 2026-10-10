@@ -8,7 +8,8 @@ Albums: Life After Death · 4:44 · Donda · MBDTF · Utopia — 10 songs × 5.5
 
 ```bash
 pip install pillow          # ffmpeg must be on PATH
-python3 make_video.py       # -> output/popular_vs_best_part5.mp4
+python3 make_video.py                     # part 5 (config.json)
+python3 make_video.py config_part6.json   # part 6
 ```
 
 ## Add your media
@@ -26,3 +27,5 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 ## Customize
 
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
+
+Any number of albums works: with fewer than 5, the covers grow so the list still fills the same space.
