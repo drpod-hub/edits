@@ -193,8 +193,8 @@ def chunk_words(text, max_words, max_chars):
             chunks.append(" ".join(cur))
             cur = []
         cur.append(w)
-        # a sentence break ends the chunk early, like a human editor would
-        if re.search(r"[.!?…]$", w):
+        # punctuation ends the chunk early, like a human editor would
+        if re.search(r"[.!?…,:;]$", w):
             chunks.append(" ".join(cur))
             cur = []
     if cur:
