@@ -17,10 +17,10 @@ Vertical (1080x1920, ~62s) edit of Crunchyroll's *"Survive Ranga Playtime Challe
 ```
 python3 build.py SOURCE.mp4 ranga_playtime_short.mp4
 ```
-Needs ffmpeg, Pillow and the Noto Color Emoji font. All cuts, captions and stickers are data
+Needs ffmpeg, Pillow and the Noto Color Emoji font. Rendering is in `../shortkit.py`; all cuts, captions and stickers are data
 at the top of `build.py` (source-video timestamps), so retiming or rewording is a one-line change.
 
-Fonts: Anton and Bangers (SIL Open Font License, via Fontsource).
+Fonts (`../fonts`): Anton and Bangers (SIL Open Font License, via Fontsource).
 
 ## Upload kit
 **Title:** He Challenged Rimuru's "Good Boy" to a 1v1 💀 #tensura #anime
