@@ -1,0 +1,41 @@
+{
+  "source": "gus_short/source.mp4",
+  "output": "output/find_gus_short.mp4",
+  "fps": 30,
+  "sharpen": false,
+
+  "chapters": {
+    "hook":     {"header": "WHERE DID *GUS* GO?", "badge": null},
+    "ride":     {"header": "MORTIS' *HAUNTED RIDE*", "badge": null},
+    "monsters": {"header": "THE *MONSTERS*", "badge": null},
+    "ghosts":   {"header": "THE *GHOSTS*", "badge": null},
+    "end":      {"header": "WHERE IS *GUS*?", "badge": null}
+  },
+
+  "clips": [
+    {"chapter": "hook", "src": 87.0, "dur": 2.0, "mode": "square", "cx": 0.55, "zoom": 1.0, "caption": "THE CART CAME BACK|*EMPTY*"},
+    {"chapter": "hook", "src": 94.95, "dur": 0.6, "mode": "square", "cx": 0.5,  "zoom": 1.0, "shake": true, "caption": "HERE'S *WHAT HAPPENED*"},
+
+    {"chapter": "ride", "src": 1.6,  "dur": 1.8, "mode": "square", "cx": 0.48, "zoom": 1.0, "caption": "MORTIS OPENED A *RIDE*"},
+    {"chapter": "ride", "src": 4.4,  "dur": 2.2, "mode": "wide",   "cx": 0.5,  "zoom": 1.15, "caption": "GUS HOPPED *IN*"},
+    {"chapter": "ride", "src": 8.0,  "dur": 1.8, "mode": "square", "cx": 0.55, "zoom": 1.0, "caption": "NO TURNING *BACK*"},
+    {"chapter": "ride", "src": 13.0, "dur": 2.4, "mode": "square", "cx": 0.48, "zoom": 1.0, "caption": "HE WAS *NOT* SCARED"},
+
+    {"chapter": "monsters", "src": 21.0, "dur": 1.2, "mode": "square", "cx": 0.55, "zoom": 1.0, "shake": true, "caption": "UNTIL..."},
+    {"chapter": "monsters", "src": 25.6, "dur": 2.6, "mode": "square", "cx": 0.48, "zoom": 1.0, "shake": true, "caption": "*THIS* SHOWED UP"},
+    {"chapter": "monsters", "src": 30.0, "dur": 2.4, "mode": "square", "cx": 0.62, "zoom": 1.0, "caption": "STILL *NOT* SCARED"},
+    {"chapter": "monsters", "src": 49.0, "dur": 1.8, "mode": "square", "cx": 0.5,  "zoom": 1.0, "caption": "NOT EVEN *A LITTLE*"},
+    {"chapter": "monsters", "src": 55.4, "dur": 2.2, "mode": "square", "cx": 0.55, "zoom": 1.0, "caption": "THE MONSTERS WERE|*CONFUSED*"},
+
+    {"chapter": "ghosts", "src": 61.0, "dur": 1.6, "mode": "square", "cx": 0.48, "zoom": 1.0, "caption": "THEN *THEY* CAME"},
+    {"chapter": "ghosts", "src": 63.9, "dur": 1.7, "mode": "square", "cx": 0.5,  "zoom": 1.0, "caption": "*GHOSTS*"},
+    {"chapter": "ghosts", "src": 69.0, "dur": 1.6, "mode": "square", "cx": 0.62, "zoom": 1.0, "caption": "ONE REACHED *OUT*"},
+    {"chapter": "ghosts", "src": 71.2, "dur": 1.6, "mode": "square", "cx": 0.5,  "zoom": 1.0, "caption": "GUS *KNEW* THEM"},
+    {"chapter": "ghosts", "src": 77.0, "dur": 3.4, "mode": "square", "cx": 0.55, "zoom": 1.0, "caption": "A MEMORY FROM|*STARR PARK*"},
+    {"chapter": "ghosts", "src": 80.6, "dur": 2.6, "mode": "square", "cx": 0.55, "zoom": 1.0, "caption": "AND THEN... *GONE*"},
+
+    {"chapter": "end", "src": 89.5, "dur": 1.8, "mode": "wide",   "cx": 0.5,  "zoom": 1.15, "caption": "ONLY THE *BALLOON*"},
+    {"chapter": "end", "src": 94.1, "dur": 1.3, "mode": "square", "cx": 0.48, "zoom": 1.0, "shake": true, "caption": "MORTIS *PANICKED*"},
+    {"chapter": "end", "src": 97.2, "dur": 2.6, "mode": "wide",   "cx": 0.5,  "zoom": 1.1, "caption": "HELP *FIND GUS*|COMMENT IF YOU SEE HIM"}
+  ]
+}

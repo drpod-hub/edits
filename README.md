@@ -38,3 +38,11 @@ python3 clash_short/make_short.py --source path/to/tv_royale.mp4   # -> output/c
 ```
 
 Edit `clash_short/edit.json` to change cuts (`src`, `dur`), framing (`mode` square/wide, `cx` crop centre, `zoom`), chapter headers and captions (`*word*` = yellow, `|` = line break).
+
+## Find Gus (Brawl Stars animation) → YouTube Short
+
+`gus_short/edit.json` cuts the 100 s "Help find Gus" animation into a ~39 s mystery-hook Short (opens on the empty cart, retells the ride, ends on the FIND GUS card and loops). Same generator:
+
+```bash
+python3 clash_short/make_short.py gus_short/edit.json --source path/to/find_gus.mp4   # -> output/find_gus_short.mp4
+```

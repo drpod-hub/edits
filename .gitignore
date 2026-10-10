@@ -10,3 +10,4 @@ assets/**/*.jpeg
 assets/**/*.png
 __pycache__/
 clash_short/*.mp4
+gus_short/*.mp4

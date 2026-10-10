@@ -175,7 +175,7 @@ def compose_bg(frame):
     return ImageEnhance.Brightness(bg).enhance(0.42).convert("RGBA")
 
 
-def compose_fg(frame, clip, t, dur):
+def compose_fg(frame, clip, t, dur, sharpen=True):
     sw, sh = frame.size
     p = t / dur
     # punch from 1.14x down to the clip zoom, then a slow push-in
@@ -191,7 +191,8 @@ def compose_fg(frame, clip, t, dur):
     x0 = min(max(cx - cw / 2, 0), sw - cw)
     y0 = (sh - ch) / 2
     fg = frame.resize((out_w, out_h), Image.LANCZOS, box=(x0, y0, x0 + cw, y0 + ch))
-    fg = fg.filter(ImageFilter.UnsharpMask(radius=2, percent=70, threshold=2))
+    if sharpen:  # only worth it when upscaling low-res sources
+        fg = fg.filter(ImageFilter.UnsharpMask(radius=2, percent=70, threshold=2))
     return fg
 
 
@@ -229,7 +230,7 @@ def build_audio(src, plan, total, tmp):
             k += 1
     graph += ";" + ";".join(sfx)
     graph += (f";[src]{''.join(f'[s{j}]' for j in range(k))}amix=inputs={k + 1}:normalize=0:duration=first,"
-              f"loudnorm=I=-14:TP=-1.0:LRA=11,aresample=48000,atrim=0:{total:.4f}[out]")
+              f"loudnorm=I=-14:TP=-1.0:LRA=11,aresample=48000,alimiter=limit=0.84:attack=0.5:release=40:level=false,atrim=0:{total:.4f}[out]")
     out = os.path.join(tmp, "audio.m4a")
     run(["ffmpeg", "-y", "-v", "error", "-i", src, "-filter_complex", graph, "-map", "[out]",
          "-c:a", "aac", "-b:a", "192k", out])
@@ -290,7 +291,7 @@ def main():
             for fi, frame in enumerate(read_frames(src, clip["src"], n, fps, sw, sh)):
                 t = fi / fps
                 canvas = compose_bg(frame)
-                fg = compose_fg(frame, clip, t, dur)
+                fg = compose_fg(frame, clip, t, dur, edl.get("sharpen", True))
                 dx = dy = 0
                 if clip.get("shake") and t < 0.35:
                     amp = 18 * (1 - t / 0.35)
