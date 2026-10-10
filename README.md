@@ -35,4 +35,6 @@ In `config.json`: song picks, ratings, name colours, title lines, handle, `segme
 python3 make_short.py shorts/tsukasa_celular.json   # -> output/tsukasa_celular_short.mp4
 ```
 
+Two configs ship: `shorts/tsukasa_celular.json` (one scene, dead-air trimmed) and `shorts/animes_incriveis.json` (top-7 montage from hand-picked `segments`, cuts snapped to quiet audio with `snap_cuts`).
+
 Put the source clip at the config's `source` path (videos are git-ignored). Caption/punch times in the config are in **source** seconds.

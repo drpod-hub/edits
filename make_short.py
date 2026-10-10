@@ -32,13 +32,21 @@ FONT_DIR = os.path.join(ROOT, "fonts")
 EMOJI_FONT = "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf"
 
 SRC_W, SRC_H = 1280, 720     # working size of the decoded clip
-FG_CROP = 0.92               # keep this fraction of the source width (trims letterbox edges)
 FG_W = W
-FG_H = int(round(FG_W * SRC_H / (SRC_W * FG_CROP) / 2) * 2)
 FG_Y = 560                   # top of the clip on the canvas
 HEADER_Y = 330               # centre of the header block
 TAG_Y = 175                  # centre of the small tag line
-CAPTION_Y = FG_Y + FG_H + 175
+
+
+def set_layout(fg_crop):
+    """fg_crop: fraction of the source width kept (trims edges; 1.0 keeps all)."""
+    global FG_CROP, FG_H, CAPTION_Y
+    FG_CROP = fg_crop
+    FG_H = int(round(FG_W * SRC_H / (SRC_W * FG_CROP) / 2) * 2)
+    CAPTION_Y = FG_Y + FG_H + 175
+
+
+set_layout(0.92)
 
 WHITE = (255, 255, 255)
 YELLOW = (255, 221, 0)
@@ -59,6 +67,12 @@ def run(cmd, capture=False):
     if r.returncode:
         sys.exit("command failed:\n" + " ".join(cmd) + "\n" + r.stderr[-3000:])
     return r
+
+
+def probe_height(path):
+    r = run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=height",
+             "-of", "csv=p=0", path], capture=True)
+    return int(r.stdout.strip())
 
 
 def probe_duration(path):
@@ -82,8 +96,37 @@ def overlaps(a, b):
     return a[0] < b[1] and b[0] < a[1]
 
 
+def audio_envelope(path, hop=0.01):
+    """RMS per `hop` seconds of the clip's audio (mono)."""
+    import numpy as np
+    r = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", "8000",
+                        "-f", "s16le", "-"], stdout=subprocess.PIPE)
+    a = np.frombuffer(r.stdout, dtype=np.int16).astype(np.float32)
+    n = int(8000 * hop)
+    a = a[: len(a) // n * n].reshape(-1, n)
+    return np.sqrt((a ** 2).mean(axis=1)), hop
+
+
+def snap_to_quiet(t, env, hop, radius):
+    """Move a cut to the quietest instant within +-radius so speech isn't chopped mid-word."""
+    lo, hi = max(0, int((t - radius) / hop)), min(len(env), int((t + radius) / hop) + 1)
+    if hi <= lo:
+        return t
+    i = lo + int(env[lo:hi].argmin())
+    return i * hop
+
+
 def build_edl(cfg, src, duration):
     """Return the list of (src_start, src_end) ranges kept for the main body."""
+    if "segments" in cfg:
+        # hand-picked ranges (montage); optionally snapped to pauses in the audio
+        segs = [tuple(r) for r in cfg["segments"]]
+        radius = cfg.get("snap_cuts", 0)
+        if radius:
+            env, hop = audio_envelope(src)
+            segs = [(snap_to_quiet(a, env, hop, radius), snap_to_quiet(b, env, hop, radius))
+                    for a, b in segs]
+        return [(a, b) for a, b in segs if b - a >= 0.1]
     ts = cfg.get("trim_silence")
     removes = [tuple(r) for r in cfg.get("remove", [])]
     protect = [tuple(r) for r in cfg.get("protect", [])]
@@ -179,7 +222,7 @@ class TextRenderer:
                     out.append((part, "emoji"))
                 else:
                     clean = re.sub(r"[^\wÀ-ÿ]", "", part).upper()
-                    out.append((part, "hl" if clean in hl else "plain"))
+                    out.append((part, "hl" if clean in hl or part.upper() in hl else "plain"))
         return out
 
     def render(self, text, size, color=WHITE, hl_color=YELLOW, highlight=(), max_w=W - 120,
@@ -280,10 +323,11 @@ class Composer:
         if cfg.get("tag"):
             tag = tr.render(cfg["tag"], 34, color=(235, 235, 235), stroke=3, upper=False)
             paste_scaled(chrome, tag, W / 2, TAG_Y)
+        # each header line stays on one line: shrink it to fit instead of wrapping
         y = HEADER_Y - (len(cfg["header"]) - 1) * 58
         for i, line in enumerate(cfg["header"]):
-            img = tr.render(line, 92, color=WHITE if i == 0 else YELLOW, stroke=10)
-            paste_scaled(chrome, img, W / 2, y)
+            img = tr.render(line, 92, color=WHITE if i == 0 else YELLOW, stroke=10, max_w=10 ** 5)
+            paste_scaled(chrome, img, W / 2, y, scale=min(1.0, (W - 50) / img.width))
             y += 116
         sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         ImageDraw.Draw(sh).rectangle([0, FG_Y - 6, W, FG_Y + FG_H + 6], fill=(0, 0, 0, 170))
@@ -412,6 +456,7 @@ def main():
     out = os.path.join(ROOT, cfg["output"])
     os.makedirs(os.path.dirname(out), exist_ok=True)
 
+    set_layout(cfg.get("fg_crop", 0.92))
     duration = probe_duration(src)
     edl = build_edl(cfg, src, duration)
     tl = Timeline(edl, fps, cfg.get("hook"))
@@ -424,9 +469,11 @@ def main():
         # 1) cut + concat (frame-accurate), normalised working size
         print("Cutting…")
         parts, labels = [], ""
+        # low-res sources get a light sharpen after upscaling
+        sharpen = ",unsharp=5:5:0.7" if probe_height(src) < 600 else ""
         for i, (a, b) in enumerate(tl.ffmpeg_ranges()):
             parts.append(f"[0:v]trim={a:.4f}:{b:.4f},setpts=PTS-STARTPTS,fps={fps},"
-                         f"scale={SRC_W}:{SRC_H},setsar=1[v{i}];"
+                         f"scale={SRC_W}:{SRC_H}:flags=lanczos{sharpen},setsar=1[v{i}];"
                          f"[0:a]atrim={a:.4f}:{b:.4f},asetpts=PTS-STARTPTS,"
                          f"afade=t=in:d=0.02,afade=t=out:st={max(0, b - a - 0.03):.4f}:d=0.03[a{i}];")
             labels += f"[v{i}][a{i}]"

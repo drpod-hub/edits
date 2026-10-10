@@ -1,0 +1,38 @@
+{
+  "source": "assets/clips/animes_incriveis.mp4",
+  "output": "output/animes_incriveis_short.mp4",
+  "fps": 30,
+  "fg_crop": 1.0,
+
+  "tag": "Salva pra assistir depois 📌",
+  "header": ["7 ANIMES INCRÍVEIS", "QUE QUASE NINGUÉM CONHECE 🤯"],
+
+  "hook": {"start": 9.0, "end": 13.0,
+           "text": "Aposto que você não conhece nenhum desses 👀", "highlight": ["NENHUM"], "size": 74},
+
+  "segments": [
+    [52.0, 55.0], [81.0, 85.5],
+    [139.0, 142.0], [166.5, 170.5],
+    [188.0, 191.0], [213.5, 217.5],
+    [307.0, 314.5],
+    [359.5, 364.5], [381.0, 383.5],
+    [405.0, 412.5],
+    [496.5, 498.6], [500.0, 506.3]
+  ],
+  "snap_cuts": 0.3,
+
+  "punch": [11.4],
+  "hit_volume": 0.4,
+
+  "captions": [
+    {"start": 50.0,  "end": 90.0,  "text": "#1 Why Does Nobody Remember Me in This World? 🌍", "highlight": ["#1"], "size": 62},
+    {"start": 130.0, "end": 175.0, "text": "#2 The Fable 🔫", "highlight": ["#2"], "size": 84},
+    {"start": 185.0, "end": 220.0, "text": "#3 The Wrong Way to Use Healing Magic ✨", "highlight": ["#3"], "size": 66},
+    {"start": 300.0, "end": 320.0, "text": "#4 The Elusive Samurai ⚔️", "highlight": ["#4"], "size": 76},
+    {"start": 355.0, "end": 390.0, "text": "#5 High Card 🃏", "highlight": ["#5"], "size": 84},
+    {"start": 400.0, "end": 420.0, "text": "#6 Yona of the Dawn 👑", "highlight": ["#6"], "size": 80},
+    {"start": 490.0, "end": 510.0, "text": "#7 The Ossan Newbie Adventurer 🗡️", "highlight": ["#7"], "size": 68}
+  ],
+
+  "cta": {"text": "Qual você vai ver primeiro? Comenta 👇", "highlight": ["COMENTA"], "seconds": 3.0, "size": 68}
+}
