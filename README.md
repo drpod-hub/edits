@@ -38,3 +38,37 @@ Drums are synthesized (kick, snare with clap layer, swung hats) and crunched to 
 The sample is low-shelved under 120 Hz to leave room for the kick and sub.
 
 Clear the sample before you release anything commercially.
+
+---
+
+# Chop: "Say It" - The Masqueraders
+
+No drums: the groove comes from where the chops land.
+
+**Source:** ~74 BPM, G major, phase-decorrelated stereo (kept stereo, since a mono sum would comb-filter).
+**Flip:** varispeed +2 semitones → **84 BPM, A major**, every chop quantized to the grid.
+
+The chops are re-sequenced into a chromatic walk-down the record never plays:
+
+| | Bar 1 | Bar 2 | Bar 3 | Bar 4 |
+|---|---|---|---|---|
+| Source key | Cmaj7 | Bm7 · Bbmaj7 | Am7 | D |
+| After the flip | **Dmaj7** | **C#m7 · Cmaj7** | **Bm7** | **E** |
+
+Each bar is cut in 3-3-4-3-3 / 3-3-2 sixteenths with MPC-style choke (every hit cuts the last one).
+The band lets each chord ring into the next downbeat, so the Cmaj7 and Am7 chops start one beat in, where the chord has settled.
+The record has no clean Bbmaj7, so that chord is the Cmaj7 chop played two semitones down.
+
+## Files (`output/say_it/`)
+- `say_it_chop_84bpm_A.mp3`: the full chop (1:11)
+- `say_it_main_loop_4bar.wav`, `say_it_variation_loop_4bar.wav`: seamless 4-bar loops
+- `pads/`: the 6 source chops, named `<flipped chord>_<source chord>`
+- `say_chop.py`: re-renders it: `python3 say_chop.py <song.mp3> <out_dir>`
+
+| Time | Section |
+|---|---|
+| 0:00 | Intro: held chords, filter opens |
+| 0:11 | Main chop, 8 bars |
+| 0:34 | Variation, 8 bars: reverse swell into bar 4, vocal line over the E |
+| 0:57 | Main chop, 4 bars |
+| 1:08 | Last Dmaj7 rings out |

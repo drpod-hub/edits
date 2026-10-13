@@ -131,24 +131,25 @@ def sweep_lp(x, f0, f1):
 
 # ---------------------------------------------------------------- chopping
 class Chopper:
-    def __init__(self, y, beats):
+    def __init__(self, y, beats, ratio=RATIO, bpm=BPM):
         self.y, self.q = y, beats
+        self.ratio, self.beat = ratio, 60.0 / bpm
 
     def beats(self, first, count, quantize=True):
         """Chop `count` beats starting at beat index `first`, pitched up and
-        quantized to exactly `count` beats at BPM."""
-        n_beat = int(round(BEAT * SR))
+        quantized to exactly `count` beats at the target tempo."""
+        n_beat = int(round(self.beat * SR))
         if not quantize:
             a, b = int(self.q[first] * SR), int(self.q[first + count] * SR)
-            return fit(varispeed(self.y[:, a:b], RATIO), n_beat * count)
+            return fit(varispeed(self.y[:, a:b], self.ratio), n_beat * count)
         pad = int(0.03 * SR)
         xf = int(0.006 * SR)
         out = np.zeros((2, n_beat * count + xf))
         for k in range(count):
             a, b = int(self.q[first + k] * SR), int(self.q[first + k + 1] * SR)
             seg = self.y[:, a:b + pad]
-            seg = varispeed(seg, RATIO)
-            tempo = ((b - a) / RATIO) / n_beat
+            seg = varispeed(seg, self.ratio)
+            tempo = ((b - a) / self.ratio) / n_beat
             if abs(tempo - 1) > 0.004:
                 seg = rubberband_tempo(seg, tempo)
             seg = fit(seg, n_beat + xf)
