@@ -142,3 +142,29 @@ No drums, and **nothing pitched or stretched**: the record sits on an exact 100 
 | 0:48 | Main loop |
 | 0:58 | The chop + vocal-chop melody |
 | 1:07 | Intro motif, filter closes |
+
+---
+
+# Stem-separated flip: "Dope Man" - N.W.A.
+
+The record is a drum machine at exactly **88.235 BPM** (bar = 2.720 s). The beat tracker reads it as 117, a dotted-8th artifact; the snare backbeat folded over the whole song gives the real grid. Because the beat repeats bar for bar, **REPET-style separation** works here: the median of many bars rebuilds the beat alone, and what changes between bars is the foreground. So instead of chopping the full mix, this pulls out real stems:
+
+- **Lead:** the synth hook (0:17–0:44), then a harmonic/percussive split to strip drum bleed
+- **Vocals:** the chorus shouts. The three choruses are different takes, so each shout uses its cleanest take.
+- **Beat:** the instrumental outro (5:37–6:15), the plain drum machine
+
+The whole flip is varispeeded down to **exactly 79 BPM** (−1.9 semitones), so it's heavier and darker.
+
+| Time | Section |
+|---|---|
+| 0:00 | The lead alone, tape delay, filter opening |
+| 0:12 | The original hook, slowed, with shouts answering the lead |
+| 0:36 | Chorus flip: outro drums + re-sequenced shouts + lead stabs on the &s |
+| 1:01 | Breakdown: kick only, reversed lead swell, delayed shout |
+| 1:13 | Hook again, shouts in call and response |
+| 1:37 | The lead alone into a tape stop |
+
+## Files (`output/dope_man/`)
+- `dope_man_flip.mp3`: the full flip (1:49)
+- `kit/` (all 79 BPM): the separated lead (8 bars), the full hook (8 bars), the outro drums (4 bars), and four vocal shouts
+- `dope_flip.py`: re-renders it: `python3 dope_flip.py <song.mp3> <out_dir>`

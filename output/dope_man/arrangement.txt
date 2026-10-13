@@ -1,0 +1,8 @@
+79 BPM (record: 88.235 BPM, varispeed x0.8953)
+
+0:00.00  intro: the lead alone, tape delay                4 bars
+0:12.15  hook (original, slowed) + shouts                 8 bars
+0:36.46  chorus flip: drums + shout chops + lead stabs    8 bars
+1:00.76  breakdown: kick, reversed lead, delayed shout    4 bars
+1:12.91  hook + shouts call and response                  8 bars
+1:37.22  outro: the lead alone, tape stop                 4 bars
