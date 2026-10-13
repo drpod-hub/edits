@@ -1,0 +1,9 @@
+0:00.00  PART 1  slowed (-3 st, 87 BPM, F#m)              
+0:00.00  intro, filter opens, no drums                    4 bars
+0:11.03  loop + Argent's drummer, pitched down            8 bars
+0:33.10  loop + drums, spin-up on the last 2 beats        4 bars
+0:44.14  PART 2  full flight (original pitch, 112 BPM, A) 
+0:44.14  the band's 2:23 hit, riff + drums                8 bars
+1:01.28  drum break, riff stabs on the 1                  4 bars
+1:09.85  riff + drums                                     8 bars
+1:27.00  tape stop                                        1 bar

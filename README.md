@@ -72,3 +72,41 @@ The record has no clean Bbmaj7, so that chord is the Cmaj7 chop played two semit
 | 0:34 | Variation, 8 bars: reverse swell into bar 4, vocal line over the E |
 | 0:57 | Main chop, 4 bars |
 | 1:08 | Last Dmaj7 rings out |
+
+---
+
+# Flip: "Like Honey" - Argent
+
+A two-part beat with a **tape spin-up beat switch**. The drums are Argent's own drummer, cut from the record and re-sequenced.
+
+**Part 1, slowed:** the drumless intro varispeeded *down* 3 semitones (103 → 87 BPM), with tape wobble.
+The record's Bb → E tritone jump is squeezed into one bar:
+
+| | Bar 1 | Bar 2 | Bar 3 | Bar 4 |
+|---|---|---|---|---|
+| Source | Am7 | Gmaj7 | D | Bbmaj7 · E |
+| Slowed | **F#m7** | **Emaj7** | **B** | **Gmaj7 · C#** |
+
+The drummer's kick, snare and hat are pitched down with it, swung, and the hats sit lazily behind the beat.
+
+**The switch:** the loop speeds up until it's back at the record's own pitch, then lands on the band's full ensemble hit from 2:23.
+
+**Part 2, full flight:** the band's riff (Dsus-A | Asus-E | Dsus-A | Asus-B7) at original pitch, 112 BPM, in A, the relative major of Part 1's F#m.
+It runs riff + drums, a drums-only break with riff stabs on each downbeat, the riff again, then a tape stop.
+
+One-shots were found by separating the percussive layer and scoring every hit. The record's kick is thin under the bass guitar, so it has a short sub layered underneath.
+
+## Files (`output/like_honey/`)
+- `like_honey_flip.mp3`: the full flip (1:29)
+- `kit/`: both loops, the impact hit, and the drummer's kick/snare/hat (original and slowed)
+- `honey_flip.py`: re-renders it: `python3 honey_flip.py <song.mp3> <out_dir>`
+
+| Time | Section |
+|---|---|
+| 0:00 | Part 1: intro, filter opens, no drums |
+| 0:11 | Loop + the drummer, pitched down (8 bars) |
+| 0:33 | 4 more bars, drums drop, spin-up |
+| 0:44 | Part 2: the 2:23 hit, riff + drums (8 bars) |
+| 1:01 | Drum break, riff stabs |
+| 1:09 | Riff + drums (8 bars) |
+| 1:27 | Tape stop |
