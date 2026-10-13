@@ -110,3 +110,35 @@ One-shots were found by separating the percussive layer and scoring every hit. T
 | 1:01 | Drum break, riff stabs |
 | 1:09 | Riff + drums (8 bars) |
 | 1:27 | Tape stop |
+
+---
+
+# Loop & chop: "You're Too Precious" - James Blake
+
+No drums, and **nothing pitched or stretched**: the record sits on an exact 100 BPM grid (bar = 2.400 s) with a triplet / 6-8 pulse inside it, so every piece is cut on the record's own beats and Blake's voice and swing stay untouched. Key: Db major / Bb minor.
+
+**Main loop (4 bars):** the verse cycle from 0:24, with Blake's D-against-Db/Eb clusters resolving to Dbmaj7. It was picked by scoring every 2- and 4-bar loop for how seamless its restart is. The record repeats this cycle exactly, so the loop point is near-identical to what originally follows it.
+
+**The chop:** chord chops from across the song, cut 3-3-2 and re-sequenced, ending on Blake's chromatic D → Db slide:
+
+| Bar 1 | Bar 2 | Bar 3 | Bar 4 |
+|---|---|---|---|
+| Gb · Ebm7 | Dbmaj7 | Fm/Db · Bbm7 | Dmaj7 · Db |
+
+**Vocal-chop melody:** one sung Eb5 vowel (0:12.2) pitch-shifted with formants preserved into Bb4, C5, Db5, Eb5, F5 and Gb5, playing a new melody over the chop. On the D chord it sings F#, the common tone.
+
+## Files (`output/youre_too_precious/`)
+- `precious_loop_and_chop.mp3`: the full piece (1:17)
+- `precious_main_loop_4bar.wav`, `precious_chop_4bar.wav`: seamless loops
+- `kit/`: 7 chord chops, the main loop, the intro motif, and 6 vocal-chop notes
+- `precious_chop.py`: re-renders it: `python3 precious_chop.py <song.mp3> <out_dir>`
+
+| Time | Section |
+|---|---|
+| 0:00 | Intro motif (the record's opening figure), filter opens |
+| 0:10 | Main loop, 8 bars |
+| 0:29 | The chop |
+| 0:38 | The chop + vocal-chop melody |
+| 0:48 | Main loop |
+| 0:58 | The chop + vocal-chop melody |
+| 1:07 | Intro motif, filter closes |

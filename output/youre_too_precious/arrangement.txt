@@ -1,0 +1,9 @@
+100 BPM, Db major (original pitch). No drums.
+
+0:00.00  intro motif, filter opens        4 bars
+0:09.60  main loop (verse cycle)          8 bars
+0:28.80  the chop                         4 bars
+0:38.40  the chop + vocal-chop melody     4 bars
+0:48.00  main loop                        4 bars
+0:57.60  the chop + vocal-chop melody     4 bars
+1:07.20  intro motif, filter closes       4 bars
