@@ -236,3 +236,33 @@ The record has no separate drum kit. Its rhythm comes from gated strum attacks o
 - `way_too_long_trap.mp3`: the full beat (1:40)
 - `kit/` (all 135 BPM): hook loop (4 bars), riff loop (8 bars), melody (8 bars), drums (8 bars), 808 line (8 bars)
 - `waytoolong_trap.py`: re-renders it: `python3 waytoolong_trap.py <song.mp3> <out_dir>`
+
+---
+
+# "CIRCUS MAXIMUS" redo: the record's own drums, a crafted sample
+
+Same 125 BPM grid and Eb ×4 | B ×2 | Ab ×2 cycle as the first flip. This time **the drums and 808 are the record's own**, and the sample is built like a producer's chop rather than raw layers.
+
+**Drums:** Travis raps over every bar of the rage beat, so a plain harmonic/percussive split would drag his consonants along. Instead the percussive layer is masked to what *repeats*. The median of all 72 rage bars (per bar parity, so 2-bar patterns survive) models the drum pattern, and each real bar keeps only what that model explains. In the vocal range, the stem's sustained-to-percussive ratio drops from 0.81 to 0.30. Bars 64–79 are used, which is two full chord cycles, so fills and variation are the record's own. The pattern is kick and clap on every quarter, with hats on top.
+
+**808:** the low band (< 100 Hz) of the same bars. It's the record's distorted 808, already walking Eb → B → Ab with syncopated attacks on 0-3-7-11-15.
+
+**Sample (8 bars, every bar checked against the record's 808):**
+- **Body:** the outro strings (3:47, with their rising glide) plus the melodic layer (3:05), drumless and mono-corrected
+- **Chop hook:** the melodic layer gated 3-3-2 on eighths, with an octave-up copy underneath for shimmer
+- **Reverse swells:** the next chord reversed into every chord change
+- **Glue:** ducked by the record's own quarter-note kick, plus light tape saturation
+
+| Time | Section |
+|---|---|
+| 0:00 | Intro: sample, filter opens, the record's hats tease in |
+| 0:15 | Hook: record drums + 808, sample + chop hook (16 bars) |
+| 0:46 | Verse: drums + 808, darker sample (room for vocals) |
+| 1:17 | Break: chop stutter, riser |
+| 1:24 | Hook (16 bars) |
+| 1:55 | Outro: sample, tape stop |
+
+## Files (`output/circus_maximus_redo/`)
+- `circus_maximus_redo.mp3`: the full beat (2:03)
+- `kit/`: the record's drums (16 bars), the record's 808 (16 bars), sample (8 bars), chop hook (8 bars), sample + hook (8 bars)
+- `circus_redo.py`: re-renders it: `python3 circus_redo.py <song.mp3> <out_dir>`

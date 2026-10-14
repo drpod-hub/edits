@@ -1,0 +1,8 @@
+125 BPM, Eb minor. Cycle: Eb x4 | B x2 | Ab x2. Drums + 808 are the record's own.
+
+0:00.00  intro: sample, filter opens, hats tease              8 bars
+0:15.36  hook: the record's drums + 808, sample + chop hook   16 bars
+0:46.08  verse: drums + 808, sample darker                    16 bars
+1:16.80  break: chop stutter, riser                           4 bars
+1:24.48  hook                                                 16 bars
+1:55.19  outro: sample, tape stop                             4 bars
