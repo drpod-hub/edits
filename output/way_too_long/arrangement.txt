@@ -1,0 +1,9 @@
+135 BPM, G major / E minor (record +2 st). Hook: C G | G D | D7 | C Am
+
+0:00.00  intro: slide-guitar melody, filter opens   8 bars
+0:14.22  hook: bridge loop + trap drums + 808       8 bars
+0:28.44  verse: gated riff, lighter drums           16 bars
+0:56.89  hook                                       8 bars
+1:11.11  break: MPC stutter, riser                  4 bars
+1:18.22  final hook: busiest drums                  8 bars
+1:32.44  outro: melody, filter closes, tape stop    4 bars

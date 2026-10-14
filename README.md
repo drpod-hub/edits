@@ -204,3 +204,35 @@ The record is on an exact **125 BPM** grid (bar = 1.9199 s). Three of its sectio
 - `circus_maximus_flip.mp3`: the full flip (1:48)
 - `kit/`: the four drumless 8-bar layers, an 8-bar drum loop, the 8-bar tuned 808 line, and single 808 notes (Eb, B, Ab)
 - `circus_flip.py`: re-renders it: `python3 circus_flip.py <song.mp3> <out_dir>`
+
+---
+
+# Trap beat: "Way Too Long" - Delicate Steve
+
+The record sits on an exact **120 BPM** grid (bar = 2.000 s), tuned −4 cents. It's varispeeded ×1.125 (+2.04 semitones) to **exactly 135 BPM**. That lift also cancels the −4 cents, so the result is in tune with A440: F major / D minor becomes **G major / E minor**. One bar is exactly 78,400 samples, so every chop stays sample-locked to the grid.
+
+The record has no separate drum kit. Its rhythm comes from gated strum attacks on syncopated 16ths, so the sample stays raw (that stutter is the charm). It's only high-passed so the 808 owns the sub, and mid/side-corrected for mono.
+
+- **Hook:** a 4-bar bridge loop (1:18), **C G | G D | D7 | C Am** after the lift
+- **Verse:** the gated riff (0:20), an 8-bar loop whose restart matches the original (chroma similarity 1.00)
+- **Intro and outro:** the record's sparse slide-guitar melody (2:12)
+- **808s:** follow the record's own bassline, checked half-bar by half-bar against the sample's chords, with late slides into chord changes and octave flicks
+- **Drums:**
+  - **Kick and clap:** a punch kick and a clap on 3
+  - **Hats:** 1/16 bursts, 1/16-triplet rolls, and 1/32 rolls that rise in pitch at phrase ends
+- **Mix:** sidechain pump, noise risers, an MPC stutter break, a tape stop, and a look-ahead limiter
+
+| Time | Section |
+|---|---|
+| 0:00 | Intro: slide-guitar melody, filter opens, riser |
+| 0:14 | Hook: bridge loop + trap drums + 808 |
+| 0:28 | Verse: gated riff, lighter drums (16 bars) |
+| 0:57 | Hook |
+| 1:11 | Break: MPC stutter of the riff, riser |
+| 1:18 | Final hook: busiest drums, pitch-rising rolls |
+| 1:32 | Outro: melody, filter closes, tape stop |
+
+## Files (`output/way_too_long/`)
+- `way_too_long_trap.mp3`: the full beat (1:40)
+- `kit/` (all 135 BPM): hook loop (4 bars), riff loop (8 bars), melody (8 bars), drums (8 bars), 808 line (8 bars)
+- `waytoolong_trap.py`: re-renders it: `python3 waytoolong_trap.py <song.mp3> <out_dir>`
