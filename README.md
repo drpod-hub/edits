@@ -168,3 +168,39 @@ The whole flip is varispeeded down to **exactly 79 BPM** (−1.9 semitones), so 
 - `dope_man_flip.mp3`: the full flip (1:49)
 - `kit/` (all 79 BPM): the separated lead (8 bars), the full hook (8 bars), the outro drums (4 bars), and four vocal shouts
 - `dope_flip.py`: re-renders it: `python3 dope_flip.py <song.mp3> <out_dir>`
+
+---
+
+# Cinematic half-time flip: "CIRCUS MAXIMUS" - Travis Scott ft. The Weeknd & Swae Lee
+
+The record is on an exact **125 BPM** grid (bar = 1.9199 s). Three of its sections run the same 8-bar cycle on **Eb minor → Cb → Ab minor** roots (Eb ×4 | B ×2 | Ab ×2), so they can be switched and stacked freely.
+
+**Sample layers (drumless):** a harmonic/percussive split removes the rage drums (transient score 3.8 → 1.6). Each layer is high-passed so the new 808 owns the low end, and corrected for mono:
+- **Pad:** the beat switch (2:34), used for the intro
+- **Strings:** the outro's rising string glides (3:47), the main loop
+- **Synths:** the rage section (2:03), layered under drop 2
+- **Melodic:** the sustained layer from 3:05, used for the switch-up
+
+**Mono safety:** the record's pads are side-heavy stereo synths, so on their own they'd cancel in mono. The drum-removal mask is shared by both channels (magnitude-based, clamped). A per-frequency mid/side correction then holds side 3 dB under mid. Every section stays positively correlated.
+
+**New production:**
+- **808s:** tuned to the record's own measured 808 pitches (Eb1 39.6 Hz, B1 62.8 Hz, Ab1 52.15 Hz), with late slides into each chord change and octave flicks in drop 2
+- **Drums:** a punch kick, a layered clap on 3 (half time), and trap hats with 1/32 rolls and triplet runs
+- **Sidechain:** the sample layers pump against the 808s
+- **Risers:** a noise riser plus the record's own string glide reversed into each drop
+- **Breakdown:** an MPC stutter of the strings
+- **Master:** a look-ahead peak limiter
+
+| Time | Section |
+|---|---|
+| 0:00 | Intro: beat-switch pad, filter opens, riser |
+| 0:15 | Drop 1: strings + drums + tuned 808 (16 bars) |
+| 0:46 | Switch: melodic layer, triplet hats, sparse 808 |
+| 1:01 | Breakdown: MPC stutter, riser |
+| 1:09 | Drop 2: strings + synths, busier drums, 808 flicks (16 bars) |
+| 1:40 | Outro: strings, filter closes, tape stop |
+
+## Files (`output/circus_maximus/`)
+- `circus_maximus_flip.mp3`: the full flip (1:48)
+- `kit/`: the four drumless 8-bar layers, an 8-bar drum loop, the 8-bar tuned 808 line, and single 808 notes (Eb, B, Ab)
+- `circus_flip.py`: re-renders it: `python3 circus_flip.py <song.mp3> <out_dir>`

@@ -1,0 +1,8 @@
+125 BPM (half-time feel), Eb minor. Cycle: Eb x4 | B x2 | Ab x2
+
+0:00.00  intro: pad, filter opens, riser              8 bars
+0:15.36  drop 1: strings + drums + tuned 808          16 bars
+0:46.08  switch: melodic layer, triplet hats          8 bars
+1:01.44  breakdown: MPC stutter, riser                4 bars
+1:09.12  drop 2: strings + synths, busier drums       16 bars
+1:39.84  outro: strings, filter closes, tape stop     4 bars
