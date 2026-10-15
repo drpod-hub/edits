@@ -53,6 +53,7 @@ ORANGE = (255, 165, 0)
 
 CAPTION_POP = 0.10            # seconds for the caption pop
 CARD_POP = 0.22               # seconds for the card pop
+FLASH = 0.16                  # seconds for the white flash on "flash" beats
 CHARS_PER_SEC = 15.0          # speaking-rate estimate for engine "none"
 VIDEO_EXT = (".mp4", ".mov", ".webm", ".mkv", ".gif")
 
@@ -355,6 +356,14 @@ def scaled(img, s, alpha=1.0):
     return im
 
 
+def shake(b, lt):
+    """Decaying (dx, dy) offset for beats marked "shake"."""
+    if not b.get("shake") or lt > 0.6:
+        return 0.0, 0.0
+    k = math.exp(-lt * 7) * 26
+    return math.sin(lt * 70) * k, math.cos(lt * 55) * k
+
+
 def paste_c(canvas, img, cx, cy):
     canvas.alpha_composite(img, (int(cx - img.width / 2), int(cy - img.height / 2)))
 
@@ -373,12 +382,25 @@ def build_bg(i, b, media, cfg, tmp):
         vf = (f"scale={int(W * z)}:{int(H * z)}:force_original_aspect_ratio=increase,"
               f"crop={W}:{H},{tail}")
     elif b["_mode"] == "full" and media:
-        # still image: slow push-in (prescale 2x so zoompan doesn't jitter)
+        # still image (prescaled 2x so zoompan doesn't jitter): a quick punch-in on the
+        # cut that settles, then a steady push or pan so the frame never sits still
         frames = int(math.ceil(dur * fps)) + 1
-        speed = b.get("push", 0.10) / max(1, frames)
+        speed = b.get("push", 0.18) / max(1, frames)
+        punch = b.get("punch", 0.14)
+        motion = b.get("motion", ("in", "left", "in", "right")[i % 4])
+        zexpr = f"{z}+{punch}*exp(-on/4)+{speed:.6f}*on"
+        x = "iw/2-(iw/zoom/2)"
+        if motion == "left":
+            x = f"(iw-iw/zoom)*(1-on/{frames})"
+        elif motion == "right":
+            x = f"(iw-iw/zoom)*on/{frames}"
+        y = "ih/2-(ih/zoom/2)"
+        if b.get("shake"):  # decaying camera shake for impact lines
+            x += "+50*sin(on*2.3)*exp(-on/9)"
+            y += "+40*cos(on*1.9)*exp(-on/9)"
         cmd += ["-loop", "1", "-framerate", str(fps), "-i", media]
         vf = (f"scale={W * 2}:{H * 2}:force_original_aspect_ratio=increase,crop={W * 2}:{H * 2},"
-              f"zoompan=z='{z}+{speed:.6f}*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+              f"zoompan=z='{zexpr}':x='{x}':y='{y}'"
               f":d={frames}:s={W}x{H}:fps={fps},{tail}")
     else:
         bg = cfg.get("card_bg", "#969696").lstrip("#")
@@ -465,21 +487,32 @@ def main():
             ins += ["-stream_loop", "-1", "-ss", str(cfg.get("music_start", 0)), "-i", music]
             fl.append(f"[{n}:a]aresample=44100,volume={cfg.get('music_volume', 0.12)}[mu]")
             n += 1
-        # per-beat sound effects (whoosh, vine boom...) at the start of the beat
+        # sound effects: an automatic whoosh/pop on every cut, plus per-beat extras
+        # ("sfx": "boom.wav" or [{"path": "riser.wav", "offset": -1.5, "volume": 0.5}])
+        auto = cfg.get("auto_sfx", {})
         sfx_mix = []
         for i, b in enumerate(beats):
-            sp = resolve(b.get("sfx"), base)
-            if sp:
+            hits = b.get("sfx") or []
+            hits = [hits] if isinstance(hits, (str, dict)) else list(hits)
+            hits = [{"path": h} if isinstance(h, str) else h for h in hits]
+            if auto.get(b["_mode"]) and b.get("auto_sfx", True):
+                hits.insert(0, {"path": auto[b["_mode"]], "volume": auto.get("volume", 0.35)})
+            for j, h in enumerate(hits):
+                sp = resolve(h.get("path"), base)
+                if not sp:
+                    print(f"  ! beat {i + 1}: sfx missing {h.get('path')}")
+                    continue
                 ins += ["-i", sp]
-                ms = int(b["_start"] * 1000)
-                fl.append(f"[{n}:a]aresample=44100,volume={b.get('sfx_volume', 0.6)},"
-                          f"adelay={ms}|{ms}[s{i}]")
-                sfx_mix.append(f"[s{i}]")
+                ms = max(0, int((b["_start"] + h.get("offset", 0)) * 1000))
+                vol = h.get("volume", b.get("sfx_volume", 0.6))
+                fl.append(f"[{n}:a]aresample=44100,aformat=channel_layouts=stereo,volume={vol},"
+                          f"adelay={ms}|{ms}[s{i}_{j}]")
+                sfx_mix.append(f"[s{i}_{j}]")
                 n += 1
         labels = (["[vo]"] if narration else []) + (["[mu]"] if music else []) + sfx_mix
         if labels:
             fl.append("".join(labels) + f"amix=inputs={len(labels)}:normalize=0:duration=longest,"
-                      f"atrim=0:{total:.4f},apad=whole_dur={total:.4f}[a]")
+                      f"atrim=0:{total:.4f},apad=whole_dur={total:.4f},alimiter=limit=0.89[a]")
             run(["ffmpeg", "-y", "-v", "error", *ins, "-filter_complex", ";".join(fl),
                  "-map", "[a]", "-ac", "2", audio])
         else:
@@ -517,28 +550,47 @@ def main():
             ci = max(j for j, (s, _) in enumerate(b["_caps"]) if s <= lt + 1e-6) if b["_caps"] else -1
             cap_t = lt - b["_caps"][ci][0] if ci >= 0 else 9
             show_cta = bubble is not None and cta.get("start", 0) <= t < cta.get("end", 0)
-            animating = lt < CARD_POP or cap_t < CAPTION_POP
+            card = b.get("_card")
+            # cards, stickers, flashes and shakes move every frame; only a bare caption
+            # over full-screen media can reuse the previous frame
+            animating = (lt < CARD_POP or cap_t < CAPTION_POP or card is not None
+                         or b.get("_sticker") is not None or lt < FLASH or show_cta)
             key = (bi, ci, show_cta)
             if not animating and key == last_key:
                 enc.stdin.write(last_bytes)
                 continue
 
             fr = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-            card = b.get("_card")
+            sx_, sy_ = shake(b, lt)
             if card is not None:
                 p = min(1.0, lt / CARD_POP)
-                paste_c(fr, scaled(card, 0.55 + 0.45 * ease_out_back(p), min(1, p * 2.5)),
-                        W / 2, CARD_CY)
+                # pop in, then keep breathing: slow grow, float and sway
+                s_ = (0.55 + 0.45 * ease_out_back(p)) * (1 + 0.07 * lt / b["_dur"])
+                im = scaled(card, s_, min(1, p * 2.5))
+                sway = math.sin(lt * 1.8 + bi) * 1.6
+                if p >= 1:
+                    im = im.rotate(sway, resample=Image.BILINEAR, expand=True)
+                paste_c(fr, im, W / 2 + sx_, CARD_CY + math.sin(lt * 2.4 + bi) * 12 + sy_)
             if b.get("_sticker"):
-                simg, sx, sy = b["_sticker"]
-                paste_c(fr, simg, sx, sy)
+                simg, stx, sty = b["_sticker"]
+                p = min(1.0, lt / CARD_POP)
+                im = scaled(simg, 0.3 + 0.7 * ease_out_back(p))
+                im = im.rotate(math.sin(lt * 5) * 8, resample=Image.BILINEAR, expand=True)
+                paste_c(fr, im, stx, sty + math.sin(lt * 6) * 10)
             if ci >= 0:
                 cimg = renderer.render(b["_caps"][ci][1])
                 p = min(1.0, cap_t / CAPTION_POP)
                 cy = b.get("caption_y", CAPTION_Y_CARD / H if card is not None else CAPTION_Y_FULL / H) * H
-                paste_c(fr, scaled(cimg, 1.18 - 0.18 * p) if p < 1 else cimg, W / 2, cy)
+                if p < 1:
+                    cimg = scaled(cimg, 1.35 - 0.35 * ease_out_back(p))
+                paste_c(fr, cimg, W / 2 + sx_ * 0.5, cy + sy_ * 0.5)
             if show_cta:
-                paste_c(fr, bubble, W * 0.58, H * 0.36)
+                p = min(1.0, (t - cta["start"]) / CARD_POP)
+                im = scaled(bubble, (0.4 + 0.6 * ease_out_back(p)) * (1 + 0.04 * math.sin(t * 7)))
+                paste_c(fr, im, W * 0.58, H * 0.36)
+            if b.get("flash") and lt < FLASH:  # white flash on the cut
+                fl_ = Image.new("RGBA", (W, H), (255, 255, 255, int(220 * (1 - lt / FLASH))))
+                fr.alpha_composite(fl_)
             if handle_img:
                 fr.alpha_composite(handle_img, (W - handle_img.width - 30, H - 330))
             data = fr.tobytes()

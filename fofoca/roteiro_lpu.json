@@ -2,6 +2,13 @@
   "output": "output/lpu_reddit.mp4",
   "fps": 30,
   "handle": "@seuperfil",
+  "music": "assets/fofoca/sfx/bed.wav",
+  "music_volume": 0.22,
+  "auto_sfx": {
+    "full": "assets/fofoca/sfx/whoosh.wav",
+    "card": "assets/fofoca/sfx/pop.wav",
+    "volume": 0.35
+  },
   "voice": {
     "engine": "edge",
     "name": "pt-BR-AntonioNeural",
@@ -34,12 +41,26 @@
         "x": 0.22,
         "y": 0.72,
         "w": 230
-      }
+      },
+      "flash": true,
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/impact.wav",
+          "volume": 0.7
+        }
+      ]
     },
     {
       "text": "e agora a polícia está atrás de quem publicou.",
       "media": "assets/fofoca/lpu/meme_emoji_sombrio.jpg",
-      "mode": "full"
+      "mode": "full",
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.6
+        }
+      ]
     },
     {
       "text": "Calma que eu te explico.",
@@ -59,7 +80,13 @@
     {
       "text": "No fim de setembro, uma postagem anônima começou a circular entre os alunos.",
       "media": "assets/fofoca/lpu/logo_reddit.jpg",
-      "mode": "card"
+      "mode": "card",
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/glitch.wav",
+          "volume": 0.5
+        }
+      ]
     },
     {
       "text": "Ela dizia que uma estudante tinha sido vítima de violência sexual dentro do alojamento feminino,",
@@ -87,12 +114,32 @@
         860,
         900
       ],
-      "pause": 0.35
+      "pause": 0.35,
+      "flash": true,
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/riser.wav",
+          "offset": -1.5,
+          "volume": 0.45
+        },
+        {
+          "path": "assets/fofoca/sfx/impact.wav",
+          "volume": 0.6
+        }
+      ]
     },
     {
       "text": "Mas o print já estava em todos os grupos.",
       "media": "assets/fofoca/lpu/meme_livro_grito.jpg",
-      "mode": "full"
+      "mode": "full",
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.6
+        }
+      ]
     },
     {
       "text": "Nos dias vinte e sete e vinte e oito de setembro, os alunos foram protestar no campus.",
@@ -101,12 +148,31 @@
       "card_max": [
         860,
         900
+      ],
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/ding.wav",
+          "volume": 0.4
+        }
       ]
     },
     {
       "text": "E o protesto saiu do controle.",
       "media": "assets/fofoca/lpu/meme_tijolo.jpg",
-      "mode": "full"
+      "mode": "full",
+      "flash": true,
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/riser.wav",
+          "offset": -1.5,
+          "volume": 0.45
+        },
+        {
+          "path": "assets/fofoca/sfx/impact.wav",
+          "volume": 0.7
+        }
+      ]
     },
     {
       "text": "Teve depredação, incêndio e confronto com a polícia.",
@@ -115,12 +181,25 @@
       "card_max": [
         860,
         900
+      ],
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.55
+        }
       ]
     },
     {
       "text": "Os alunos dizem que gente de fora, com o rosto coberto, se misturou ao protesto.",
       "media": "assets/fofoca/lpu/meme_abelha.jpg",
-      "mode": "full"
+      "mode": "full",
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/glitch.wav",
+          "volume": 0.5
+        }
+      ]
     },
     {
       "text": "Já a polícia nega ter partido pra cima dos estudantes.",
@@ -130,7 +209,13 @@
     {
       "text": "Resultado: nove pessoas presas, sete delas estudantes,",
       "media": "assets/fofoca/lpu/meme_choro.jpg",
-      "mode": "full"
+      "mode": "full",
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.6
+        }
+      ]
     },
     {
       "text": "e vinte nomes no registro da ocorrência, segundo a polícia.",
@@ -139,12 +224,24 @@
       "card_max": [
         860,
         900
+      ],
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/ding.wav",
+          "volume": 0.4
+        }
       ]
     },
     {
       "text": "A universidade nega tudo e chama a história de boato.",
       "media": "assets/fofoca/lpu/meme_cara_amassada.jpg",
-      "mode": "full"
+      "mode": "full",
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/glitch.wav",
+          "volume": 0.45
+        }
+      ]
     },
     {
       "text": "Mas o caso foi parar na Justiça.",
@@ -153,6 +250,13 @@
       "card_max": [
         860,
         900
+      ],
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/impact.wav",
+          "volume": 0.55
+        }
       ]
     },
     {
@@ -172,7 +276,20 @@
         520,
         640
       ],
-      "pause": 0.4
+      "pause": 0.4,
+      "flash": true,
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/riser.wav",
+          "offset": -1.5,
+          "volume": 0.45
+        },
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.7
+        }
+      ]
     },
     {
       "text": "Até a última atualização, a suposta vítima nem tinha sido identificada.",
@@ -186,7 +303,13 @@
     {
       "text": "A polícia montou uma equipe especial pra investigar duas coisas:",
       "media": "assets/fofoca/lpu/meme_mentalista_crop.jpg",
-      "mode": "card"
+      "mode": "card",
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/ding.wav",
+          "volume": 0.4
+        }
+      ]
     },
     {
       "text": "a denúncia em si, e a origem da postagem.",
@@ -201,13 +324,25 @@
       "text": "E, segundo a imprensa indiana, os investigadores pediram informações ao próprio Reddit.",
       "media": "assets/fofoca/lpu/logo_reddit.jpg",
       "mode": "full",
-      "zoom": 1.0
+      "zoom": 1.0,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/glitch.wav",
+          "volume": 0.5
+        }
+      ]
     },
     {
       "text": "E é aqui que o caso fica difícil.",
       "media": "assets/fofoca/lpu/meme_bob.jpg",
       "mode": "full",
-      "pause": 0.3
+      "pause": 0.3,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.55
+        }
+      ]
     },
     {
       "text": "Se a denúncia for verdadeira, ela merecia ser investigada desde o primeiro dia.",
@@ -216,6 +351,12 @@
       "card_max": [
         860,
         900
+      ],
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/ding.wav",
+          "volume": 0.4
+        }
       ]
     },
     {
@@ -225,6 +366,13 @@
       "card_max": [
         860,
         900
+      ],
+      "shake": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/impact.wav",
+          "volume": 0.55
+        }
       ]
     },
     {
@@ -244,6 +392,13 @@
       "card_max": [
         860,
         900
+      ],
+      "flash": true,
+      "sfx": [
+        {
+          "path": "assets/fofoca/sfx/ding.wav",
+          "volume": 0.45
+        }
       ]
     }
   ]

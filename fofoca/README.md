@@ -56,9 +56,18 @@ Campos de cada beat:
 - `sticker`: imagem pequena por cima.
 - `tilt`: inclinação do card.
 - `caption_y`: altura da legenda, de 0 a 1.
+- `flash`: `true` faz um flash branco no corte.
+- `shake`: `true` faz a câmera tremer (impacto).
+- `motion`: movimento da imagem em tela cheia, `in`, `left` ou `right` (alterna sozinho); `punch` é o zoom de impacto no corte (padrão `0.14`) e `push` o zoom lento (padrão `0.18`).
+- `sfx` também aceita lista: `[{"path": "assets/fofoca/sfx/riser.wav", "offset": -1.5, "volume": 0.45}, "assets/fofoca/sfx/boom.wav"]`. `offset` negativo faz o som começar antes do corte (riser terminando na revelação).
+- `auto_sfx` (no topo do roteiro): `{"full": ".../whoosh.wav", "card": ".../pop.wav", "volume": 0.35}` coloca um som em todo corte. Use `"auto_sfx": false` num beat para tirar.
 - `card_max`: tamanho máximo do card, `[largura, altura]` (padrão `[560, 640]`; use `[860, 900]` para cards de texto).
 
 O `cta` também aceita `"beat": n` e `"seconds": 4` em vez de `start`/`end`: o balão aparece no beat `n`. Escolha um beat em tela cheia, para o balão não cobrir um card.
+
+### Efeitos sonoros e trilha
+
+`python3 fofoca/make_sfx.py` gera um kit próprio (sem direitos autorais) em `assets/fofoca/sfx/`: `whoosh`, `pop`, `boom`, `impact`, `riser`, `ding`, `glitch` e `bed.wav` (trilha de suspense de 30 s que entra em loop). Use `"music": "assets/fofoca/sfx/bed.wav"`, ou troque por uma música da biblioteca da plataforma.
 
 ### Voz
 
