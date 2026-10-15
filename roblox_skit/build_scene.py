@@ -498,8 +498,8 @@ def story():
                                 (209, along(max_pos, to_seek, 4.3, 5.0), (*max_pos, 5.3), 32)]),
         "bush": camera("C_bush", [(210, along(bush, pip_dir, 3.8, 3.1), (*bush, 2.75), 38),
                                   (299, along(bush, pip_dir, 3.4, 3.1), (*bush, 2.75), 38)]),
-        "count": camera("C_count", [(300, (5.2, 4.0, 4.7), (0, 4.8, 4.9), 30),
-                                    (389, (4.7, 4.0, 4.7), (0, 4.8, 4.9), 30)]),
+        "count": camera("C_count", [(300, (7.2, 3.4, 5.0), (0, 4.6, 5.4), 34),
+                                    (389, (6.6, 3.4, 5.0), (0, 4.6, 5.4), 34)]),
         "shoulder": camera("C_shoulder", [(390, (1.24, 6.43, 5.3), (*max_pos, 4.6), 28),
                                           (400, (1.24, 6.43, 5.3), (*max_pos, 4.6), 28),
                                           (445, (1.24, 6.43, 5.3), (*max_pos, 4.6), 62)]),
@@ -529,8 +529,8 @@ def story():
     seek.say("1...", 12, 44, C["wide"], h=3.2, front=0)
     seek.say("1... 2...", 46, 78, C["wide"], h=3.2, front=0)
     seek.say("1... 2... 3...", 80, 119, C["wide"], h=3.2, front=0)
-    seek.say("...9... 10!", 302, 338, C["count"])
-    seek.say("READY OR NOT!", 340, 388, C["count"])
+    seek.say("...9... 10!", 302, 338, C["count"], front=0)
+    seek.say("READY OR NOT!", 340, 388, C["count"], front=0)
     seek.pose(354, 362, armR=(0, 0, 0), armL=(0, 0, 0), neck=(0, 0, 0))
     seek.face(356, "smirk")
     seek.turn(364, 380, seek_look)
