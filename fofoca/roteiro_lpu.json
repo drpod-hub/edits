@@ -40,12 +40,6 @@
       "text": "Um post anônimo no Reddit ajudou a desencadear uma onda de violência numa universidade na Índia,",
       "media": "assets/fofoca/lpu/meme_gato_explosao.jpg",
       "mode": "full",
-      "sticker": {
-        "path": "assets/fofoca/lpu/logo_reddit.jpg",
-        "x": 0.22,
-        "y": 0.72,
-        "w": 230
-      },
       "shake": true,
       "sfx": [
         {
@@ -56,9 +50,6 @@
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.8
         }
-      ],
-      "fx": [
-        "pulse"
       ],
       "impact": {
         "style": "invert",
