@@ -615,7 +615,9 @@ def main():
              "-filter_complex", "[0:v][2:v]overlay=0:0:format=auto"
              + "".join("," + GLOBAL_FX[f] for f in cfg.get("global_fx", []) if f in GLOBAL_FX)
              + ",format=yuv420p[v]",
-             "-map", "[v]", "-map", "1:a", "-c:v", "libx264", "-preset", "medium", "-crf", "19",
+             "-map", "[v]", "-map", "1:a", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+             # cap the bitrate: film grain would otherwise balloon the file
+             "-maxrate", "8M", "-bufsize", "16M",
              "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-t", f"{total:.4f}", out],
             stdin=subprocess.PIPE)
 
