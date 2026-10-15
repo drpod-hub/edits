@@ -61,6 +61,19 @@ Campos de cada beat:
 - `motion`: movimento da imagem em tela cheia, `in`, `left` ou `right` (alterna sozinho); `punch` é o zoom de impacto no corte (padrão `0.14`) e `push` o zoom lento (padrão `0.18`).
 - `sfx` também aceita lista: `[{"path": "assets/fofoca/sfx/riser.wav", "offset": -1.5, "volume": 0.45}, "assets/fofoca/sfx/boom.wav"]`. `offset` negativo faz o som começar antes do corte (riser terminando na revelação).
 - `auto_sfx` (no topo do roteiro): `{"full": ".../whoosh.wav", "card": ".../pop.wav", "volume": 0.35}` coloca um som em todo corte. Use `"auto_sfx": false` num beat para tirar.
+- `fx`: lista de efeitos visuais da frase. Funcionam em tela cheia e em card:
+  - `wave`: imagem ondulando
+  - `glitch`: separação RGB forte com ruído/rasgos
+  - `rgb`: separação RGB leve
+  - `wobble`: imagem balançando
+  - `pulse`: zoom pulsando
+  - `bw`: preto e branco dramático
+  - `deepfry`: cores estouradas de meme
+  - `grain`: granulado
+  - `vignette`: bordas escuras (só tela cheia)
+
+  Exemplo: `"fx": ["wave", "vignette"]`. Em tela cheia, `wave_amp` e `wave_length` ajustam a onda. Em cards de texto, prefira `rgb` a `glitch` para manter a leitura.
+- `global_fx` (no topo do roteiro): efeitos no vídeo inteiro, `["grain", "vignette"]`.
 - `card_max`: tamanho máximo do card, `[largura, altura]` (padrão `[560, 640]`; use `[860, 900]` para cards de texto).
 
 O `cta` também aceita `"beat": n` e `"seconds": 4` em vez de `start`/`end`: o balão aparece no beat `n`. Escolha um beat em tela cheia, para o balão não cobrir um card.

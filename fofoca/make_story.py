@@ -36,7 +36,8 @@ import subprocess
 import sys
 import tempfile
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+import numpy as np
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 
 W, H = 1080, 1920
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -371,6 +372,64 @@ def paste_c(canvas, img, cx, cy):
 # --------------------------------------------------------------------------
 # Background per beat (ffmpeg)
 # --------------------------------------------------------------------------
+# Per-beat "fx" for full-screen media (ffmpeg filters, applied after the motion).
+# "wave" and "pulse" are handled separately in build_bg.
+FFMPEG_FX = {
+    "wobble": f"scale={int(W * 1.1)}:{int(H * 1.1)},rotate=a='0.045*sin(t*5)',crop={W}:{H}",
+    "rgb": "rgbashift=rh=-12:bh=12:edge=smear",
+    "glitch": "rgbashift=rh=-24:gv=8:bh=24:edge=smear,noise=alls=30:allf=t",
+    "bw": "hue=s=0,eq=contrast=1.3",
+    "deepfry": "eq=saturation=2.6:contrast=1.5:brightness=0.04,unsharp=7:7:2.5,noise=alls=14:allf=t",
+    "grain": "noise=alls=16:allf=t+u",
+    "vignette": "vignette=PI/4.5",
+}
+# Whole-video fx (top-level "global_fx"), applied over everything in the final encode.
+GLOBAL_FX = {"grain": "noise=alls=7:allf=t+u", "vignette": "vignette=PI/5"}
+
+
+def card_fx_static(img, fx):
+    """Colour fx baked into a card once."""
+    if "bw" in fx:
+        a = img.getchannel("A")
+        img = ImageOps.grayscale(img).convert("RGBA")
+        img = ImageEnhance.Contrast(img).enhance(1.3)
+        img.putalpha(a)
+    if "deepfry" in fx:
+        a = img.getchannel("A")
+        img = ImageEnhance.Color(img).enhance(2.6)
+        img = ImageEnhance.Contrast(img).enhance(1.5)
+        img = ImageEnhance.Sharpness(img).enhance(4)
+        img.putalpha(a)
+    return img
+
+
+def card_fx_frame(im, fx, lt, seed):
+    """Per-frame fx on a (scaled) card: wave, rgb split, glitch bands."""
+    if not any(f in fx for f in ("wave", "rgb", "glitch")):
+        return im
+    arr = np.asarray(im)
+    h, w = arr.shape[:2]
+    if "wave" in fx:
+        shift = (14 * np.sin(2 * np.pi * np.arange(h) / 160 + lt * 7)).astype(int)
+        idx = np.clip(np.arange(w)[None, :] - shift[:, None], 0, w - 1)
+        arr = np.take_along_axis(arr, np.repeat(idx[:, :, None], 4, axis=2), axis=1)
+    if "rgb" in fx or "glitch" in fx:
+        n = 5 if "rgb" in fx else 11
+        out = arr.copy()
+        out[..., 0] = np.roll(arr[..., 0], -n, axis=1)
+        out[..., 2] = np.roll(arr[..., 2], n, axis=1)
+        out[..., 3] = np.maximum(arr[..., 3], np.maximum(np.roll(arr[..., 3], -n, 1), np.roll(arr[..., 3], n, 1)))
+        arr = out
+    if "glitch" in fx:
+        rng = np.random.default_rng(seed + int(lt * 30))
+        if rng.random() < 0.45:  # tear a few horizontal bands sideways
+            arr = arr.copy()
+            for _ in range(3):
+                y0, hh = int(rng.integers(0, max(1, h - 40))), int(rng.integers(8, 40))
+                arr[y0:y0 + hh] = np.roll(arr[y0:y0 + hh], int(rng.integers(-40, 40)), axis=1)
+    return Image.fromarray(arr, "RGBA")
+
+
 def build_bg(i, b, media, cfg, tmp):
     dur, fps = b["_dur"], cfg["fps"]
     out = os.path.join(tmp, f"bg{i:03d}.mp4")
@@ -389,6 +448,8 @@ def build_bg(i, b, media, cfg, tmp):
         punch = b.get("punch", 0.14)
         motion = b.get("motion", ("in", "left", "in", "right")[i % 4])
         zexpr = f"{z}+{punch}*exp(-on/4)+{speed:.6f}*on"
+        if "pulse" in b.get("fx", []):  # zoom breathing in and out
+            zexpr += "+0.05*(1+sin(on*0.35))"
         x = "iw/2-(iw/zoom/2)"
         if motion == "left":
             x = f"(iw-iw/zoom)*(1-on/{frames})"
@@ -406,8 +467,24 @@ def build_bg(i, b, media, cfg, tmp):
         bg = cfg.get("card_bg", "#969696").lstrip("#")
         cmd += ["-f", "lavfi", "-i", f"color=c=0x{bg}:s={W}x{H}:r={fps}"]
         vf = tail
-    cmd += ["-t", f"{dur:.4f}", "-map", "0:v:0", "-vf", vf, "-an",
-            "-c:v", "libx264", "-preset", "veryfast", "-crf", "17", out]
+    fx = b.get("fx", []) if b["_mode"] == "full" else []
+    vf += "".join("," + FFMPEG_FX[f] for f in fx if f in FFMPEG_FX)
+    if "wave" in fx:
+        # horizontal sine wobble: displace with a scrolling sine map
+        lam, amp = b.get("wave_length", 220), b.get("wave_amp", 22)
+        xmap = os.path.join(tmp, f"wave_{lam}_{amp}.png")
+        if not os.path.exists(xmap):
+            rows = (128 + amp * np.sin(2 * np.pi * np.arange(H + lam) / lam)).astype(np.uint8)
+            Image.fromarray(np.repeat(rows[:, None], W, axis=1), "L").save(xmap)
+        cmd += ["-loop", "1", "-framerate", str(fps), "-i", xmap,
+                "-f", "lavfi", "-i", f"color=c=0x808080:s={W}x{H}:r={fps}"]
+        fc = (f"[0:v]{vf},format=gbrp[m];"
+              f"[1:v]crop={W}:{H}:0:'mod(n*9,{lam})',format=gbrp[xm];[2:v]format=gbrp[ym];"
+              f"[m][xm][ym]displace=edge=smear,format=yuv420p[v]")
+        cmd += ["-filter_complex", fc, "-map", "[v]"]
+    else:
+        cmd += ["-map", "0:v:0", "-vf", vf]
+    cmd += ["-t", f"{dur:.4f}", "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "17", out]
     run(cmd)
     return out
 
@@ -447,7 +524,8 @@ def main():
                 tilt = b.get("tilt", (-3, 2.5, -1.5, 3)[i % 4])
                 still = load_still(media, b.get("start", 0), tmp) if media else \
                     placeholder_card(b.get("media") or "imagem/print/meme")
-                b["_card"] = make_card(still, tilt, b.get("card_max", CARD_MAX))
+                b["_card"] = make_card(card_fx_static(still.convert("RGBA"), b.get("fx", [])),
+                                       tilt, b.get("card_max", CARD_MAX))
             st = b.get("sticker")
             if st:
                 sp = resolve(st.get("path"), base)
@@ -534,7 +612,9 @@ def main():
         enc = subprocess.Popen(
             ["ffmpeg", "-y", "-v", "error", "-i", bg, "-i", audio,
              "-f", "rawvideo", "-pix_fmt", "rgba", "-s", f"{W}x{H}", "-r", str(fps), "-i", "-",
-             "-filter_complex", "[0:v][2:v]overlay=0:0:format=auto,format=yuv420p[v]",
+             "-filter_complex", "[0:v][2:v]overlay=0:0:format=auto"
+             + "".join("," + GLOBAL_FX[f] for f in cfg.get("global_fx", []) if f in GLOBAL_FX)
+             + ",format=yuv420p[v]",
              "-map", "[v]", "-map", "1:a", "-c:v", "libx264", "-preset", "medium", "-crf", "19",
              "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-t", f"{total:.4f}", out],
             stdin=subprocess.PIPE)
@@ -566,8 +646,11 @@ def main():
                 p = min(1.0, lt / CARD_POP)
                 # pop in, then keep breathing: slow grow, float and sway
                 s_ = (0.55 + 0.45 * ease_out_back(p)) * (1 + 0.07 * lt / b["_dur"])
-                im = scaled(card, s_, min(1, p * 2.5))
-                sway = math.sin(lt * 1.8 + bi) * 1.6
+                fx = b.get("fx", [])
+                if "pulse" in fx:
+                    s_ *= 1 + 0.05 * math.sin(lt * 10)
+                im = card_fx_frame(scaled(card, s_, min(1, p * 2.5)), fx, lt, bi)
+                sway = math.sin(lt * 1.8 + bi) * (6 if "wobble" in fx else 1.6)
                 if p >= 1:
                     im = im.rotate(sway, resample=Image.BILINEAR, expand=True)
                 paste_c(fr, im, W / 2 + sx_, CARD_CY + math.sin(lt * 2.4 + bi) * 12 + sy_)

@@ -9,6 +9,10 @@
     "card": "assets/fofoca/sfx/pop.wav",
     "volume": 0.35
   },
+  "global_fx": [
+    "grain",
+    "vignette"
+  ],
   "voice": {
     "engine": "edge",
     "name": "pt-BR-AntonioNeural",
@@ -49,6 +53,9 @@
           "path": "assets/fofoca/sfx/impact.wav",
           "volume": 0.7
         }
+      ],
+      "fx": [
+        "pulse"
       ]
     },
     {
@@ -60,12 +67,19 @@
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.6
         }
+      ],
+      "fx": [
+        "wave",
+        "vignette"
       ]
     },
     {
       "text": "Calma que eu te explico.",
       "media": "assets/fofoca/lpu/meme_to_ligado.jpg",
-      "mode": "card"
+      "mode": "card",
+      "fx": [
+        "wave"
+      ]
     },
     {
       "text": "A Lovely Professional University fica no Punjab, no norte da Índia,",
@@ -75,7 +89,11 @@
     {
       "text": "e é uma das maiores universidades particulares do país.",
       "media": "assets/fofoca/lpu/meme_galinha.jpg",
-      "mode": "full"
+      "mode": "full",
+      "fx": [
+        "rgb",
+        "wobble"
+      ]
     },
     {
       "text": "No fim de setembro, uma postagem anônima começou a circular entre os alunos.",
@@ -86,6 +104,9 @@
           "path": "assets/fofoca/sfx/glitch.wav",
           "volume": 0.5
         }
+      ],
+      "fx": [
+        "glitch"
       ]
     },
     {
@@ -127,6 +148,10 @@
           "path": "assets/fofoca/sfx/impact.wav",
           "volume": 0.6
         }
+      ],
+      "fx": [
+        "rgb",
+        "pulse"
       ]
     },
     {
@@ -139,6 +164,10 @@
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.6
         }
+      ],
+      "fx": [
+        "wobble",
+        "deepfry"
       ]
     },
     {
@@ -172,6 +201,9 @@
           "path": "assets/fofoca/sfx/impact.wav",
           "volume": 0.7
         }
+      ],
+      "fx": [
+        "deepfry"
       ]
     },
     {
@@ -188,6 +220,10 @@
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.55
         }
+      ],
+      "fx": [
+        "rgb",
+        "pulse"
       ]
     },
     {
@@ -199,12 +235,19 @@
           "path": "assets/fofoca/sfx/glitch.wav",
           "volume": 0.5
         }
+      ],
+      "fx": [
+        "wave",
+        "glitch"
       ]
     },
     {
       "text": "Já a polícia nega ter partido pra cima dos estudantes.",
       "media": "assets/fofoca/lpu/meme_velho_olhando.jpg",
-      "mode": "full"
+      "mode": "full",
+      "fx": [
+        "wave"
+      ]
     },
     {
       "text": "Resultado: nove pessoas presas, sete delas estudantes,",
@@ -215,6 +258,10 @@
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.6
         }
+      ],
+      "fx": [
+        "pulse",
+        "vignette"
       ]
     },
     {
@@ -241,6 +288,10 @@
           "path": "assets/fofoca/sfx/glitch.wav",
           "volume": 0.45
         }
+      ],
+      "fx": [
+        "deepfry",
+        "wobble"
       ]
     },
     {
@@ -289,6 +340,9 @@
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.7
         }
+      ],
+      "fx": [
+        "pulse"
       ]
     },
     {
@@ -309,6 +363,9 @@
           "path": "assets/fofoca/sfx/ding.wav",
           "volume": 0.4
         }
+      ],
+      "fx": [
+        "rgb"
       ]
     },
     {
@@ -330,6 +387,9 @@
           "path": "assets/fofoca/sfx/glitch.wav",
           "volume": 0.5
         }
+      ],
+      "fx": [
+        "glitch"
       ]
     },
     {
@@ -342,6 +402,10 @@
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.55
         }
+      ],
+      "fx": [
+        "wave",
+        "vignette"
       ]
     },
     {
@@ -373,17 +437,29 @@
           "path": "assets/fofoca/sfx/impact.wav",
           "volume": 0.55
         }
+      ],
+      "fx": [
+        "rgb",
+        "pulse"
       ]
     },
     {
       "text": "Por enquanto, ninguém tem essa resposta.",
       "media": "assets/fofoca/lpu/meme_minion.jpg",
-      "mode": "full"
+      "mode": "full",
+      "fx": [
+        "bw",
+        "pulse",
+        "vignette"
+      ]
     },
     {
       "text": "E você, acha que a internet julga rápido demais?",
       "media": "assets/fofoca/lpu/meme_mulher.jpg",
-      "mode": "full"
+      "mode": "full",
+      "fx": [
+        "wobble"
+      ]
     },
     {
       "text": "Comenta aí e segue pra acompanhar a parte dois. As fontes estão na descrição.",
