@@ -1,0 +1,37 @@
+{
+  "output": "output/kanye_review.mp4",
+  "fps": 30,
+  "segment_seconds": 7.5,
+  "rating_delay": 4.0,
+
+  "title": "KANYE WEST REVIEW",
+  "rating": "95/100",
+
+  "items": [
+    {"label": "BIGGEST", "song": "TBD", "streams": "TBD",
+     "clip": "assets/clips/flashing_lights.mp4", "clip_start": 26.65,
+     "audio": "assets/clips/flashing_lights.mp4", "audio_start": 26.65},
+    {"label": "SMALLEST", "song": "TBD", "streams": "TBD",
+     "clip": "assets/clips/hurricane.mp4", "clip_start": 21.7,
+     "audio": "assets/clips/hurricane.mp4", "audio_start": 21.7},
+    {"label": "BEST", "song": "Runaway", "streams": "TBD",
+     "clip": "assets/clips/runaway.mp4", "clip_start": 55.7,
+     "audio": "assets/clips/runaway.mp4", "audio_start": 55.7},
+    {"label": "WORST", "song": "TBD", "streams": "TBD",
+     "clip": "assets/clips/stronger.mp4", "clip_start": 23.65,
+     "audio": "assets/clips/stronger.mp4", "audio_start": 23.65},
+    {"label": "UNDERRATED", "song": "Off The Grid", "streams": "TBD",
+     "cover": "assets/covers/donda.jpg",
+     "clip": "", "clip_start": 0,
+     "audio": "assets/audio/off_the_grid.mp4", "audio_start": 13.65},
+    {"label": "OVERRATED", "song": "Stronger", "streams": "TBD",
+     "clip": "assets/clips/stronger.mp4", "clip_start": 60,
+     "audio": "assets/clips/stronger.mp4", "audio_start": 60},
+    {"label": "BEST FEATURE", "song": "Run This Town", "streams": "TBD",
+     "clip": "assets/clips/run_this_town.mp4", "clip_start": 61.9,
+     "audio": "assets/clips/run_this_town.mp4", "audio_start": 61.9},
+    {"label": "BEST ALBUM", "song": "My Beautiful Dark Twisted Fantasy", "streams": "TBD",
+     "clip": "assets/clips/power.mp4", "clip_start": 37.2,
+     "audio": "assets/clips/power.mp4", "audio_start": 37.2}
+  ]
+}

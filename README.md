@@ -29,3 +29,18 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
 
 Any number of albums works: with fewer than 5, the covers grow so the list still fills the same space.
+
+## Artist review format
+
+`make_review.py` renders the "ARTIST REVIEW" format (red title box, 8 rows +
+artist rating, green song + yellow stream count per row):
+
+```bash
+python3 make_review.py review_kanye.json   # -> output/kanye_review.mp4
+```
+
+Each of the 8 `items` (BIGGEST, SMALLEST, BEST, WORST, UNDERRATED, OVERRATED,
+BEST FEATURE, BEST ALBUM, in that order) takes `song`, optional `streams`,
+and the same `clip`/`audio`/`cover` fields as above. `segment_seconds`
+(default 7.5 -> 60 s total) and `rating_delay` (seconds into the last item
+when the rating pops in) control timing.
