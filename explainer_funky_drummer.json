@@ -1,0 +1,32 @@
+{
+  "output": "output/funky_drummer_explainer.mp4",
+  "fps": 30,
+
+  "handle": "@YOURHANDLE",
+  "brand": "beatlore",
+  "brand_accent_index": 4,
+
+  "voice": "am_michael",
+  "voice_speed": 1.05,
+  "voice_file": "",
+
+  "lines": [
+    {"id": "hook",      "text": "The most sampled drum beat in hip-hop"},
+    {"id": "hook2",     "text": "wasn't made by a hip-hop producer."},
+    {"id": "older",     "text": "It's older than hip-hop itself."},
+    {"id": "band",      "text": "It's from a 1970 James Brown record,"},
+    {"id": "notes",     "text": "called Funky Drummer."},
+    {"id": "dropout",   "text": "Near the end, the band drops out,"},
+    {"id": "solo",      "text": "and Clyde Stubblefield plays alone."},
+    {"id": "twenty",    "text": "Twenty seconds. That's it."},
+    {"id": "sampled",   "text": "Producers sampled those seconds,"},
+    {"id": "looped",    "text": "looped them,"},
+    {"id": "era",       "text": "and built a whole era on top."},
+    {"id": "names",     "text": "Public Enemy. LL Cool J."},
+    {"id": "thousand",  "text": "Over a thousand songs."},
+    {"id": "royalty",   "text": "But Clyde said he never saw"},
+    {"id": "royalty2",  "text": "a royalty check for any of it."},
+    {"id": "everywhere","text": "The beat was everywhere."},
+    {"id": "almost",    "text": "The drummer almost wasn't."}
+  ]
+}

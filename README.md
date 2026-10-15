@@ -29,3 +29,22 @@ Anything missing falls back to a placeholder (generated cover card, blurred-cove
 In `config.json`: song picks, ratings, name colours, title lines, handle, `segment_seconds`, `fps` (reference is 60).
 
 Any number of albums works: with fewer than 5, the covers grow so the list still fills the same space.
+
+---
+
+# Music lore explainer (illustrated short)
+
+`make_explainer.py` renders a ~36 s 1080×1920 illustrated "fact" short in the flat-illustration explainer style: one drawn scene the camera pushes around, a swirling sound-wave hero shot, karaoke captions with the spoken word boxed in red, a pop-in liner-notes card, a red dashed reveal trace, a moving watermark and a logo/handle outro.
+
+First story: **Funky Drummer**, the James Brown break (Clyde Stubblefield) that hip-hop sampled over a thousand times.
+
+```bash
+pip install skia-python numpy kokoro-onnx soundfile   # ffmpeg must be on PATH
+python3 make_explainer.py                             # -> output/funky_drummer_explainer.mp4
+STILLS=1.5,12,25 python3 make_explainer.py            # just PNG stills in output/work/
+```
+
+- **Voiceover:** generated offline with Kokoro TTS. The model downloads to `models/kokoro/` on the first run. Change `voice` (`am_michael`, `am_adam`, `af_heart`, …) and `voice_speed` in `explainer_funky_drummer.json`, or set `voice_file` to your own recording.
+- **Music/SFX:** an original funk drum loop, bass, whooshes and pops, all synthesised. The drummer's sticks hit in time with the loop, and the band drops out on "the band drops out".
+- **Branding:** `handle`, `brand` and `brand_accent_index` (the red letter in the outro logo).
+- **Script:** edit the `text` of each line. The scenes are keyed to the line `id`s, so keep those.
