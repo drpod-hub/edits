@@ -3,35 +3,94 @@
   "fps": 30,
   "segment_seconds": 7.5,
   "rating_delay": 4.0,
-
   "title": "PLAYBOI CARTI REVIEW",
   "rating": "88/100",
-
   "items": [
-    {"label": "BIGGEST", "song": "Magnolia", "streams": "TBD",
-     "clip": "assets/clips/carti_magnolia.mp4", "clip_start": 0,
-     "audio": "assets/clips/carti_magnolia.mp4", "audio_start": 0},
-    {"label": "SMALLEST", "song": "TBD", "streams": "TBD",
-     "clip": "assets/clips/carti_smallest.mp4", "clip_start": 0,
-     "audio": "assets/clips/carti_smallest.mp4", "audio_start": 0},
-    {"label": "BEST", "song": "Sky", "streams": "TBD",
-     "clip": "assets/clips/carti_sky.mp4", "clip_start": 0,
-     "audio": "assets/clips/carti_sky.mp4", "audio_start": 0},
-    {"label": "WORST", "song": "Pain 1993", "streams": "TBD",
-     "clip": "assets/clips/carti_pain_1993.mp4", "clip_start": 0,
-     "audio": "assets/clips/carti_pain_1993.mp4", "audio_start": 0},
-    {"label": "UNDERRATED", "song": "Location", "streams": "TBD",
-     "clip": "assets/clips/carti_location.mp4", "clip_start": 0,
-     "audio": "assets/clips/carti_location.mp4", "audio_start": 0},
-    {"label": "OVERRATED", "song": "Stop Breathing", "streams": "TBD",
-     "clip": "assets/clips/carti_stop_breathing.mp4", "clip_start": 0,
-     "audio": "assets/clips/carti_stop_breathing.mp4", "audio_start": 0},
-    {"label": "BEST FEATURE", "song": "FE!N", "streams": "TBD",
-     "clip": "assets/clips/fein.mp4", "clip_start": 29.05,
-     "clip_zoom": 1.6, "clip_brightness": 0.08,
-     "audio": "assets/clips/fein.mp4", "audio_start": 29.05},
-    {"label": "BEST ALBUM", "song": "Whole Lotta Red", "streams": "TBD",
-     "clip": "assets/clips/carti_wlr.mp4", "clip_start": 0,
-     "audio": "assets/clips/carti_wlr.mp4", "audio_start": 0}
+    {
+      "label": "BIGGEST",
+      "song": "Magnolia",
+      "streams": "1B+",
+      "clip": "assets/clips/carti_magnolia.mp4",
+      "clip_start": 7.7,
+      "audio": "assets/clips/carti_magnolia.mp4",
+      "audio_start": 7.7
+    },
+    {
+      "label": "SMALLEST",
+      "song": "Walk On Water",
+      "streams": "82K+",
+      "clip": "",
+      "clip_start": 0,
+      "audio": "assets/clips/carti_walk_on_water.mp4",
+      "audio_start": 0,
+      "cover": "assets/covers/carti_photo.jpg",
+      "bg_blur": false,
+      "bg_focus_x": 0.2
+    },
+    {
+      "label": "BEST",
+      "song": "Sky",
+      "streams": "TBD",
+      "clip": "assets/clips/carti_sky.mp4",
+      "clip_start": 4.9,
+      "audio": "assets/clips/carti_sky.mp4",
+      "audio_start": 4.9
+    },
+    {
+      "label": "WORST",
+      "song": "Pain 1993",
+      "streams": "TBD",
+      "clip": "",
+      "clip_start": 0,
+      "audio": "assets/clips/carti_pain_1993.mp4",
+      "audio_start": 85.0,
+      "cover": "assets/covers/carti_photo.jpg",
+      "bg_blur": false,
+      "bg_focus_x": 0.2
+    },
+    {
+      "label": "UNDERRATED",
+      "song": "Location",
+      "streams": "TBD",
+      "clip": "",
+      "clip_start": 0,
+      "audio": "assets/clips/carti_location.mp4",
+      "audio_start": 30.15,
+      "cover": "assets/covers/carti_photo.jpg",
+      "bg_blur": false,
+      "bg_focus_x": 0.15
+    },
+    {
+      "label": "OVERRATED",
+      "song": "Stop Breathing",
+      "streams": "TBD",
+      "clip": "",
+      "clip_start": 0,
+      "audio": "assets/clips/carti_stop_breathing.mp4",
+      "audio_start": 0.0,
+      "cover": "assets/covers/carti_photo.jpg",
+      "bg_blur": false,
+      "bg_focus_x": 0.3
+    },
+    {
+      "label": "BEST FEATURE",
+      "song": "FE!N",
+      "streams": "TBD",
+      "clip": "assets/clips/fein.mp4",
+      "clip_start": 29.05,
+      "clip_zoom": 1.6,
+      "clip_brightness": 0.08,
+      "audio": "assets/clips/fein.mp4",
+      "audio_start": 29.05
+    },
+    {
+      "label": "BEST ALBUM",
+      "song": "Whole Lotta Red",
+      "streams": "",
+      "clip": "assets/clips/carti_sky.mp4",
+      "clip_start": 75.2,
+      "audio": "assets/clips/carti_sky.mp4",
+      "audio_start": 75.2
+    }
   ]
 }

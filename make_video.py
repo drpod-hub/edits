@@ -259,14 +259,21 @@ def build_segment(i, song, cover, cfg, tmp):
             vf += f"eq=brightness={song['clip_brightness']}:contrast=1.1:saturation=1.1,"
         vf += vf_tail
     else:
-        print(f"  ! clip missing for {song['song']} -> blurred cover background")
         cpath = os.path.join(tmp, f"cover{i:02d}.png")
-        cover.resize((460, 460), Image.LANCZOS).filter(ImageFilter.GaussianBlur(14)).resize((2300, 2300), Image.BICUBIC).save(cpath)
+        if song.get("bg_blur", True):
+            print(f"  ! clip missing for {song['song']} -> blurred cover background")
+            bg = cover.resize((460, 460), Image.LANCZOS).filter(ImageFilter.GaussianBlur(14))
+            look = "eq=brightness=-0.08:saturation=1.15"
+        else:  # sharp photo background (e.g. an artist photo)
+            bg, look = cover, "eq=brightness=-0.04"
+        bg.resize((2300, 2300), Image.BICUBIC).save(cpath)
         cmd += ["-loop", "1", "-framerate", str(fps), "-t", str(dur), "-i", cpath]
+        # bg_focus_x: which part of the square image stays in the 9:16 frame (0 left .. 1 right)
+        fx = song.get("bg_focus_x", 0.5)
         # slow drift so the background isn't static
         vf = (f"crop=w=1180:h=2098:"
-              f"x='(in_w-out_w)/2+sin(t*0.9)*90':y='(in_h-out_h)/2+cos(t*0.7)*80',"
-              f"scale={W}:{H},eq=brightness=-0.08:saturation=1.15,{vf_tail}")
+              f"x='(in_w-out_w)*{fx}+sin(t*0.9)*60':y='(in_h-out_h)/2+cos(t*0.7)*80',"
+              f"scale={W}:{H},{look},{vf_tail}")
 
     if audio:
         cmd += ["-ss", str(song.get("audio_start", 0)), "-t", str(dur), "-i", audio]
