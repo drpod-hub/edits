@@ -514,25 +514,48 @@ def make_background():
     return surf.makeImageSnapshot()
 
 
-def drum_state(events, t, kind, lift=1.0):
-    """Stick height 0 (on the drum) .. 1 (raised) for a limb playing `kind` hits."""
-    hits = [e for e in events if e[1] in kind]
-    if not hits:
-        return 0.35
-    times = [e[0] for e in hits]
-    i = np.searchsorted(times, t)
+_HITS = {"events": []}
+
+
+def set_events(events):
+    _HITS.clear()
+    _HITS["events"] = events
+
+
+def hit_arrays(kinds):
+    key = tuple(sorted(kinds))
+    if key not in _HITS:
+        sel = [e for e in _HITS["events"] if e[1] in kinds]
+        _HITS[key] = (np.array([e[0] for e in sel]), np.array([e[2] for e in sel]))
+    return _HITS[key]
+
+
+def drum_state(t, kinds):
+    """Stick height 0 (on the drum) .. 1 (raised) for a limb playing `kinds` hits."""
+    times, vels = hit_arrays(kinds)
+    if len(times) == 0:
+        return 0.25
+    i = int(np.searchsorted(times, t))
     prev = times[i - 1] if i > 0 else None
     nxt = times[i] if i < len(times) else None
-    if prev is None or nxt is None:
-        # resting before the first / after the last hit: ease to a low hover
-        far = min(abs(t - (prev if prev is not None else nxt)), 1.0)
+    if prev is None or nxt is None or nxt - prev > 1.0:
+        far = min(abs(t - x) for x in (prev, nxt) if x is not None)
         return 0.25 * smooth(far * 3)
-    span = nxt - prev
-    if span > 1.0:
-        return 0.25 * smooth(min(t - prev, nxt - t) * 3)
-    ph = (t - prev) / span
-    v = hits[i][2]
-    return math.sin(math.pi * ph) ** 0.8 * (0.45 + 0.55 * v) * lift
+    ph = (t - prev) / (nxt - prev)
+    return math.sin(math.pi * ph) ** 0.8 * (0.45 + 0.55 * vels[i])
+
+
+def last_hit(t, kinds):
+    times, vels = hit_arrays(kinds)
+    i = int(np.searchsorted(times, t, "right")) - 1
+    if i < 0:
+        return 99.0, 0.0
+    return t - times[i], vels[i]
+
+
+def hit_env(t, kinds, decay=10.0):
+    dt, v = last_hit(t, kinds)
+    return v * math.exp(-dt * decay)
 
 
 def ik(s, tgt, a, b, bend):
@@ -541,111 +564,330 @@ def ik(s, tgt, a, b, bend):
     d = clamp(d, abs(a - b) + 1, a + b - 1)
     base = math.atan2(tgt[1] - s[1], tgt[0] - s[0])
     ang = math.acos(clamp((a * a + d * d - b * b) / (2 * a * d), -1, 1))
-    e = s + a * np.array([math.cos(base + bend * ang), math.sin(base + bend * ang)])
-    return e
+    return s + a * np.array([math.cos(base + bend * ang), math.sin(base + bend * ang)])
 
 
-def draw_cymbal(c, x, y, rx, tilt, wob=0.0):
+# ---- shape helpers (flat cel-shaded look)
+
+def p_rrect(l, t, r, b, rad):
+    p = skia.Path()
+    p.addRRect(skia.RRect.MakeRectXY(skia.Rect.MakeLTRB(l, t, r, b), rad, rad))
+    return p
+
+
+def p_oval(l, t, r, b):
+    p = skia.Path()
+    p.addOval(skia.Rect.MakeLTRB(l, t, r, b))
+    return p
+
+
+def p_circle(x, y, r):
+    p = skia.Path()
+    p.addCircle(x, y, r)
+    return p
+
+
+def p_poly(pts):
+    p = path_of(pts)
+    p.close()
+    return p
+
+
+def p_blob(pts, n=8):
+    """Closed smooth shape through control points."""
+    ring = list(pts) + list(pts[:3])
+    dense = catmull(ring, n)
+    return p_poly([tuple(q) for q in dense[n:-2 * n]])
+
+
+def shaded(c, path, base, dark, off=(-11, -8), hi=None, hi_off=(5, 4)):
+    """Fill with a dark rim on the lower-right and an optional light rim upper-left."""
+    c.drawPath(path, paint(dark))
     c.save()
-    c.translate(x, y)
-    c.rotate(tilt + wob)
-    c.drawOval(skia.Rect.MakeLTRB(-rx, -rx * 0.18, rx, rx * 0.18), paint(GOLD))
-    c.drawOval(skia.Rect.MakeLTRB(-rx, -rx * 0.18, rx, rx * 0.18), paint("#a57a1c", stroke=3))
-    c.drawOval(skia.Rect.MakeLTRB(-rx * 0.55, -rx * 0.09, rx * 0.25, rx * 0.04), paint("#fbe39a", 0.7))
-    c.drawCircle(0, -2, 6, paint("#a57a1c"))
+    c.clipPath(path, skia.ClipOp.kIntersect, True)
+    c.translate(*off)
+    if hi:
+        c.drawPath(path, paint(hi))
+        c.translate(*hi_off)
+    c.drawPath(path, paint(base))
     c.restore()
 
 
-def draw_drum_shell(c, cx, top, w, h, body=SHELL):
+def limb(c, a, b, w, base, dark):
+    c.drawLine(a[0], a[1], b[0], b[1], paint(dark, stroke=w))
+    c.drawLine(a[0] - w * 0.13, a[1] - w * 0.1, b[0] - w * 0.13, b[1] - w * 0.1, paint(base, stroke=w * 0.66))
+
+
+def halftone(c, path, color, a=1.0, step=11, r=2.2):
+    b = path.getBounds()
+    c.save()
+    c.clipPath(path, skia.ClipOp.kIntersect, True)
+    p = paint(color, a)
+    y, row = b.top(), 0
+    while y < b.bottom():
+        x = b.left() + (step / 2 if row % 2 else 0)
+        while x < b.right():
+            c.drawCircle(x, y, r, p)
+            x += step
+        y += step
+        row += 1
+    c.restore()
+
+
+def draw_cymbal(c, x, y, rx, tilt, wob=0.0, glint=0.0):
+    c.save()
+    c.translate(x, y)
+    c.rotate(tilt + wob)
+    body = p_oval(-rx, -rx * 0.17, rx, rx * 0.17)
+    shaded(c, body, GOLD, "#a87818", off=(0, -5), hi="#fbe39a", hi_off=(0, 3))
+    for k in (0.72, 0.45):
+        c.drawOval(skia.Rect.MakeLTRB(-rx * k, -rx * 0.17 * k, rx * k, rx * 0.17 * k), paint("#b8861f", 0.45, stroke=2))
+    c.drawOval(skia.Rect.MakeLTRB(-rx * 0.2, -rx * 0.12, rx * 0.2, rx * 0.04), paint("#c9952a"))
+    c.drawCircle(0, -rx * 0.05, 5, paint("#6e4f12"))
+    if glint > 0.02:
+        gx, gy, s = -rx * 0.45, -rx * 0.04, 26 * glint
+        p = paint(WHITE, glint, stroke=4)
+        c.drawLine(gx - s, gy, gx + s, gy, p)
+        c.drawLine(gx, gy - s, gx, gy + s, p)
+    c.restore()
+
+
+def draw_drum_shell(c, cx, top, w, h, body=SHELL, squash=0.0):
+    c.save()
+    c.translate(cx, top + h)
+    c.scale(1 + 0.04 * squash, 1 - 0.08 * squash)
+    c.translate(-cx, -(top + h))
     r = skia.Rect.MakeLTRB(cx - w / 2, top, cx + w / 2, top + h)
     c.drawRect(r, paint(body))
     sh = skia.GradientShader.MakeLinear([(cx - w / 2, 0), (cx + w / 2, 0)],
-                                        [col(WHITE, 0.25), col(WHITE, 0), col(INK, 0.25)], [0, 0.35, 1])
+                                        [col(WHITE, 0.3), col(WHITE, 0), col(INK, 0.3)], [0, 0.3, 1])
     c.drawRect(r, paint(WHITE, shader=sh))
+    for k in range(5):
+        lx = cx - w / 2 + w * (0.12 + 0.19 * k)
+        c.drawRoundRect(skia.Rect.MakeLTRB(lx - 4, top + h * 0.3, lx + 4, top + h * 0.7), 3, 3, paint(CHROME))
     for yy in (top + 4, top + h - 4):
         c.drawLine(cx - w / 2, yy, cx + w / 2, yy, paint(CHROME, stroke=7, cap=skia.Paint.kButt_Cap))
-    c.drawOval(skia.Rect.MakeLTRB(cx - w / 2, top - w * 0.12, cx + w / 2, top + w * 0.12), paint("#f4efe6"))
-    c.drawOval(skia.Rect.MakeLTRB(cx - w / 2, top - w * 0.12, cx + w / 2, top + w * 0.12), paint(CHROME, stroke=5))
+    head = skia.Rect.MakeLTRB(cx - w / 2, top - w * 0.12, cx + w / 2, top + w * 0.12)
+    c.drawOval(head, paint("#f6f1e8"))
+    c.drawOval(skia.Rect.MakeLTRB(cx - w / 2 + 6, top - w * 0.12 + 6, cx + w / 2, top + w * 0.12),
+               paint("#e3dccd"))
+    c.drawOval(skia.Rect.MakeLTRB(cx - w / 2 + 6, top - w * 0.12 + 3, cx + w / 2 - 10, top + w * 0.12 - 4),
+               paint("#f6f1e8"))
+    c.drawOval(head, paint(CHROME, stroke=5))
+    c.restore()
 
 
-def draw_drummer(c, t, ev, playing, bob):
-    """Drummer behind a kit; kit centred around x=540, floor at y=1380."""
-    hat_h = drum_state(ev, t, ("hat",)) if playing else 0.0
-    sn_h = drum_state(ev, t, ("snare",)) if playing else 0.0
-    kick_h = drum_state(ev, t, ("kick",)) if playing else 0.0
+# ---- the drummer
 
-    # stands behind the kit
-    st = paint("#55565e", stroke=6)
-    c.drawLine(300, 930, 300, 1380, st)
-    c.drawLine(300, 1380, 260, 1380, st)
-    c.drawLine(300, 1380, 340, 1380, st)
-    c.drawLine(815, 980, 815, 1380, st)
-    draw_cymbal(c, 300, 925, 105, -14, wob=2.5 * math.sin(t * 9) * (1 if playing else 0))
-    draw_cymbal(c, 815, 975, 115, 10)
+SNARE_HIT = (395, 1120)
+HAT_HIT = (690, 1066)
 
-    # body
-    hy = 870 + bob
-    c.drawRoundRect(skia.Rect.MakeLTRB(462, 950 + bob * 0.6, 660, 1200), 60, 60, paint(NAVY))
-    c.drawPath(path_of([(520, 950 + bob * 0.6), (562, 1010 + bob * 0.6), (604, 950 + bob * 0.6)]),
-               paint("#f1e7d2"))
-    c.drawRect(skia.Rect.MakeLTRB(540, 925 + bob, 584, 965 + bob), paint(SKIN_DK))
-    # afro + head (three-quarter view facing left)
-    c.drawCircle(572, hy - 34, 92, paint(INK))
-    c.drawOval(skia.Rect.MakeLTRB(510, hy - 62, 616, hy + 62), paint(SKIN))
-    c.drawOval(skia.Rect.MakeLTRB(596, hy - 14, 622, hy + 22), paint(SKIN_DK))
-    c.drawPath(path_of([(512, hy - 30), (500, hy - 66), (560, hy - 92), (640, hy - 60), (620, hy - 20),
-                        (590, hy - 44), (540, hy - 40)]), paint(INK))
-    c.drawRect(skia.Rect.MakeLTRB(588, hy - 30, 604, hy + 18), paint(INK))  # sideburn
-    c.drawCircle(530, hy - 8, 5.5, paint(INK))
-    c.drawLine(518, hy - 24, 542, hy - 26, paint(INK, stroke=5))
-    c.drawPath(path_of([(512, hy - 2), (502, hy + 18), (514, hy + 20)]), paint(SKIN_DK, stroke=4))
-    c.drawPath(path_of([(514, hy + 33), (532, hy + 30), (548, hy + 34)]), paint(INK, stroke=6))  # moustache
-    c.drawLine(524, hy + 45, 540, hy + 46, paint(SKIN_DK, stroke=4))
 
-    # bass drum + pedal
-    c.drawCircle(540, 1250, 128, paint(SHELL))
-    c.drawCircle(540, 1250, 112, paint("#f4efe6"))
-    c.drawCircle(540, 1250, 120, paint(CHROME, stroke=8))
-    c.drawCircle(540, 1250, 52, paint(SHELL))
-    f = font("ExtraBold", 34)
-    draw_text(c, "1970", 540, 1262, f, "#f4efe6", align="center")
-    beater = 1250 + 60 - 18 * (1 - kick_h)
-    c.drawLine(560, 1380, 572, beater + 30, paint("#55565e", stroke=6))
-    c.drawRoundRect(skia.Rect.MakeLTRB(548, 1360, 600, 1384), 8, 8, paint(INK))
-    # rack tom
-    draw_drum_shell(c, 540, 1068, 120, 56)
-    # floor tom
+def arm_pose(shoulder, drum, h, bend, stick_dir):
+    hand = np.array([drum[0] + stick_dir * 70, drum[1] - 50 - 90 * h])
+    el = ik(shoulder, hand, 118, 112, bend)
+    ang = math.atan2(drum[1] - hand[1], drum[0] - hand[0])
+    d = np.array([math.cos(ang), math.sin(ang)])
+    return np.array(shoulder, float), el, hand, hand + 150 * d, hand - 22 * d
+
+
+def drummer_pose(t, playing):
+    hat_h = drum_state(t, ("hat",)) if playing else 0.05
+    sn_h = drum_state(t, ("snare",)) if playing else 0.05
+    bob = 9 * hit_env(t, ("kick", "snare"), 8) if playing else 0.0
+    sway = 5 * math.sin(2 * math.pi * t * BPM / 60 / 2) if playing else 0.0
+    sy = 985 + bob * 0.6
+    return {
+        "bob": bob, "sway": sway, "hat_h": hat_h,
+        "left": arm_pose((488 + sway * 0.4, sy), SNARE_HIT, sn_h, -1, 1),
+        "right": arm_pose((636 + sway * 0.4, sy), HAT_HIT, hat_h, 1, -1),
+    }
+
+
+def draw_head(c, t, cx, hy, mood):
+    c.save()
+    if mood == "sad":
+        c.translate(0, 14)
+        c.rotate(-9, cx, hy + 60)
+    elif mood == "bliss":
+        c.rotate(4 * math.sin(t * 9), cx, hy + 60)
+    afro = p_circle(cx + 12, hy - 34, 94)
+    shaded(c, afro, INK, "#0b0b10", off=(-10, -8), hi="#34343f", hi_off=(5, 4))
+    halftone(c, afro, "#3b3b4a", 0.9, step=12, r=2.4)
+    shaded(c, p_oval(cx + 36, hy - 14, cx + 64, hy + 24), SKIN, SKIN_DK, off=(-4, -3))
+    face = p_blob([(cx - 50, hy - 40), (cx - 4, hy - 64), (cx + 50, hy - 40), (cx + 54, hy + 20),
+                   (cx + 20, hy + 62), (cx - 26, hy + 64), (cx - 52, hy + 30)])
+    shaded(c, face, SKIN, SKIN_DK, off=(-9, -6), hi="#a5724f", hi_off=(4, 3))
+    c.drawPath(p_poly([(cx - 52, hy - 30), (cx - 60, hy - 72), (cx, hy - 104), (cx + 84, hy - 64),
+                       (cx + 62, hy - 16), (cx + 36, hy - 44), (cx - 10, hy - 46)]), paint(INK))
+    c.drawRoundRect(skia.Rect.MakeLTRB(cx + 26, hy - 34, cx + 36, hy + 6), 5, 5, paint(INK))
+    # eye
+    blink = 0.12 if (t % 3.3) < 0.11 else 1.0
+    ex, ey = cx - 22, hy - 6
+    if mood == "bliss":
+        c.drawArc(skia.Rect.MakeLTRB(ex - 13, ey - 8, ex + 13, ey + 10), 200, 140, False, paint(INK, stroke=5))
+    else:
+        c.drawOval(skia.Rect.MakeLTRB(ex - 13, ey - 8 * blink, ex + 11, ey + 8 * blink), paint("#fbf6ec"))
+        if blink > 0.5:
+            look = -3 if mood != "sad" else -1
+            c.drawCircle(ex - 3 + look, ey + (3 if mood == "sad" else 0), 6, paint(INK))
+        c.drawLine(ex - 14, ey - 8 * blink, ex + 12, ey - 8 * blink, paint(INK, stroke=4))
+    # brow
+    if mood == "sad":
+        c.drawLine(ex - 16, ey - 14, ex + 12, ey - 26, paint(INK, stroke=6))
+    elif mood == "bliss":
+        c.drawArc(skia.Rect.MakeLTRB(ex - 16, ey - 34, ex + 14, ey - 14), 200, 130, False, paint(INK, stroke=6))
+    else:
+        c.drawLine(ex - 16, ey - 22, ex + 14, ey - 18, paint(INK, stroke=6))
+    # nose, moustache, mouth
+    c.drawPath(p_poly([(cx - 44, hy - 4), (cx - 60, hy + 20), (cx - 40, hy + 22)]), paint(SKIN_DK))
+    c.drawPath(p_blob([(cx - 54, hy + 34), (cx - 32, hy + 27), (cx - 10, hy + 33), (cx - 14, hy + 41),
+                       (cx - 34, hy + 37)], 6), paint(INK))
+    if mood == "bliss":
+        c.drawArc(skia.Rect.MakeLTRB(cx - 46, hy + 36, cx - 16, hy + 56), 20, 140, False, paint(INK, stroke=4))
+    elif mood == "sad":
+        c.drawArc(skia.Rect.MakeLTRB(cx - 44, hy + 46, cx - 18, hy + 62), 200, 140, False, paint(INK, stroke=4))
+    else:
+        c.drawLine(cx - 42, hy + 49, cx - 22, hy + 48, paint(SKIN_DK, stroke=4))
+    c.restore()
+
+
+def draw_arm(c, arm, ghost=0.0):
+    s, e, h, tip, tail = arm
+    if ghost:
+        p = paint("#aab4f0", ghost, stroke=34)
+        c.drawLine(e[0], e[1], h[0], h[1], p)
+        c.drawLine(tail[0], tail[1], tip[0], tip[1], paint("#f3dfae", ghost, stroke=11))
+        return
+    limb(c, s, e, 52, NAVY, NAVY_DK)
+    c.drawLine(s[0] - 14, s[1] + 4, e[0] - 14, e[1] - 2, paint(WHITE, 0.55, stroke=3))
+    limb(c, e, h, 38, SKIN, SKIN_DK)
+    c.drawRoundRect(skia.Rect.MakeLTRB(e[0] + (h[0] - e[0]) * 0.72 - 20, e[1] + (h[1] - e[1]) * 0.72 - 9,
+                                       e[0] + (h[0] - e[0]) * 0.72 + 20, e[1] + (h[1] - e[1]) * 0.72 + 9),
+                    5, 5, paint(GOLD))
+    c.drawLine(tail[0], tail[1], tip[0], tip[1], paint("#b88f4f", stroke=13))
+    c.drawLine(tail[0] - 2, tail[1] - 3, tip[0] - 2, tip[1] - 3, paint("#f3dfae", stroke=5))
+    c.drawCircle(tip[0], tip[1], 7, paint("#f3dfae"))
+    shaded(c, p_circle(h[0], h[1], 23), SKIN, SKIN_DK, off=(-5, -4))
+
+
+def draw_drummer(c, t, playing, mood, trail=0):
+    pose = drummer_pose(t, playing)
+    bob, sway = pose["bob"], pose["sway"]
+
+    # cymbals behind the kit, wobbling after hits
+    st = paint("#55565e", stroke=7)
+    for x, top in ((300, 930), (815, 980)):
+        c.drawLine(x, top, x, 1380, st)
+        c.drawLine(x - 42, 1380, x, 1330, st)
+        c.drawLine(x + 42, 1380, x, 1330, st)
+    dtk, vk = last_hit(t, ("kick",))
+    crash = 10 * math.exp(-dtk * 5) * math.sin(dtk * 26) if (playing and vk >= 1.0) else 0
+    draw_cymbal(c, 300, 925, 108, -14, wob=crash, glint=math.exp(-dtk * 6) if (playing and vk >= 1.0) else 0)
+    draw_cymbal(c, 815, 975, 118, 10, wob=1.5 * math.sin(t * 3))
+
+    # legs (knees peek out either side of the bass drum)
+    pants, pants_dk = "#ece2cc", "#c7b796"
+    kick_e = hit_env(t, ("kick",), 14) if playing else 0
+    limb(c, (515, 1180), (432, 1245), 56, pants, pants_dk)
+    limb(c, (432, 1245), (420, 1360), 46, pants, pants_dk)
+    limb(c, (605, 1180), (684, 1245), 56, pants, pants_dk)
+    limb(c, (684, 1245), (640, 1355), 46, pants, pants_dk)
+    c.drawRoundRect(skia.Rect.MakeLTRB(384, 1356, 446, 1384), 12, 12, paint(INK))
+    c.save()
+    c.rotate(-10 * (1 - kick_e), 650, 1380)
+    c.drawRoundRect(skia.Rect.MakeLTRB(588, 1356, 656, 1384), 12, 12, paint(INK))
+    c.restore()
+
+    # torso
+    c.save()
+    c.rotate(sway * 0.35, 560, 1200)
+    oy = bob * 0.6
+    neck = p_rrect(538, 915 + bob, 586, 975 + bob, 12)
+    shaded(c, neck, SKIN_DK, "#55341f", off=(-6, 0))
+    torso = p_blob([(470, 990 + oy), (520, 952 + oy), (604, 952 + oy), (652, 990 + oy), (664, 1120),
+                    (650, 1205), (474, 1205), (458, 1120)])
+    shaded(c, torso, NAVY, NAVY_DK, off=(-16, -10), hi="#3a40ad", hi_off=(7, 5))
+    c.drawPath(p_poly([(526, 954 + oy), (562, 1020 + oy), (598, 954 + oy)]), paint("#f1e7d2"))
+    c.drawPath(path_of([(530, 960 + oy), (562, 1030 + oy), (594, 960 + oy)]), paint(WHITE, 0.9, stroke=5))
+    c.drawPath(path_of([(488, 1000 + oy), (478, 1080), (482, 1180)]), paint(WHITE, 0.55, stroke=4))
+    draw_head(c, t, 560, 870 + bob, mood)
+    c.restore()
+
+    # bass drum
+    shaded(c, p_circle(540, 1250, 130), SHELL, "#8e231c", off=(-8, -8), hi="#e2554a", hi_off=(4, 4))
+    hg = skia.GradientShader.MakeRadial((515, 1225), 140, [col("#fbf7f0"), col("#e6ddcc")])
+    c.drawCircle(540, 1250, 112, paint(WHITE, shader=hg))
+    for k in range(10):
+        a = math.radians(k * 36 + 18)
+        c.save()
+        c.translate(540 + 121 * math.cos(a), 1250 + 121 * math.sin(a))
+        c.rotate(math.degrees(a))
+        c.drawRoundRect(skia.Rect.MakeLTRB(-9, -5, 9, 5), 3, 3, paint(CHROME))
+        c.restore()
+    c.drawCircle(540, 1250, 120, paint(CHROME, stroke=7))
+    c.drawCircle(540, 1250, 54, paint(SHELL))
+    c.drawCircle(540, 1250, 46, paint("#f4efe6", stroke=3))
+    draw_text(c, "1970", 540, 1262, font("ExtraBold", 32), "#f4efe6", align="center")
+    if kick_e > 0.02:
+        c.drawCircle(540, 1250, 112, paint(WHITE, 0.35 * kick_e))
+        c.drawCircle(540, 1250, 130 + 50 * (1 - kick_e), paint(WHITE, 0.6 * kick_e, stroke=5))
+    beater = 1250 + 60 - 22 * (1 - kick_e)
+    c.drawLine(570, 1378, 575, beater + 30, paint("#55565e", stroke=6))
+    c.drawCircle(575, beater + 30, 9, paint(INK))
+
+    # rack tom, floor tom
+    draw_drum_shell(c, 540, 1068, 124, 58)
     c.drawLine(712, 1290, 712, 1380, st)
     c.drawLine(812, 1290, 812, 1380, st)
-    draw_drum_shell(c, 762, 1200, 130, 95)
+    draw_drum_shell(c, 762, 1200, 134, 95)
+
     # snare on its stand
+    dts, vs = last_hit(t, ("snare",))
     c.drawLine(395, 1180, 395, 1380, st)
-    c.drawLine(395, 1380, 350, 1380, st)
-    c.drawLine(395, 1380, 440, 1380, st)
-    draw_drum_shell(c, 395, 1138, 160, 46, body="#d9dbe0")
-    # hi-hat (right side)
+    c.drawLine(395, 1330, 350, 1380, st)
+    c.drawLine(395, 1330, 440, 1380, st)
+    draw_drum_shell(c, 395, 1138, 164, 46, body="#d9dbe0",
+                    squash=(math.exp(-dts * 25) * vs if playing else 0))
+
+    # hi-hat
+    dth, _ = last_hit(t, ("hat",))
+    hw = 6 * math.exp(-dth * 7) * math.sin(dth * 38) if playing else 0
     c.drawLine(700, 1080, 700, 1380, st)
-    open_ = 4 + 6 * hat_h
-    draw_cymbal(c, 700, 1080 + open_, 78, 4)
-    draw_cymbal(c, 700, 1074 - open_, 78, 4)
+    c.drawLine(700, 1330, 660, 1380, st)
+    c.drawLine(700, 1330, 740, 1380, st)
+    open_ = 3 + 5 * pose["hat_h"]
+    draw_cymbal(c, 700, 1080 + open_, 80, 4)
+    draw_cymbal(c, 700, 1074 - open_, 80, 4 + hw)
 
-    # arms + sticks (in front of the kit)
-    def arm(shoulder, drum, h, bend, stick_dir):
-        hand = (drum[0] + stick_dir * 70, drum[1] - 50 - 90 * h)
-        el = ik(shoulder, hand, 118, 112, bend)
-        c.drawLine(shoulder[0], shoulder[1], el[0], el[1], paint(NAVY, stroke=50))
-        c.drawLine(el[0], el[1], hand[0], hand[1], paint(SKIN, stroke=36))
-        ang = math.atan2(drum[1] - hand[1], drum[0] - hand[0])
-        tip = (hand[0] + 150 * math.cos(ang), hand[1] + 150 * math.sin(ang))
-        c.drawLine(hand[0] - 20 * math.cos(ang), hand[1] - 20 * math.sin(ang), tip[0], tip[1],
-                   paint("#e9cf98", stroke=11))
-        c.drawCircle(hand[0], hand[1], 21, paint(SKIN))
-        c.drawCircle(hand[0], hand[1], 21, paint(SKIN_DK, stroke=3))
-        return tip
+    # arms: afterimages, smear, then the real arms
+    for k in range(trail, 0, -1):
+        pk = drummer_pose(t - k * 0.035, playing)
+        a = 0.28 * (1 - k / (trail + 1))
+        draw_arm(c, pk["left"], ghost=a)
+        draw_arm(c, pk["right"], ghost=a)
+    if playing:
+        prev = drummer_pose(t - 0.045, playing)
+        for side in ("left", "right"):
+            _, _, h0, t0, _ = prev[side]
+            _, _, h1, t1, _ = pose[side]
+            if np.linalg.norm(t1 - t0) > 12:
+                c.drawPath(p_poly([tuple(h0), tuple(t0), tuple(t1), tuple(h1)]), paint(WHITE, 0.4))
+    draw_arm(c, pose["left"])
+    draw_arm(c, pose["right"])
 
-    arm((488, 985 + bob * 0.6), (395, 1120), sn_h, -1, 1)
-    arm((636, 985 + bob * 0.6), (690, 1066), hat_h, 1, -1)
-    return sn_h, hat_h
+    # impact ring + sparks on accented snare hits
+    if playing and dts < 0.25 and vs > 0.5:
+        p = dts / 0.25
+        rx = 70 + 120 * ease_out(p)
+        c.drawOval(skia.Rect.MakeLTRB(395 - rx, 1128 - rx * 0.24, 395 + rx, 1128 + rx * 0.24),
+                   paint(WHITE, 0.8 * (1 - p), stroke=6))
+        for k in range(7):
+            a = math.radians(-160 + k * 23)
+            r0, r1 = 50 + 110 * ease_out(p), 80 + 140 * ease_out(p)
+            c.drawLine(395 + math.cos(a) * r0, 1110 + math.sin(a) * r0 * 0.8,
+                       395 + math.cos(a) * r1, 1110 + math.sin(a) * r1 * 0.8,
+                       paint("#fff3c8", 1 - p, stroke=6))
 
 
 def draw_meter(c, t, rise, alarm):
@@ -676,158 +918,277 @@ def draw_meter(c, t, rise, alarm):
     c.restore()
 
 
-def draw_band(c, t, a, slide):
+def squash_in(t, t_in, dur=0.5):
+    """(sx, sy) for a springy pop-in from the feet."""
+    k = clamp((t - t_in) / dur)
+    if k >= 1:
+        return 1.0, 1.0
+    sy = max(0.001, back_out(k, 2.6))
+    return 1 + 0.35 * (1 - k) * math.sin(k * math.pi), sy
+
+
+def draw_band(c, t, T, E):
     """Bandleader (cape + mic) on the right, bassist on the left."""
+    a = window(t, T["band"] - 0.05, E["dropout"] + 1.3, 0.05, 0.3)
     if a <= 0:
         return
+    drop = T["dropout"]
+    leave = smooth((t - drop - 0.6) / 0.9)
+    hop = -150 * math.sin(math.pi * clamp((t - drop - 0.6) / 0.9))
+    singing = t < drop + 0.3
+    beat = 2 * math.pi * t * BPM / 60
     c.saveLayerAlpha(None, int(255 * a))
+
     # bandleader
-    c.save()
-    c.translate(slide, 0)
-    sway = 6 * math.sin(t * 2 * math.pi * BPM / 60 / 2)
     bx = 900
-    c.drawLine(bx - 20, 1170, bx - 30, 1380, paint(INK, stroke=30))
-    c.drawLine(bx + 20, 1170, bx + 32, 1380, paint(INK, stroke=30))
-    c.drawPath(path_of([(bx - 70, 960), (bx + 70, 960), (bx + 120 + sway, 1330), (bx - 110 + sway, 1330)]),
-               paint("#b0182c"))
-    c.drawRoundRect(skia.Rect.MakeLTRB(bx - 52, 950, bx + 52, 1190), 30, 30, paint("#f4efe6"))
-    c.drawLine(bx, 960, bx, 1190, paint(INK, stroke=4))
-    c.drawOval(skia.Rect.MakeLTRB(bx - 44 + sway * 0.3, 830, bx + 40 + sway * 0.3, 940), paint(SKIN))
-    c.drawPath(path_of([(bx - 50 + sway * 0.3, 870), (bx - 40, 800), (bx + 10, 780), (bx + 54, 810),
-                        (bx + 40 + sway * 0.3, 860), (bx + 10, 832), (bx - 30, 842)]), paint(INK))
-    c.drawCircle(bx - 26 + sway * 0.3, 884, 5, paint(INK))
-    # mic stand + arm to mic
-    c.drawLine(bx - 120, 950, bx - 120, 1380, paint("#55565e", stroke=6))
-    c.drawLine(bx - 120, 950, bx - 60, 905, paint("#55565e", stroke=6))
-    c.drawRoundRect(skia.Rect.MakeLTRB(bx - 75, 885, bx - 45, 925), 12, 12, paint(INK))
-    c.drawLine(bx - 40, 990, bx - 70, 1060, paint("#f4efe6", stroke=28))
-    c.drawLine(bx - 70, 1060, bx - 64, 930, paint(SKIN, stroke=24))
-    c.restore()
-    # bassist
+    sx, sy = squash_in(t, T["band"] + 0.05)
     c.save()
-    c.translate(-slide, 0)
+    c.translate(560 * leave, hop)
+    c.translate(bx, 1380)
+    c.scale(sx, sy)
+    c.translate(-bx, -1380)
+    sway = 7 * math.sin(beat / 2) if singing else 0
+    limb(c, (bx - 20, 1170), (bx - 34 + sway * 0.4, 1372), 32, "#26262e", INK)
+    limb(c, (bx + 20, 1170), (bx + 34, 1372), 32, "#26262e", INK)
+    c.drawRoundRect(skia.Rect.MakeLTRB(bx - 66 + sway * 0.4, 1360, bx - 10, 1384), 10, 10, paint(INK))
+    c.drawRoundRect(skia.Rect.MakeLTRB(bx + 8, 1360, bx + 70, 1384), 10, 10, paint(INK))
+    cape = p_blob([(bx - 70, 960), (bx + 70, 960), (bx + 128 + sway, 1330), (bx + 10, 1350), (bx - 116 + sway, 1330)])
+    shaded(c, cape, "#c21d33", "#7e0f1e", off=(-14, -6), hi="#e8475a")
+    for k in range(14):
+        tw = 0.5 + 0.5 * math.sin(t * 6 + k * 1.7)
+        c.drawCircle(bx - 80 + 160 * hash01("sp", k) + sway * hash01("sq", k),
+                     1000 + 320 * hash01("sy", k), 3 + 3 * tw, paint("#ffd977", 0.4 + 0.6 * tw))
+    shirt = p_rrect(bx - 52, 950, bx + 52, 1190, 30)
+    shaded(c, shirt, "#f4efe6", "#cfc6b4", off=(-10, -6))
+    c.drawLine(bx, 962, bx, 1190, paint(INK, stroke=4))
+    hx = bx + sway * 0.3
+    shaded(c, p_oval(hx - 44, 832, hx + 40, 944), "#7b4a2e", "#5c3520", off=(-7, -5), hi="#946043")
+    hair = p_blob([(hx - 52, 874), (hx - 44, 804), (hx + 4, 774), (hx + 58, 800), (hx + 50, 870), (hx + 10, 834),
+                   (hx - 30, 846)])
+    shaded(c, hair, INK, "#0b0b10", off=(-6, -6), hi="#34343f")
+    halftone(c, hair, "#3b3b4a", 0.8, step=11, r=2.0)
+    c.drawCircle(hx - 24, 884, 5, paint(INK))
+    c.drawLine(hx - 36, 868, hx - 12, 870, paint(INK, stroke=5))
+    mouth = (0.3 + 0.7 * abs(math.sin(t * 8.5))) if singing else (0.9 if t < drop + 0.9 else 0.2)
+    c.drawOval(skia.Rect.MakeLTRB(hx - 36, 912 - 2, hx - 18, 912 + 14 * mouth), paint("#3a1610"))
+    # mic stand + mic
+    c.drawLine(bx - 120, 950, bx - 120, 1380, paint("#55565e", stroke=6))
+    c.drawLine(bx - 150, 1380, bx - 90, 1380, paint("#55565e", stroke=6))
+    c.drawLine(bx - 120, 950, bx - 62, 908, paint("#55565e", stroke=6))
+    c.drawRoundRect(skia.Rect.MakeLTRB(bx - 76, 884, bx - 46, 926), 12, 12, paint(INK))
+    halftone(c, p_rrect(bx - 76, 884, bx - 46, 904, 12), "#666666", 1, step=6, r=1.5)
+    # mic arm
+    limb(c, (bx - 30, 990), (bx - 66, 1060), 30, "#f4efe6", "#cfc6b4")
+    limb(c, (bx - 66, 1060), (bx - 60, 935), 25, "#7b4a2e", "#5c3520")
+    # free arm: swings on the beat, then points at the drummer ("give the drummer some")
+    point = smooth((t - drop - 0.05) / 0.3) * (1 - leave)
+    elbow = (lerp(bx + 70, bx - 110, point), lerp(1060 + 20 * math.sin(beat), 975, point))
+    hand = (lerp(bx + 60, bx - 220, point), lerp(960 + 30 * math.sin(beat), 935, point))
+    limb(c, (bx + 36, 990), elbow, 30, "#f4efe6", "#cfc6b4")
+    limb(c, elbow, hand, 25, "#7b4a2e", "#5c3520")
+    c.drawCircle(hand[0], hand[1], 15, paint("#7b4a2e"))
+    if point > 0.5:
+        c.drawLine(hand[0] - 4, hand[1], hand[0] - 34, hand[1] - 2, paint("#7b4a2e", stroke=9))
+    c.restore()
+
+    # bassist
     gx = 140
-    c.drawLine(gx - 18, 1170, gx - 26, 1380, paint(INK, stroke=28))
-    c.drawLine(gx + 18, 1170, gx + 26, 1380, paint(INK, stroke=28))
-    c.drawRoundRect(skia.Rect.MakeLTRB(gx - 50, 960, gx + 50, 1190), 30, 30, paint("#2f7d6d"))
-    c.drawOval(skia.Rect.MakeLTRB(gx - 38, 850, gx + 42, 955), paint(SKIN_DK))
-    c.drawCircle(gx + 4, 870, 54, paint(INK))
-    c.drawOval(skia.Rect.MakeLTRB(gx - 34, 870, gx + 40, 960), paint(SKIN_DK))
+    sx, sy = squash_in(t, T["band"] + 0.2)
+    nod = 10 * hit_env(t, ("kick",), 7) if singing else 0
+    c.save()
+    c.translate(-560 * leave, hop)
+    c.translate(gx, 1380)
+    c.scale(sx, sy)
+    c.translate(-gx, -1380)
+    limb(c, (gx - 18, 1170), (gx - 30, 1372), 30, "#2c3e50", "#1b2733")
+    limb(c, (gx + 18, 1170), (gx + 30, 1372), 30, "#2c3e50", "#1b2733")
+    c.drawRoundRect(skia.Rect.MakeLTRB(gx - 62, 1360, gx - 8, 1384), 10, 10, paint(INK))
+    c.drawRoundRect(skia.Rect.MakeLTRB(gx + 6, 1360, gx + 64, 1384), 10, 10, paint(INK))
+    shaded(c, p_rrect(gx - 52, 960, gx + 52, 1190, 30), "#2f8a74", "#1f5e4f", off=(-10, -6), hi="#45a88f")
+    c.drawRect(skia.Rect.MakeLTRB(gx - 9, 925, gx + 13, 965), paint(SKIN_DK))
+    c.save()
+    c.rotate(nod * 0.6, gx, 950)
+    afro = p_circle(gx + 6, 872, 60)
+    shaded(c, afro, INK, "#0b0b10", off=(-6, -5), hi="#34343f")
+    halftone(c, afro, "#3b3b4a", 0.8, step=11, r=2.0)
+    shaded(c, p_oval(gx - 32, 868, gx + 44, 962), SKIN_DK, "#55341f", off=(-6, -4))
+    c.drawCircle(gx + 22, 904, 5, paint(INK))
+    c.drawLine(gx + 12, 930, gx + 30, 930, paint("#3a1610", stroke=4))
+    c.restore()
     c.save()
     c.translate(gx, 1100)
     c.rotate(-32)
-    c.drawRoundRect(skia.Rect.MakeLTRB(-60, -40, 60, 40), 36, 36, paint("#d9782a"))
-    c.drawRect(skia.Rect.MakeLTRB(50, -9, 260, 9), paint("#5a3a1e"))
-    c.drawRect(skia.Rect.MakeLTRB(250, -14, 290, 14), paint(INK))
+    shaded(c, p_blob([(-70, -30), (-20, -46), (40, -40), (66, 0), (40, 42), (-20, 46), (-70, 30)]),
+           "#e0822e", "#a85a18", off=(-6, -5), hi="#f2a35a")
+    c.drawCircle(-6, 0, 12, paint(INK))
+    c.drawRect(skia.Rect.MakeLTRB(50, -9, 270, 9), paint("#5a3a1e"))
+    for k in range(6):
+        c.drawLine(80 + k * 30, -9, 80 + k * 30, 9, paint("#c9ccd3", stroke=2))
+    c.drawRoundRect(skia.Rect.MakeLTRB(262, -15, 302, 15), 5, 5, paint(INK))
     c.restore()
-    c.drawLine(gx + 40, 1000, gx + 10, 1100, paint(SKIN_DK, stroke=24))
+    strum = 14 * math.sin(beat * 2) if singing else 0
+    limb(c, (gx + 30, 990), (gx + 30, 1080), 26, "#2f8a74", "#1f5e4f")
+    limb(c, (gx + 30, 1080), (gx - 4 + strum, 1110), 22, SKIN_DK, "#55341f")
     c.restore()
     c.restore()
 
 
-def draw_producer(c, t, ev, a):
-    """Producer at a table with a 4x4-pad sampler, around world x=1520."""
+def draw_producer(c, t, T, E):
+    """Producer at a table with a pad sampler, around world x=1520."""
+    a = window(t, T["sampled"], T["royalty"] + 0.3, 0.05, 0.5)
     if a <= 0:
         return
-    c.saveLayerAlpha(None, int(255 * a))
     px = 1520
-    tap = drum_state(ev, t, ("snare", "kick"))
-    # chair back + body
-    c.drawRoundRect(skia.Rect.MakeLTRB(px - 80, 960, px + 80, 1190), 50, 50, paint("#2f8a8a"))
-    c.drawRoundRect(skia.Rect.MakeLTRB(px - 60, 900, px + 60, 920), 8, 8, paint("#2f8a8a"))
-    c.drawOval(skia.Rect.MakeLTRB(px - 50, 800, px + 46, 925), paint("#c98f62"))
-    c.drawPath(path_of([(px - 58, 830), (px - 40, 780), (px + 30, 776), (px + 60, 806), (px - 58, 830)]),
-               paint("#e04f3f"))
-    c.drawRoundRect(skia.Rect.MakeLTRB(px - 112, 812, px - 30, 826), 6, 6, paint("#e04f3f"))  # cap brim
-    # headphones
-    c.drawArc(skia.Rect.MakeLTRB(px - 62, 790, px + 62, 930), 200, 140, False, paint(INK, stroke=10))
-    c.drawRoundRect(skia.Rect.MakeLTRB(px + 34, 848, px + 66, 900), 12, 12, paint(INK))
-    c.drawCircle(px - 26, 862, 5, paint(INK))
+    sx, sy = squash_in(t, T["sampled"] + 0.1)
+    tap = drum_state(t, ("snare", "kick"))
+    nod = 9 * hit_env(t, ("kick", "snare"), 7)
+    c.saveLayerAlpha(None, int(255 * a))
+    c.save()
+    c.translate(px, 1380)
+    c.scale(sx, sy)
+    c.translate(-px, -1380)
+    # chair
+    c.drawRoundRect(skia.Rect.MakeLTRB(px + 40, 1000, px + 96, 1230), 20, 20, paint("#3b3b46"))
+    c.drawLine(px + 70, 1230, px + 70, 1380, paint("#55565e", stroke=8))
+    # body + head
+    body = p_blob([(px - 80, 1000), (px - 20, 955), (px + 60, 965), (px + 86, 1060), (px + 80, 1190), (px - 78, 1190)])
+    shaded(c, body, "#2f8a8a", "#1d5d5d", off=(-12, -8), hi="#46a7a7")
+    c.drawPath(path_of([(px - 40, 980), (px - 30, 1040)]), paint(WHITE, 0.8, stroke=4))
+    c.save()
+    c.rotate(nod, px, 950)
+    shaded(c, p_oval(px - 50, 810, px + 46, 935), "#c98f62", "#a06c44", off=(-7, -5), hi="#dba67b")
+    cap = p_blob([(px - 56, 842), (px - 44, 790), (px + 20, 778), (px + 58, 812), (px + 54, 846)])
+    shaded(c, cap, "#e04f3f", "#a8352a", off=(-5, -5), hi="#f07a6b")
+    c.drawRoundRect(skia.Rect.MakeLTRB(px - 118, 830, px - 30, 846), 7, 7, paint("#c43f31"))
+    c.drawArc(skia.Rect.MakeLTRB(px - 64, 796, px + 64, 936), 195, 150, False, paint(INK, stroke=11))
+    shaded(c, p_rrect(px + 30, 852, px + 68, 910, 14), "#2b2b33", INK, off=(-4, -3))
+    blink = 0.15 if (t % 2.9) < 0.1 else 1
+    c.drawOval(skia.Rect.MakeLTRB(px - 34, 870 - 6 * blink, px - 18, 870 + 6 * blink), paint(INK))
+    c.drawLine(px - 40, 902, px - 22, 900, paint("#7a4a2e", stroke=4))
+    c.restore()
     # table + sampler
-    c.drawRect(skia.Rect.MakeLTRB(px - 220, 1180, px + 220, 1206), paint("#6b4426"))
-    c.drawLine(px - 190, 1206, px - 190, 1380, paint("#6b4426", stroke=16))
-    c.drawLine(px + 190, 1206, px + 190, 1380, paint("#6b4426", stroke=16))
-    box = skia.Rect.MakeLTRB(px - 170, 1110, px + 60, 1182)
-    c.drawRoundRect(box, 10, 10, paint("#8d8f96"))
-    c.drawRoundRect(skia.Rect.MakeLTRB(px - 160, 1118, px - 70, 1140), 4, 4, paint("#3b6b3f"))
-    lit = int((t / STEP)) % 16
+    shaded(c, p_rrect(px - 230, 1178, px + 230, 1208, 6), "#7a4e2c", "#563620", off=(0, -5))
+    c.drawLine(px - 196, 1206, px - 196, 1380, paint("#563620", stroke=16))
+    c.drawLine(px + 196, 1206, px + 196, 1380, paint("#563620", stroke=16))
+    shaded(c, p_rrect(px - 180, 1100, px + 70, 1182, 12), "#9a9ca4", "#6e7078", off=(-6, -6), hi="#c4c6cc")
+    c.drawRoundRect(skia.Rect.MakeLTRB(px - 168, 1114, px - 76, 1140), 4, 4, paint("#35603a"))
+    lvl = 0.3 + 0.7 * tap
+    c.drawRect(skia.Rect.MakeLTRB(px - 162, 1120, px - 162 + 80 * lvl, 1134), paint("#8ee36a"))
+    lit = int(t / STEP) % 8
     for i in range(4):
         for j in range(2):
-            idx = i + 4 * j
-            on = (idx == lit % 8) and tap > 0.3
-            c.drawRoundRect(skia.Rect.MakeLTRB(px - 60 + i * 28, 1120 + j * 28, px - 38 + i * 28, 1142 + j * 28),
-                            4, 4, paint(RED if on else "#c9ccd3"))
+            on = (i + 4 * j == lit) and tap > 0.3
+            r = skia.Rect.MakeLTRB(px - 62 + i * 30, 1112 + j * 30, px - 38 + i * 30, 1136 + j * 30)
+            c.drawRoundRect(r, 4, 4, paint(RED if on else "#d5d7dd"))
+            if on:
+                c.drawRoundRect(r.makeOutset(5, 5), 7, 7, paint(RED, 0.35))
     # arm tapping pads
-    hand = (px - 20, 1110 - 30 * tap)
-    c.drawLine(px - 50, 990, px - 110, 1080, paint("#2f8a8a", stroke=40))
-    c.drawLine(px - 110, 1080, hand[0], hand[1], paint("#c98f62", stroke=30))
-    c.drawCircle(hand[0], hand[1], 18, paint("#c98f62"))
+    hand = (px - 22, 1104 - 34 * tap)
+    limb(c, (px - 40, 1000), (px - 112, 1086), 40, "#2f8a8a", "#1d5d5d")
+    limb(c, (px - 112, 1086), hand, 30, "#c98f62", "#a06c44")
+    shaded(c, p_circle(hand[0], hand[1], 18), "#c98f62", "#a06c44", off=(-4, -3))
+    c.restore()
     c.restore()
 
 
-def wave_curve():
-    ctrl = [(395, 1110), (250, 1040), (150, 860), (150, 600), (300, 380), (520, 320),
-            (720, 420), (760, 600), (660, 720), (520, 690), (480, 570), (560, 520), (610, 570)]
-    pts, L = resample(catmull(ctrl), 6.0)
-    return pts, L
+# ---- the hero "sound wave" curl
+
+WAVE_CTRL = [(395, 1110), (250, 1040), (150, 860), (150, 600), (300, 380), (520, 320),
+             (720, 420), (760, 600), (660, 720), (520, 690), (480, 570), (560, 520), (610, 570)]
+WAVE_PTS, WAVE_LEN = resample(catmull(WAVE_CTRL), 6.0)
+_tang = np.gradient(WAVE_PTS, axis=0)
+_tang /= np.linalg.norm(_tang, axis=1, keepdims=True) + 1e-9
+WAVE_NRM = np.stack([-_tang[:, 1], _tang[:, 0]], 1)
+WAVE_S = np.linspace(0, 1, len(WAVE_PTS))
+WAVE_W = 30 + 180 * np.sin(np.pi * np.clip(WAVE_S * 1.15, 0, 1)) ** 1.3 * (1 - 0.72 * WAVE_S)
+WAVE_EDGES = [path_of([tuple(p) for p in WAVE_PTS + WAVE_NRM * (WAVE_W * f)[:, None]]) for f in (-0.5, 0.5)]
+WAVE_BANDS = [(-0.5, 0.5, "#14318f"), (-0.36, 0.5, "#2152c4"), (-0.12, 0.45, "#3a80e3"),
+              (0.14, 0.4, "#78bdfc"), (0.28, 0.34, "#e9f5ff")]
 
 
-WAVE_PTS, WAVE_LEN = wave_curve()
-WAVE_PATH = path_of([tuple(p) for p in WAVE_PTS])
+def ribbon(pts, nrm, w, f0, f1):
+    a = pts + nrm * (w * f0)[:, None]
+    b = pts + nrm * (w * f1)[:, None]
+    return p_poly([tuple(p) for p in np.concatenate([a, b[::-1]])])
 
 
-def draw_wave(c, t, grow, fade, phase_speed=1.0):
-    """Sound-wave curl: waveform bars standing perpendicular on the spiral."""
-    if grow <= 0 or fade <= 0:
-        return
-    pts = WAVE_PTS
-    n = len(pts)
+def draw_note(c, x, y, s, color, a, rot):
+    c.save()
+    c.translate(x, y)
+    c.rotate(rot)
+    c.save()
+    c.rotate(-20)
+    c.drawOval(skia.Rect.MakeLTRB(-s * 0.55, -s * 0.36, s * 0.55, s * 0.36), paint(color, a))
+    c.restore()
+    c.drawLine(s * 0.46, -s * 0.1, s * 0.46, -s * 2.1, paint(color, a, stroke=s * 0.17))
+    c.drawPath(path_of([(s * 0.46, -s * 2.1), (s * 1.1, -s * 1.6), (s * 0.95, -s * 1.0)]),
+               paint(color, a, stroke=s * 0.17))
+    c.restore()
+
+
+def draw_wave(c, t, grow, fade, tl):
+    """Layered-ribbon water curl whose edge ripples like a sound wave."""
+    n = len(WAVE_PTS)
     upto = int(n * clamp(grow))
-    tang = np.gradient(pts, axis=0)
-    tang /= np.linalg.norm(tang, axis=1, keepdims=True) + 1e-9
-    nrm = np.stack([-tang[:, 1], tang[:, 0]], 1)
-    s = np.linspace(0, 1, n)
-    width = 26 + 150 * np.sin(np.pi * np.clip(s * 1.15, 0, 1)) ** 1.3 * (1 - 0.75 * s)
-    # soft body
-    left = pts + nrm * width[:, None] * 0.55
-    right = pts - nrm * width[:, None] * 0.55
-    body = np.concatenate([left[:upto], right[:upto][::-1]])
-    if upto > 3:
-        c.drawPath(path_of([tuple(p) for p in body]), paint("#3d7be0", 0.18 * fade))
-    stops = [col("#16308f"), col("#2f63d6"), col("#59a8ff"), col("#d8ecff")]
-    for i in range(0, upto, 2):
-        u = s[i] * 3
-        k = min(int(u), 2)
-        fr = u - k
-        cc = skia.Color4f(skia.Color4f(stops[k]).fR * (1 - fr) + skia.Color4f(stops[k + 1]).fR * fr,
-                          skia.Color4f(stops[k]).fG * (1 - fr) + skia.Color4f(stops[k + 1]).fG * fr,
-                          skia.Color4f(stops[k]).fB * (1 - fr) + skia.Color4f(stops[k + 1]).fB * fr, fade)
-        ph = i * 0.21 - t * 9 * phase_speed
-        amp = (0.35 + 0.65 * abs(math.sin(ph) * math.sin(ph * 0.37 + 1.3)) + 0.15 * hash01(i, int(t * 12)))
-        tip_fade = clamp((upto - i) / 25)
-        h = width[i] * amp * 0.5 * (0.3 + 0.7 * tip_fade)
-        p = pts[i]
-        q0, q1 = p + nrm[i] * h, p - nrm[i] * h
-        pp = skia.Paint(AntiAlias=True, Color4f=cc, StrokeWidth=7, Style=skia.Paint.kStroke_Style,
-                        StrokeCap=skia.Paint.kRound_Cap)
-        c.drawLine(q0[0], q0[1], q1[0], q1[1], pp)
-    # spray of droplets/notes at the leading edge
-    if upto > 10:
-        head = pts[upto - 1]
-        for k in range(14):
-            r0 = hash01("spray", k)
-            ang = r0 * 2 * math.pi
-            dist = 30 + 90 * ((t * 0.9 + hash01("d", k)) % 1)
-            rr = 3 + 9 * hash01("r", k)
-            c.drawCircle(head[0] + math.cos(ang) * dist, head[1] + math.sin(ang) * dist, rr,
-                         paint(WHITE if k % 3 else "#59a8ff", 0.85 * fade))
+    if upto < 6 or fade <= 0:
+        return
+    idx = np.arange(upto)
+    s = WAVE_S[:upto]
+    w = WAVE_W[:upto] * (1 + 0.11 * np.sin(s * 60 - t * 10) + 0.05 * np.sin(s * 150 - t * 19))
+    w = w * np.clip((upto - idx) / 22, 0.2, 1)
+    pts, nrm = WAVE_PTS[:upto], WAVE_NRM[:upto]
+    c.saveLayerAlpha(None, int(255 * fade))
+    c.drawPath(ribbon(pts + np.array([14, 12]), nrm, w, -0.5, 0.5), paint("#6b5232", 0.16))
+    for f0, f1, cc in WAVE_BANDS:
+        c.drawPath(ribbon(pts, nrm, w, f0, f1), paint(cc))
+    for f, dash, sp, al, sw in ((0.02, [60, 90], 420, 0.45, 5), (-0.25, [30, 120], 300, 0.35, 4),
+                                (0.36, [18, 50], 520, 0.85, 3)):
+        line = pts + nrm * (w * f)[:, None]
+        eff = skia.DashPathEffect.Make(dash, -t * sp)
+        c.drawPath(path_of([tuple(p) for p in line]), paint(WHITE, al, stroke=sw, effect=eff))
+    # foam at the crest
+    head = pts[-1]
+    for k in range(10):
+        r = 7 + 16 * hash01("fo", k)
+        ang = hash01("fa", k) * 2 * math.pi
+        d = 10 + 30 * hash01("fd", k) + 4 * math.sin(t * 7 + k)
+        c.drawCircle(head[0] + math.cos(ang) * d, head[1] + math.sin(ang) * d, r, paint(WHITE, 0.92))
+    # droplets thrown off the edge
+    for i in range(48):
+        tb = i * 0.085 + 0.05 * hash01("db", i)
+        age = tl - tb
+        if not (0 < age < 0.9):
+            continue
+        j = int(hash01("di", i) * (upto - 1))
+        side = 1 if hash01("ds", i) > 0.35 else -1
+        p0 = pts[j] + nrm[j] * w[j] * 0.5 * side
+        v = nrm[j] * side * (180 + 260 * hash01("dv", i)) + np.array([0, -120])
+        pos = p0 + v * age + np.array([0, 450 * age * age])
+        vel = v + np.array([0, 900 * age])
+        r = (4 + 9 * hash01("dr", i)) * (1 - age / 0.9)
+        cc = WHITE if i % 3 else "#7cc0ff"
+        c.drawLine(pos[0], pos[1], pos[0] - vel[0] * 0.03, pos[1] - vel[1] * 0.03, paint(cc, 0.45, stroke=r * 1.1))
+        c.drawCircle(pos[0], pos[1], r, paint(cc, 0.95))
+    # music notes drifting up out of the wave
+    for i in range(8):
+        tb = i * 0.4 + 0.3 * hash01("nb", i)
+        age = tl - tb
+        if not (0 < age < 2.2):
+            continue
+        j = int((0.15 + 0.7 * hash01("nj", i)) * (upto - 1))
+        x = pts[j][0] + 40 * math.sin(age * 3 + i)
+        y = pts[j][1] - 150 * age
+        draw_note(c, x, y, 22 + 10 * hash01("ns", i), NAVY if i % 2 else "#2152c4",
+                  window(age, 0, 2.2, 0.3, 0.6), 15 * math.sin(age * 4 + i))
+    c.restore()
 
 
 def draw_dashed_curl(c, t, a, draw_on=1.0, w=6):
     if a <= 0 or draw_on <= 0:
         return
     eff = skia.DashPathEffect.Make([24, 15], -t * 40)
-    c.drawPath(trimmed(WAVE_PATH, 0, draw_on), paint(RED, a, stroke=w, effect=eff))
+    for edge in WAVE_EDGES:
+        c.drawPath(trimmed(edge, 0, draw_on), paint(RED, a, stroke=w, effect=eff))
 
 
 def draw_waveform_strip(c, t, a, hl, cx=540, y=560, w=760):
@@ -1073,6 +1434,7 @@ def render(cfg_path):
     T["end"] = cfg["lines"][-1]["end"]
     E = {l["id"]: l["end"] for l in cfg["lines"]}
     events = drum_events(T, total)
+    set_events(events)
     print(f"duration {total:.2f}s, {len(chunks)} caption chunks")
     print("  ".join(f"{k}={v:.2f}" for k, v in T.items()))
 
@@ -1103,42 +1465,64 @@ def render(cfg_path):
         stdin=subprocess.PIPE)
 
     surf = skia.Surface(W, H)
-    for fi, t in enumerate(stills or [i / fps for i in range(frames)]):
-        c = surf.getCanvas()
-        c.clear(col(CREAM))
-        z, cx, cy = camera_at(keys, t)
+    shadow = skia.Paint(ImageFilter=skia.ImageFilters.DropShadow(14, 11, 0, 0, col("#6b5232", 0.2)))
+    sections = music_sections(T, total)
+
+    def is_playing(tt):
+        return any(s0 <= tt < s1 and "drums" in parts for s0, s1, parts in sections)
+
+    def mood_at(tt):
+        if T["solo"] <= tt < T["twenty"] + 0.3:
+            return "bliss"
+        if T["royalty"] + 0.3 <= tt < T["everywhere"]:
+            return "sad"
+        return "focus"
+
+    def cam(tt):
+        z, cx, cy = camera_at(keys, tt)
+        if is_playing(tt):
+            z *= 1 + 0.012 * hit_env(tt, ("kick",), 12)
+        return z, cx, cy
+
+    def draw_world(c, t, z, cx, cy):
+        playing = is_playing(t)
         c.save()
         c.translate(W / 2, H / 2)
         c.scale(z, z)
         c.translate(-cx, -cy)
-        # background is laid out for screen space; stretch it under the world camera
         c.drawImage(bg, BG_X0, BG_Y0)
+        # spotlight cone + dust in the light
+        cone = skia.GradientShader.MakeLinear([(0, -300), (0, 1420)], [col("#fff8e6", 0.0), col("#fff8e6", 0.32)])
+        c.drawPath(p_poly([(430, -300), (650, -300), (930, 1420), (150, 1420)]), paint(WHITE, shader=cone))
+        for k in range(36):
+            mx, my, ms = hash01("mx", k), hash01("my", k), hash01("ms", k)
+            x = 200 + 680 * mx + 18 * math.sin(t * 0.7 + k)
+            y = 1380 - ((my * 1500 + t * 22 * (0.5 + ms)) % 1500)
+            c.drawCircle(x, y, 1.5 + 2.5 * ms, paint("#fffaf0", 0.35 + 0.4 * ms))
 
-        playing = any(s0 <= t < s1 and "drums" in parts for s0, s1, parts in music_sections(T, total))
+        hero1 = t < T["older"] + 0.1
         hero_a = window(t, 0, T["older"] + 0.1, 0, 0.3) + window(t, T["everywhere"] - 0.1, total, 0.3, 0.01)
-        hero_grow = ease_out(t / 1.6) if t < T["older"] else ease_out((t - T["everywhere"] + 0.1) / 1.2)
+        tl = t if hero1 else t - (T["everywhere"] - 0.1)
+        hero_grow = ease_out(tl / 1.4)
         hero_fade = 1 - smooth((t - T["almost"] - 0.3) / 0.9) if t > T["everywhere"] else 1
-        draw_wave(c, t, hero_grow * min(1, hero_a), hero_fade * min(1, hero_a))
-        # red dashed trace of the curl: first as the "it's a loop" reveal, then at the end
+        draw_wave(c, t, hero_grow * min(1, hero_a), hero_fade * min(1, hero_a), tl)
         draw_dashed_curl(c, t, window(t, T["almost"], total, 0.3, 0.01), smooth((t - T["almost"]) / 1.2))
 
-        band_a = window(t, T["band"] - 0.1, E["dropout"] + 0.8, 0.4, 0.6)
-        band_slide = 420 * smooth((t - T["dropout"] - 0.4) / 1.0)
-        draw_band(c, t, band_a, band_slide)
-
+        c.saveLayer(None, shadow)
+        draw_band(c, t, T, E)
         meter_rise = smooth((t - T["royalty"] - 0.2) / 0.6) * (1 - smooth((t - E["almost"]) / 0.6))
         meter_rise = max(meter_rise, window(t, 0, T["band"], 0, 0.4))
-        draw_meter(c, t, meter_rise, t > T["royalty2"] + 0.2 and t < E["royalty2"] + 0.5)
-
-        bob = 6 * drum_state(events, t, ("snare", "kick")) if playing else 0
+        draw_meter(c, t, meter_rise, T["royalty2"] + 0.2 < t < E["royalty2"] + 0.5)
         ghost = smooth((t - T["almost"] - 0.2) / 1.0)
         if ghost > 0:
             c.saveLayerAlpha(None, int(255 * (1 - 0.72 * ghost)))
-        draw_drummer(c, t, events, playing, bob)
+        solo = T["solo"] <= t < T["twenty"]
+        draw_drummer(c, t, playing, mood_at(t), trail=4 if solo else 0)
         if ghost > 0:
             c.restore()
+        draw_producer(c, t, T, E)
+        c.restore()
 
-        draw_producer(c, t, events, window(t, T["sampled"], T["royalty"] + 0.3, 0.6, 0.5))
         strip_a = window(t, T["twenty"] - 0.05, T["era"] + 0.3, 0.3, 0.4)
         draw_waveform_strip(c, t, strip_a, smooth((t - T["twenty"] - 0.2) / 0.3), cx=540, y=560)
         # dashed cable from the highlighted break to the sampler
@@ -1147,26 +1531,49 @@ def render(cfg_path):
             cab = path_of([tuple(p) for p in catmull([(830, 490), (1150, 380), (1450, 700), (1440, 1100)], 30)])
             eff = skia.DashPathEffect.Make([22, 14], -t * 60)
             c.drawPath(trimmed(cab, 0, cable), paint(RED, stroke=7, effect=eff))
+            m = skia.PathMeasure(cab, False)
+            pos, _ = m.getPosTan(m.getLength() * ((t * 0.8) % 1) * cable)
+            if pos is not None:
+                c.drawCircle(pos.x(), pos.y(), 12, paint(RED))
+                c.drawCircle(pos.x(), pos.y(), 22, paint(RED, 0.25))
         # loop arrow over the sampler
         loop_a = window(t, T["looped"], T["royalty"], 0.3, 0.4)
         if loop_a > 0:
             c.save()
             c.translate(1450, 960)
+            c.scale(back_out((t - T["looped"]) / 0.4), back_out((t - T["looped"]) / 0.4))
             c.rotate(t * 220)
-            p = paint(RED, loop_a, stroke=12)
-            c.drawArc(skia.Rect.MakeLTRB(-90, -90, 90, 90), 20, 300, False, p)
-            c.drawPath(path_of([(84, -48), (60, 20), (118, 4)]), paint(RED, loop_a))
+            c.drawArc(skia.Rect.MakeLTRB(-90, -90, 90, 90), 20, 300, False, paint(RED, loop_a, stroke=14))
+            c.drawPath(p_poly([(84, -48), (60, 20), (118, 4)]), paint(RED, loop_a))
             c.restore()
-        # motion lines during the solo
+        # speed lines during the solo
         solo_a = window(t, T["solo"], T["twenty"], 0.2, 0.3)
         if solo_a > 0:
-            for k in range(8):
-                ang = math.radians(200 + k * 22)
-                r0 = 260 + 30 * math.sin(t * 20 + k)
+            for k in range(12):
+                ang = math.radians(195 + k * 14 + 6 * math.sin(t * 3 + k))
+                r0 = 250 + 40 * ((t * 3 + hash01("sl", k)) % 1)
+                ln = 40 + 60 * hash01("sll", k)
                 c.drawLine(560 + math.cos(ang) * r0, 1040 + math.sin(ang) * r0,
-                           560 + math.cos(ang) * (r0 + 70), 1040 + math.sin(ang) * (r0 + 70),
-                           paint(NAVY, 0.6 * solo_a, stroke=6))
-        c.restore()  # end world camera
+                           560 + math.cos(ang) * (r0 + ln), 1040 + math.sin(ang) * (r0 + ln),
+                           paint(NAVY, 0.55 * solo_a, stroke=5))
+        c.restore()
+
+    for fi, t in enumerate(stills or [i / fps for i in range(frames)]):
+        c = surf.getCanvas()
+        c.clear(col(CREAM))
+        z, cx, cy = cam(t)
+        z0, cx0, cy0 = cam(t - 1 / fps)
+        moving = math.hypot(cx - cx0, cy - cy0) * z > 14 or abs(z / z0 - 1) > 0.015
+        # camera motion blur: average a few sub-frame camera positions on fast moves
+        subs = 4 if moving else 1
+        for j in range(subs):
+            ts = t - (subs - 1 - j) / subs / fps
+            if j:
+                c.saveLayerAlpha(None, int(255 / (j + 1)))
+            draw_world(c, t, *cam(ts))
+            if j:
+                c.restore()
+
 
         # ---- screen-space overlays
         draw_glitch_title(c, t, T["older"], T["band"] + 0.1, "OLDER THAN", "HIP-HOP.")
