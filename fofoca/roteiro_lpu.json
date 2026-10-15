@@ -2,87 +2,249 @@
   "output": "output/lpu_reddit.mp4",
   "fps": 30,
   "handle": "@seuperfil",
-
   "voice": {
     "engine": "edge",
     "name": "pt-BR-AntonioNeural",
     "rate": "+10%",
-    "gap": 0.05
+    "gap": 0.05,
+    "model": "voices/pt-br-edresson-low.onnx",
+    "length_scale": 0.82,
+    "tempo": 1.3
   },
-
-  "music": "assets/fofoca/lpu/musica_tensa.mp3",
-  "music_volume": 0.08,
-
   "card_bg": "#969696",
-  "caption": {"color": "#FFA500", "glow": "#FF7A00", "size": 80, "max_words": 3, "max_chars": 20},
-
-  "cta": {"text": "segue pra acompanhar a parte 2", "start": 40, "end": 44},
-
+  "caption": {
+    "color": "#FFA500",
+    "glow": "#FF7A00",
+    "size": 80,
+    "max_words": 3,
+    "max_chars": 20
+  },
+  "cta": {
+    "text": "segue pra acompanhar a parte 2",
+    "beat": 24,
+    "seconds": 4
+  },
   "beats": [
-    {"text": "Um post anônimo no Reddit ajudou a desencadear uma onda de violência numa universidade na Índia,",
-     "media": "assets/fofoca/lpu/protesto_noite.mp4", "start": 0, "sfx": "assets/fofoca/lpu/whoosh.mp3"},
-    {"text": "e agora a polícia está atrás de quem publicou.",
-     "media": "assets/fofoca/lpu/manchete_reddit.png", "mode": "card"},
-    {"text": "Calma que eu te explico.", "media": "assets/fofoca/lpu/narrador.png", "mode": "card"},
-
-    {"text": "A Lovely Professional University fica no Punjab, no norte da Índia,",
-     "media": "assets/fofoca/lpu/mapa_punjab.png", "mode": "card"},
-    {"text": "e é uma das maiores universidades particulares do país.",
-     "media": "assets/fofoca/lpu/campus_aereo.mp4"},
-
-    {"text": "No fim de setembro, uma postagem anônima começou a circular entre os alunos.",
-     "media": "assets/fofoca/lpu/celular_rolando.mp4"},
-    {"text": "Ela dizia que uma estudante tinha sido vítima de violência sexual dentro do alojamento feminino,",
-     "media": "assets/fofoca/lpu/alojamento.png", "mode": "card"},
-    {"text": "e acusava a universidade de ter mandado a aluna embora sem investigar.",
-     "media": "assets/fofoca/lpu/predio_reitoria.png", "mode": "card"},
-    {"text": "Detalhe: nada disso tinha sido confirmado.",
-     "media": "assets/fofoca/lpu/carimbo_nao_verificado.png", "mode": "card", "pause": 0.35},
-    {"text": "Mas o print já estava em todos os grupos.",
-     "media": "assets/fofoca/lpu/grupos_compartilhando.mp4"},
-
-    {"text": "Nos dias vinte e sete e vinte e oito de setembro, os alunos foram protestar no campus.",
-     "media": "assets/fofoca/lpu/protesto_dia.mp4", "start": 0},
-    {"text": "E o protesto saiu do controle.",
-     "media": "assets/fofoca/lpu/fumaca.mp4", "sfx": "assets/fofoca/lpu/impacto.mp3"},
-    {"text": "Teve depredação, incêndio e confronto com a polícia.",
-     "media": "assets/fofoca/lpu/veiculo_queimado.mp4"},
-    {"text": "Os alunos dizem que gente de fora, com o rosto coberto, se misturou ao protesto.",
-     "media": "assets/fofoca/lpu/manchete_alunos.png", "mode": "card"},
-    {"text": "Já a polícia nega ter partido pra cima dos estudantes.",
-     "media": "assets/fofoca/lpu/manchete_policia.png", "mode": "card"},
-
-    {"text": "Resultado: nove pessoas presas, sete delas estudantes,",
-     "media": "assets/fofoca/lpu/manchete_presos.png", "mode": "card"},
-    {"text": "e vinte nomes no registro da ocorrência, segundo a polícia.",
-     "media": "assets/fofoca/lpu/documento.png", "mode": "card"},
-    {"text": "A universidade nega tudo e chama a história de boato.",
-     "media": "assets/fofoca/lpu/nota_universidade.png", "mode": "card"},
-
-    {"text": "Mas o caso foi parar na Justiça.", "media": "assets/fofoca/lpu/tribunal.mp4"},
-    {"text": "E o Tribunal Superior do Punjab fez a pergunta que todo mundo queria fazer:",
-     "media": "assets/fofoca/lpu/manchete_tribunal.png", "mode": "card"},
-    {"text": "esse crime aconteceu ou não?", "media": "assets/fofoca/lpu/martelo.mp4", "pause": 0.4},
-    {"text": "Até a última atualização, a suposta vítima nem tinha sido identificada.",
-     "media": "assets/fofoca/lpu/silhueta.png", "mode": "card"},
-
-    {"text": "A polícia montou uma equipe especial pra investigar duas coisas:",
-     "media": "assets/fofoca/lpu/investigacao.mp4"},
-    {"text": "a denúncia em si, e a origem da postagem.",
-     "media": "assets/fofoca/lpu/duas_colunas.png", "mode": "card"},
-    {"text": "E, segundo a imprensa indiana, os investigadores pediram informações ao próprio Reddit.",
-     "media": "assets/fofoca/lpu/logo_reddit.png", "mode": "card", "sfx": "assets/fofoca/lpu/whoosh.mp3"},
-
-    {"text": "E é aqui que o caso fica difícil.", "media": "assets/fofoca/lpu/balanca.png", "mode": "card", "pause": 0.3},
-    {"text": "Se a denúncia for verdadeira, ela merecia ser investigada desde o primeiro dia.",
-     "media": "assets/fofoca/lpu/lado_a.png", "mode": "card"},
-    {"text": "Se não for, um post anônimo terminou em incêndio e prisões.",
-     "media": "assets/fofoca/lpu/lado_b.png", "mode": "card"},
-    {"text": "Por enquanto, ninguém tem essa resposta.", "media": "assets/fofoca/lpu/campus_vazio.mp4"},
-
-    {"text": "E você, acha que a internet julga rápido demais?",
-     "media": "assets/fofoca/lpu/pergunta.png", "mode": "card"},
-    {"text": "Comenta aí e segue pra acompanhar a parte dois. As fontes estão na descrição.",
-     "media": "assets/fofoca/lpu/seguir.png", "mode": "card"}
+    {
+      "text": "Um post anônimo no Reddit ajudou a desencadear uma onda de violência numa universidade na Índia,",
+      "media": "assets/fofoca/lpu/meme_gato_explosao.jpg",
+      "mode": "full",
+      "sticker": {
+        "path": "assets/fofoca/lpu/logo_reddit.jpg",
+        "x": 0.22,
+        "y": 0.72,
+        "w": 230
+      }
+    },
+    {
+      "text": "e agora a polícia está atrás de quem publicou.",
+      "media": "assets/fofoca/lpu/meme_emoji_sombrio.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "Calma que eu te explico.",
+      "media": "assets/fofoca/lpu/meme_to_ligado.jpg",
+      "mode": "card"
+    },
+    {
+      "text": "A Lovely Professional University fica no Punjab, no norte da Índia,",
+      "media": "assets/fofoca/lpu/logo_lpu.jpg",
+      "mode": "card"
+    },
+    {
+      "text": "e é uma das maiores universidades particulares do país.",
+      "media": "assets/fofoca/lpu/meme_galinha.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "No fim de setembro, uma postagem anônima começou a circular entre os alunos.",
+      "media": "assets/fofoca/lpu/logo_reddit.jpg",
+      "mode": "card"
+    },
+    {
+      "text": "Ela dizia que uma estudante tinha sido vítima de violência sexual dentro do alojamento feminino,",
+      "media": "assets/fofoca/lpu/alegacao.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "e acusava a universidade de ter mandado a aluna embora sem investigar.",
+      "media": "assets/fofoca/lpu/acusacao.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "Detalhe: nada disso tinha sido confirmado.",
+      "media": "assets/fofoca/lpu/nao_confirmado.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ],
+      "pause": 0.35
+    },
+    {
+      "text": "Mas o print já estava em todos os grupos.",
+      "media": "assets/fofoca/lpu/meme_livro_grito.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "Nos dias vinte e sete e vinte e oito de setembro, os alunos foram protestar no campus.",
+      "media": "assets/fofoca/lpu/protesto_datas.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "E o protesto saiu do controle.",
+      "media": "assets/fofoca/lpu/meme_tijolo.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "Teve depredação, incêndio e confronto com a polícia.",
+      "media": "assets/fofoca/lpu/violencia.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "Os alunos dizem que gente de fora, com o rosto coberto, se misturou ao protesto.",
+      "media": "assets/fofoca/lpu/meme_abelha.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "Já a polícia nega ter partido pra cima dos estudantes.",
+      "media": "assets/fofoca/lpu/meme_velho_olhando.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "Resultado: nove pessoas presas, sete delas estudantes,",
+      "media": "assets/fofoca/lpu/meme_choro.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "e vinte nomes no registro da ocorrência, segundo a polícia.",
+      "media": "assets/fofoca/lpu/presos.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "A universidade nega tudo e chama a história de boato.",
+      "media": "assets/fofoca/lpu/meme_cara_amassada.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "Mas o caso foi parar na Justiça.",
+      "media": "assets/fofoca/lpu/justica.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "E o Tribunal Superior de Punjab e Haryana fez a pergunta que todo mundo queria fazer:",
+      "media": "assets/fofoca/lpu/tribunal.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "esse crime aconteceu ou não?",
+      "media": "assets/fofoca/lpu/interrogacao.png",
+      "mode": "card",
+      "card_max": [
+        520,
+        640
+      ],
+      "pause": 0.4
+    },
+    {
+      "text": "Até a última atualização, a suposta vítima nem tinha sido identificada.",
+      "media": "assets/fofoca/lpu/vitima.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "A polícia montou uma equipe especial pra investigar duas coisas:",
+      "media": "assets/fofoca/lpu/meme_mentalista_crop.jpg",
+      "mode": "card"
+    },
+    {
+      "text": "a denúncia em si, e a origem da postagem.",
+      "media": "assets/fofoca/lpu/duas_coisas.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "E, segundo a imprensa indiana, os investigadores pediram informações ao próprio Reddit.",
+      "media": "assets/fofoca/lpu/logo_reddit.jpg",
+      "mode": "full",
+      "zoom": 1.0
+    },
+    {
+      "text": "E é aqui que o caso fica difícil.",
+      "media": "assets/fofoca/lpu/meme_bob.jpg",
+      "mode": "full",
+      "pause": 0.3
+    },
+    {
+      "text": "Se a denúncia for verdadeira, ela merecia ser investigada desde o primeiro dia.",
+      "media": "assets/fofoca/lpu/lado_a.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "Se não for, um post anônimo terminou em incêndio e prisões.",
+      "media": "assets/fofoca/lpu/lado_b.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    },
+    {
+      "text": "Por enquanto, ninguém tem essa resposta.",
+      "media": "assets/fofoca/lpu/meme_minion.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "E você, acha que a internet julga rápido demais?",
+      "media": "assets/fofoca/lpu/meme_mulher.jpg",
+      "mode": "full"
+    },
+    {
+      "text": "Comenta aí e segue pra acompanhar a parte dois. As fontes estão na descrição.",
+      "media": "assets/fofoca/lpu/seguir.png",
+      "mode": "card",
+      "card_max": [
+        860,
+        900
+      ]
+    }
   ]
 }

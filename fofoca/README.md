@@ -56,6 +56,9 @@ Campos de cada beat:
 - `sticker`: imagem pequena por cima.
 - `tilt`: inclinação do card.
 - `caption_y`: altura da legenda, de 0 a 1.
+- `card_max`: tamanho máximo do card, `[largura, altura]` (padrão `[560, 640]`; use `[860, 900]` para cards de texto).
+
+O `cta` também aceita `"beat": n` e `"seconds": 4` em vez de `start`/`end`: o balão aparece no beat `n`. Escolha um beat em tela cheia, para o balão não cobrir um card.
 
 ### Voz
 
@@ -63,6 +66,7 @@ Campos de cada beat:
 |---|---|
 | `edge` | voz neural da Microsoft (grátis, precisa de internet). Vozes pt-BR: `pt-BR-AntonioNeural`, `pt-BR-FranciscaNeural`, `pt-BR-ThalitaMultilingualNeural` |
 | `file` | **sua própria voz** gravada (`"file": "assets/fofoca/voz.m4a"`). Coloque `"at": segundos` em cada beat para sincronizar; sem isso, o tempo é dividido pelo tamanho do texto |
+| `piper` | voz neural offline (`pip install piper-tts`). Use `"model": "caminho/voz.onnx"`, `"length_scale"` (menor = mais rápido) e `"tempo"` (acelera sem mudar o tom, ex.: `1.3`). Voz pt-BR: `voice-pt-br-edresson-low.tar.gz` nos releases v0.0.2 de rhasspy/piper |
 | `espeak` | voz robótica offline, só para prévia |
 | `none` | sem som; a duração é estimada pelo texto |
 

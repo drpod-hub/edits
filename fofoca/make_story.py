@@ -13,6 +13,7 @@ Each beat is one of two looks:
 
 Narration comes from one of:
   edge    - Microsoft Edge neural TTS (pip install edge-tts), word-level sync
+  piper   - offline neural TTS (pip install piper-tts; voice.model = .onnx)
   espeak  - offline espeak-ng (robotic; for previews only)
   file    - your own recorded voice-over (voice.file); beats are timed by
             their "at" field, or spread over the recording by text length
@@ -127,6 +128,26 @@ def tts_espeak(text, voice, out):
     os.remove(wav)
 
 
+def tts_piper(text, voice, out):
+    model = voice.get("model")
+    if not model or not os.path.exists(model):
+        sys.exit("engine 'piper' needs voice.model pointing at a .onnx voice (pip install piper-tts)")
+    wav = out + ".wav"
+    r = subprocess.run([sys.executable, "-m", "piper", "-m", model, "-f", wav,
+                        "--length-scale", str(voice.get("length_scale", 0.85))],
+                       input=text, text=True, capture_output=True)
+    if r.returncode:
+        sys.exit("piper failed:\n" + r.stderr[-2000:])
+    # trim piper's leading/trailing silence and optionally speed it up
+    trim = "silenceremove=start_periods=1:start_threshold=-45dB"
+    af = f"{trim},areverse,{trim},areverse,atempo={voice.get('tempo', 1.0)}"
+    run(["ffmpeg", "-y", "-v", "error", "-i", wav, "-af", af, out])
+    os.remove(wav)
+
+
+TTS = {"edge": tts_edge, "espeak": tts_espeak, "piper": tts_piper}
+
+
 def plan_timing(cfg, beats, tmp, base):
     """Set beat['_dur'] and return the narration track path (or None)."""
     voice = cfg.get("voice", {})
@@ -159,7 +180,7 @@ def plan_timing(cfg, beats, tmp, base):
             continue
         mp3 = os.path.join(tmp, f"vo{i:03d}.mp3")
         print(f"  tts {i + 1}/{len(beats)}: {b['text'][:50]}")
-        (tts_edge if engine == "edge" else tts_espeak)(b["text"], voice, mp3)
+        TTS[engine](b["text"], voice, mp3)
         b["_dur"] = duration(mp3) + gap + pause
         clips.append((i, mp3))
     if engine == "none":
@@ -259,9 +280,9 @@ def load_still(path, at=0.0, tmp=None):
     return ImageOps.exif_transpose(Image.open(path)).convert("RGBA")
 
 
-def make_card(img, tilt):
-    img = img.copy()
-    img.thumbnail(CARD_MAX, Image.LANCZOS)
+def make_card(img, tilt, box=CARD_MAX):
+    k = min(box[0] / img.width, box[1] / img.height)  # fit the box, upscaling small images
+    img = img.resize((max(1, int(img.width * k)), max(1, int(img.height * k))), Image.LANCZOS)
     r = 14
     m = Image.new("L", img.size, 0)
     ImageDraw.Draw(m).rounded_rectangle([0, 0, img.width - 1, img.height - 1], r, fill=255)
@@ -404,7 +425,7 @@ def main():
                 tilt = b.get("tilt", (-3, 2.5, -1.5, 3)[i % 4])
                 still = load_still(media, b.get("start", 0), tmp) if media else \
                     placeholder_card(b.get("media") or "imagem/print/meme")
-                b["_card"] = make_card(still, tilt)
+                b["_card"] = make_card(still, tilt, b.get("card_max", CARD_MAX))
             st = b.get("sticker")
             if st:
                 sp = resolve(st.get("path"), base)
@@ -467,6 +488,9 @@ def main():
 
         print("Overlay + encode…")
         cta = cfg.get("cta")
+        if cta and "beat" in cta:  # pin the bubble to a beat instead of fixed seconds
+            cta = dict(cta, start=beats[cta["beat"]]["_start"])
+            cta["end"] = cta["start"] + cta.get("seconds", 4)
         bubble = speech_bubble(cta["text"]) if cta and cta.get("text") else None
         handle_img = None
         if cfg.get("handle"):
