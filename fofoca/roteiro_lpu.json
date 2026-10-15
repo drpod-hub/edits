@@ -149,7 +149,7 @@
       ],
       "fx": [
         "rgb",
-        "pulse"
+        "wobble"
       ]
     },
     {
@@ -228,7 +228,7 @@
       ],
       "fx": [
         "rgb",
-        "pulse"
+        "wobble"
       ]
     },
     {
@@ -269,7 +269,7 @@
         }
       ],
       "fx": [
-        "pulse",
+        "wave",
         "vignette"
       ],
       "impact": {
@@ -354,7 +354,7 @@
         }
       ],
       "fx": [
-        "pulse"
+        "glitch"
       ],
       "impact": {
         "text": "ACONTECEU?",
@@ -456,7 +456,7 @@
       ],
       "fx": [
         "rgb",
-        "pulse"
+        "wobble"
       ]
     },
     {
@@ -465,7 +465,7 @@
       "mode": "full",
       "fx": [
         "bw",
-        "pulse",
+        "wave",
         "vignette"
       ]
     },
