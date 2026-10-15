@@ -23,9 +23,9 @@
       "clip_start": 0,
       "audio": "assets/clips/carti_walk_on_water.mp4",
       "audio_start": 27.9,
-      "cover": "assets/covers/carti_photo.jpg",
+      "cover": "assets/covers/carti_walk_on_water_art.png",
       "bg_blur": false,
-      "bg_focus_x": 0.0
+      "bg_focus_x": 0.5
     },
     {
       "label": "BEST",
@@ -44,9 +44,9 @@
       "clip_start": 0,
       "audio": "assets/clips/carti_pain_1993.mp4",
       "audio_start": 85.0,
-      "cover": "assets/covers/carti_photo.jpg",
+      "cover": "assets/covers/carti_pain_1993_art.png",
       "bg_blur": false,
-      "bg_focus_x": 0.05
+      "bg_focus_x": 0.5
     },
     {
       "label": "UNDERRATED",
@@ -56,9 +56,9 @@
       "clip_start": 0,
       "audio": "assets/clips/carti_location.mp4",
       "audio_start": 30.15,
-      "cover": "assets/covers/carti_photo.jpg",
+      "cover": "assets/covers/carti_location_art.png",
       "bg_blur": false,
-      "bg_focus_x": 0.0
+      "bg_focus_x": 0.5
     },
     {
       "label": "OVERRATED",
@@ -68,9 +68,9 @@
       "clip_start": 0,
       "audio": "assets/clips/carti_stop_breathing.mp4",
       "audio_start": 0.0,
-      "cover": "assets/covers/carti_photo.jpg",
+      "cover": "assets/covers/carti_stop_breathing_art.png",
       "bg_blur": false,
-      "bg_focus_x": 0.1
+      "bg_focus_x": 0.5
     },
     {
       "label": "BEST FEATURE",
@@ -87,10 +87,13 @@
       "label": "BEST ALBUM",
       "song": "Whole Lotta Red",
       "streams": "",
-      "clip": "assets/clips/carti_sky.mp4",
-      "clip_start": 75.2,
+      "clip": "",
+      "clip_start": 0,
       "audio": "assets/clips/carti_sky.mp4",
-      "audio_start": 75.2
+      "audio_start": 75.2,
+      "cover": "assets/covers/carti_photo.jpg",
+      "bg_blur": false,
+      "bg_focus_x": 0.0
     }
   ]
 }
