@@ -22,7 +22,7 @@
       "clip": "",
       "clip_start": 0,
       "audio": "assets/clips/carti_walk_on_water.mp4",
-      "audio_start": 0,
+      "audio_start": 27.9,
       "cover": "assets/covers/carti_photo.jpg",
       "bg_blur": false,
       "bg_focus_x": 0.0
@@ -30,7 +30,7 @@
     {
       "label": "BEST",
       "song": "Sky",
-      "streams": "TBD",
+      "streams": "1B+",
       "clip": "assets/clips/carti_sky.mp4",
       "clip_start": 4.9,
       "audio": "assets/clips/carti_sky.mp4",
@@ -39,7 +39,7 @@
     {
       "label": "WORST",
       "song": "Pain 1993",
-      "streams": "TBD",
+      "streams": "400M+",
       "clip": "",
       "clip_start": 0,
       "audio": "assets/clips/carti_pain_1993.mp4",
@@ -51,7 +51,7 @@
     {
       "label": "UNDERRATED",
       "song": "Location",
-      "streams": "TBD",
+      "streams": "600M+",
       "clip": "",
       "clip_start": 0,
       "audio": "assets/clips/carti_location.mp4",
@@ -63,7 +63,7 @@
     {
       "label": "OVERRATED",
       "song": "Stop Breathing",
-      "streams": "TBD",
+      "streams": "250M+",
       "clip": "",
       "clip_start": 0,
       "audio": "assets/clips/carti_stop_breathing.mp4",
@@ -75,7 +75,7 @@
     {
       "label": "BEST FEATURE",
       "song": "FE!N",
-      "streams": "TBD",
+      "streams": "1B+",
       "clip": "assets/clips/fein.mp4",
       "clip_start": 29.05,
       "clip_zoom": 1.6,
