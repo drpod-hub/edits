@@ -430,6 +430,53 @@ def card_fx_frame(im, fx, lt, seed):
     return Image.fromarray(arr, "RGBA")
 
 
+def impact_frame(b, media, tmp):
+    """Pre-render the "impact frame" shown at the start of a beat.
+
+    "impact": {"text": "9 PRESOS"}                  -> white screen, huge black text
+    "impact": {"style": "invert"}                   -> the beat's own image as a blown-out
+                                                       black-and-white negative (anime style)
+    Optional "seconds" (default 0.35) for how long it holds.
+    """
+    imp = b["impact"]
+    if imp.get("style") == "invert" and media:
+        src = load_still(media, b.get("start", 0), tmp).convert("RGB")
+        g = ImageOps.autocontrast(ImageOps.grayscale(ImageOps.fit(src, (W, H), Image.LANCZOS)), cutoff=3)
+        g = g.point(lambda v: 0 if v > 110 else 255)  # hard threshold, inverted
+        img = g.convert("RGBA")
+    else:
+        img = Image.new("RGBA", (W, H), (255, 255, 255, 255))
+    text = imp.get("text", "")
+    if text:
+        f = font("ExtraBold", imp.get("size", 190))
+        lines = text.upper().split("\n") if "\n" in text else wrap_lines(text.upper(), f, W - 120)
+        while max(f.getlength(ln) for ln in lines) > W - 100 and f.size > 60:
+            f = font("ExtraBold", f.size - 6)
+            lines = wrap_lines(text.upper(), f, W - 120)
+        asc, desc = f.getmetrics()
+        lh = asc + desc
+        layer = Image.new("RGBA", (W, lh * len(lines) + 40), (0, 0, 0, 0))
+        d = ImageDraw.Draw(layer)
+        col = (255, 255, 255) if imp.get("style") == "invert" else (0, 0, 0)
+        stroke = (0, 0, 0) if imp.get("style") == "invert" else (255, 255, 255)
+        for k, ln in enumerate(lines):
+            d.text((W / 2, 20 + k * lh), ln, font=f, fill=col, anchor="ma", stroke_width=6, stroke_fill=stroke)
+        b["_impact_text"] = layer
+    return img
+
+
+def wrap_lines(text, fnt, max_w):
+    words, lines, cur = text.split(), [], ""
+    for w in words:
+        trial = (cur + " " + w).strip()
+        if fnt.getlength(trial) > max_w and cur:
+            lines.append(cur)
+            cur = w
+        else:
+            cur = trial
+    return lines + [cur]
+
+
 def build_bg(i, b, media, cfg, tmp):
     dur, fps = b["_dur"], cfg["fps"]
     out = os.path.join(tmp, f"bg{i:03d}.mp4")
@@ -526,6 +573,9 @@ def main():
                     placeholder_card(b.get("media") or "imagem/print/meme")
                 b["_card"] = make_card(card_fx_static(still.convert("RGBA"), b.get("fx", [])),
                                        tilt, b.get("card_max", CARD_MAX))
+            if b.get("impact"):
+                b["_impact"] = impact_frame(b, media, tmp)
+                b["_impact_s"] = b["impact"].get("seconds", 0.35)
             st = b.get("sticker")
             if st:
                 sp = resolve(st.get("path"), base)
@@ -636,7 +686,8 @@ def main():
             # cards, stickers, flashes and shakes move every frame; only a bare caption
             # over full-screen media can reuse the previous frame
             animating = (lt < CARD_POP or cap_t < CAPTION_POP or card is not None
-                         or b.get("_sticker") is not None or lt < FLASH or show_cta)
+                         or b.get("_sticker") is not None or lt < FLASH or show_cta
+                         or lt < b.get("_impact_s", 0) + FLASH)
             key = (bi, ci, show_cta)
             if not animating and key == last_key:
                 enc.stdin.write(last_bytes)
@@ -673,7 +724,19 @@ def main():
                 p = min(1.0, (t - cta["start"]) / CARD_POP)
                 im = scaled(bubble, (0.4 + 0.6 * ease_out_back(p)) * (1 + 0.04 * math.sin(t * 7)))
                 paste_c(fr, im, W * 0.58, H * 0.36)
-            if b.get("flash") and lt < FLASH:  # white flash on the cut
+            imp_s = b.get("_impact_s", 0)
+            if imp_s and lt < imp_s:
+                # impact frame: covers everything, text slams in and shakes
+                fr = b["_impact"].copy()
+                if b.get("_impact_text") is not None:
+                    p = min(1.0, lt / 0.08)
+                    k = math.exp(-lt * 9) * 18
+                    paste_c(fr, scaled(b["_impact_text"], 1.6 - 0.6 * p),
+                            W / 2 + math.sin(lt * 90) * k, H / 2 + math.cos(lt * 70) * k)
+            elif imp_s and lt < imp_s + FLASH:  # fade out of the white
+                fl_ = Image.new("RGBA", (W, H), (255, 255, 255, int(200 * (1 - (lt - imp_s) / FLASH))))
+                fr.alpha_composite(fl_)
+            elif b.get("flash") and lt < FLASH:  # white flash on the cut
                 fl_ = Image.new("RGBA", (W, H), (255, 255, 255, int(220 * (1 - lt / FLASH))))
                 fr.alpha_composite(fl_)
             if handle_img:

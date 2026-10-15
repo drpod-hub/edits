@@ -46,17 +46,24 @@
         "y": 0.72,
         "w": 230
       },
-      "flash": true,
       "shake": true,
       "sfx": [
         {
           "path": "assets/fofoca/sfx/impact.wav",
           "volume": 0.7
+        },
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.8
         }
       ],
       "fx": [
         "pulse"
-      ]
+      ],
+      "impact": {
+        "style": "invert",
+        "seconds": 0.3
+      }
     },
     {
       "text": "e agora a polícia está atrás de quem publicou.",
@@ -189,7 +196,6 @@
       "text": "E o protesto saiu do controle.",
       "media": "assets/fofoca/lpu/meme_tijolo.jpg",
       "mode": "full",
-      "flash": true,
       "shake": true,
       "sfx": [
         {
@@ -200,11 +206,19 @@
         {
           "path": "assets/fofoca/sfx/impact.wav",
           "volume": 0.7
+        },
+        {
+          "path": "assets/fofoca/sfx/boom.wav",
+          "volume": 0.8
         }
       ],
       "fx": [
         "deepfry"
-      ]
+      ],
+      "impact": {
+        "text": "SAIU DO CONTROLE",
+        "seconds": 0.45
+      }
     },
     {
       "text": "Teve depredação, incêndio e confronto com a polícia.",
@@ -257,12 +271,20 @@
         {
           "path": "assets/fofoca/sfx/boom.wav",
           "volume": 0.6
+        },
+        {
+          "path": "assets/fofoca/sfx/impact.wav",
+          "volume": 0.6
         }
       ],
       "fx": [
         "pulse",
         "vignette"
-      ]
+      ],
+      "impact": {
+        "text": "9 PRESOS",
+        "seconds": 0.45
+      }
     },
     {
       "text": "e vinte nomes no registro da ocorrência, segundo a polícia.",
@@ -328,7 +350,6 @@
         640
       ],
       "pause": 0.4,
-      "flash": true,
       "shake": true,
       "sfx": [
         {
@@ -343,7 +364,11 @@
       ],
       "fx": [
         "pulse"
-      ]
+      ],
+      "impact": {
+        "text": "ACONTECEU?",
+        "seconds": 0.5
+      }
     },
     {
       "text": "Até a última atualização, a suposta vítima nem tinha sido identificada.",

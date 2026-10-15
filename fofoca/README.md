@@ -73,6 +73,11 @@ Campos de cada beat:
   - `vignette`: bordas escuras (só tela cheia)
 
   Exemplo: `"fx": ["wave", "vignette"]`. Em tela cheia, `wave_amp` e `wave_length` ajustam a onda. Em cards de texto, prefira `rgb` a `glitch` para manter a leitura.
+- `impact`: "impact frame" no começo da frase. A tela fica branca por uma fração de segundo com a palavra-chave gigante em preto, e depois volta seco para a imagem:
+  - `{"text": "9 PRESOS"}`: tela branca com o texto (padrão 0.35 s; mude com `"seconds"`)
+  - `{"style": "invert"}`: a própria imagem em preto e branco estourado e invertido, estilo anime (aceita `"text"` também)
+
+  Combine com um `boom.wav` no `sfx`. Use em 3 ou 4 momentos no máximo, senão perde o impacto.
 - `global_fx` (no topo do roteiro): efeitos no vídeo inteiro, `["grain", "vignette"]`.
 - `card_max`: tamanho máximo do card, `[largura, altura]` (padrão `[560, 640]`; use `[860, 900]` para cards de texto).
 
