@@ -48,3 +48,11 @@ STILLS=1.5,12,25 python3 make_explainer.py            # just PNG stills in outpu
 - **Music/SFX:** an original funk drum loop, bass, whooshes and pops, all synthesised. The drummer's sticks hit in time with the loop, and the band drops out on "the band drops out".
 - **Branding:** `handle`, `brand` and `brand_accent_index` (the red letter in the outro logo).
 - **Script:** edit the `text` of each line. The scenes are keyed to the line `id`s, so keep those.
+
+## Stickman version
+
+```bash
+python3 make_stickman.py      # -> output/funky_drummer_stickman.mp4 (~40 s render)
+```
+
+The same script, voice and beat, retold with ink stickmen on graph paper. The floor is the song's real waveform scrolling under a playhead. The band falls through trapdoors in it on "the band drops out". A giant mouse cursor drag-selects the drummer, then Ctrl+C / Ctrl+V pastes copies of him. The copies stack into a pyramid with rappers standing on top. The screen fills with 1,000 tiny drummers, he gets a $0.00 cheque, and in the end the cursor turns him into a dashed outline while his copies keep playing. A few frames flash inverted on big hits, like stick-fight animations.
