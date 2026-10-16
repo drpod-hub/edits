@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Barlow:wght@400;500&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Barlow:wght@400;500&family=VT323&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
 <style>
 /* Layout: one piece of grey hardware on a desk — LCD and edit strip on top, 4×3 rubber pads below, numbered from bottom-left like a real sampler. */
 :root {
@@ -321,21 +321,55 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
 .career .btn { background: var(--pad-hi); color: var(--pad-ink); border-color: #252422; padding: 6px 10px; font-size: 12px; }
 .career-goal { margin: 0; font-size: 13px; color: var(--pad-dim); }
 .songname { font: 500 15px var(--f-body); background: var(--case); border: 1px solid var(--case-lo); border-radius: 5px; padding: 7px 9px; color: var(--ink); flex: 1 1 160px; min-width: 0; }
-.cine { position: fixed; inset: 0; z-index: 50; background: #06050c; }
-.cine canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
-.cine-skip { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); z-index: 2; opacity: .85; }
-.cine-box {
-  position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  width: min(760px, calc(100% - 32px)); background: rgba(14,12,24,.94); color: #f0e9ff;
-  border: 2px solid #f0e9ff; border-radius: 6px; padding: 14px 18px 18px; box-shadow: 0 0 0 4px #14101f, 0 10px 30px rgba(0,0,0,.6);
+.cine { position: fixed; inset: 0; z-index: 50; background: #0d0a14; overflow: hidden; font-family: "M PLUS Rounded 1c", var(--f-body); }
+#cineBg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .45s ease; }
+.vn-stage { position: absolute; inset: 0; pointer-events: none; }
+.vn-sprite {
+  position: absolute; bottom: 0; height: min(94vh, 960px); max-width: 78vw; object-fit: contain; object-position: bottom;
+  transform: translateX(-50%); transition: left .5s ease, opacity .4s ease, filter .3s ease; filter: brightness(.7) saturate(.85);
 }
-.cine-who { font-family: var(--f-label); font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
-.cine-text { margin: 8px 0 0; font-family: var(--f-lcd); font-size: clamp(20px, 2.6vw, 26px); line-height: 1.25; min-height: 2.5em; }
-.cine-next { position: absolute; right: 14px; bottom: 8px; color: #f0a23b; animation: nextblink 1s steps(2) infinite; }
-@keyframes nextblink { 50% { opacity: 0; } }
-.cine-card { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 16px; text-align: center; padding: 24px; color: #f0e9ff; background: rgba(6,5,12,.72); }
-.cine-card h2 { margin: 0; font-family: var(--f-label); font-weight: 400; font-size: clamp(22px, 4vw, 34px); color: #ff3df0; text-wrap: balance; }
-.cine-card p { margin: 0; max-width: 46ch; font-family: var(--f-lcd); font-size: clamp(20px, 2.4vw, 24px); line-height: 1.3; }
+.vn-sprite.talk { filter: none; animation: vnhop .3s ease-out; }
+.vn-sprite.enter { opacity: 0; }
+@keyframes vnhop { 40% { transform: translateX(-50%) translateY(-12px); } }
+.vn-box {
+  position: absolute; left: 50%; bottom: calc(46px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  width: min(920px, calc(100% - 24px)); min-height: 150px; padding: 28px 28px 22px;
+  background: rgba(255, 249, 253, .92); color: #4b3653; border: 3px solid #ffb4e1; border-radius: 16px;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.7) inset, 0 14px 32px rgba(20, 8, 30, .45);
+}
+.vn-name {
+  position: absolute; top: -21px; left: 24px; padding: 4px 20px; border-radius: 12px;
+  background: #ff8fd2; color: #fff; border: 3px solid #fff; box-shadow: 0 3px 0 #e86fbb;
+  font-weight: 800; font-size: 20px; letter-spacing: .02em;
+}
+.vn-name:empty { display: none; }
+.vn-text { margin: 0; font-size: clamp(17px, 2.2vw, 23px); line-height: 1.55; font-weight: 500; min-height: 3.1em; }
+.vn-next { position: absolute; right: 20px; bottom: 14px; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 13px solid #ff8fd2; animation: vnbob 1s ease-in-out infinite; }
+@keyframes vnbob { 50% { transform: translateY(5px); } }
+.vn-menu { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 22px; }
+.vn-menu button { background: none; border: 0; padding: 4px 6px; cursor: pointer; color: #ffd6ef; font: 800 15px "M PLUS Rounded 1c", sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+.vn-menu button[aria-pressed="true"] { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.vn-menu button:focus-visible, .vn-choices button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.vn-choices { position: absolute; inset: 0 0 160px; display: grid; place-content: center; gap: 14px; padding: 0 16px; }
+.vn-choices button {
+  width: min(460px, calc(100vw - 32px)); padding: 13px 22px; cursor: pointer; border-radius: 14px;
+  background: rgba(255, 249, 253, .96); color: #4b3653; border: 3px solid #ffb4e1;
+  font: 800 19px "M PLUS Rounded 1c", sans-serif; box-shadow: 0 8px 20px rgba(20, 8, 30, .45);
+}
+.vn-choices button:hover { background: #ffe3f4; border-color: #ff8fd2; }
+.vn-log { position: absolute; inset: 0; background: rgba(20, 10, 30, .75); display: grid; place-items: center; padding: 16px; z-index: 3; }
+.vn-log-inner { width: min(760px, 100%); max-height: 80vh; overflow: auto; background: #fff9fd; color: #4b3653; border: 3px solid #ffb4e1; border-radius: 16px; padding: 20px 24px; display: grid; gap: 12px; }
+.vn-log-inner h2 { margin: 0; font-size: 22px; color: #e86fbb; }
+.vn-log-inner ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 17px; line-height: 1.45; }
+.vn-log-inner b { color: #e86fbb; }
+.cine-card { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px; text-align: center; padding: 24px; color: #fff3fb; background: rgba(13, 10, 20, .82); z-index: 2; }
+.cine-card h2 { margin: 0; font: 800 clamp(24px, 4vw, 38px) "M PLUS Rounded 1c", sans-serif; color: #ff8fd2; text-wrap: balance; }
+.cine-card p { margin: 0; max-width: 46ch; font-size: clamp(17px, 2.2vw, 22px); line-height: 1.5; font-weight: 500; }
+@media (max-width: 620px) {
+  .vn-sprite { height: 70vh; max-width: 92vw; }
+  .vn-box { min-height: 128px; padding: 24px 18px 18px; }
+  .vn-name { font-size: 17px; }
+}
 .cine-mail {
   position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow: auto;
   background: #f4f1f8; color: #1d1a22; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.6); padding: 18px;
@@ -354,6 +388,11 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
 #replyList li::before { content: "+ "; color: #1f8a3a; font-weight: 700; }
 #replyList li[data-good="0"]::before { content: "– "; color: #9b2d1f; }
 .reply-pts { margin: 0; font-family: var(--f-lcd); font-size: 26px; color: #6a2bd9; }
+/* email window in the visual-novel look */
+.cine-mail { border: 3px solid #ffb4e1; border-radius: 16px; background: #fff9fd; color: #4b3653; font-family: "M PLUS Rounded 1c", var(--f-body); }
+.cine-mail .label { font-family: "M PLUS Rounded 1c", var(--f-body); font-weight: 800; letter-spacing: .02em; text-transform: none; color: #b07aa0; }
+#replyTitle { font-family: "M PLUS Rounded 1c", var(--f-body); font-weight: 800; }
+.cine-mail .btn.dark { background: #ff8fd2; border-color: #e86fbb; color: #fff; font-family: "M PLUS Rounded 1c", var(--f-body); font-weight: 800; letter-spacing: .02em; text-transform: none; }
 .kitbox { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .lang { width: auto; padding: 4px 8px; font: 400 12px var(--f-label); letter-spacing: .04em; }
 </style>
@@ -659,12 +698,21 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
   <input type="file" id="kitFolder" webkitdirectory multiple hidden>
 </main>
 <div class="cine" id="cine" hidden>
-  <canvas id="cineCanvas" aria-hidden="true"></canvas>
-  <button class="btn cine-skip" id="cineSkip" type="button">Pular</button>
-  <div class="cine-box" id="cineBox" hidden>
-    <span class="cine-who" id="cineWho"></span>
-    <p class="cine-text" id="cineText" aria-live="polite"></p>
-    <span class="cine-next" id="cineNext" hidden>▼</span>
+  <canvas id="cineBg" aria-hidden="true"></canvas>
+  <div class="vn-stage" id="vnStage" aria-hidden="true"></div>
+  <div class="vn-box" id="cineBox" hidden>
+    <span class="vn-name" id="cineWho"></span>
+    <p class="vn-text" id="cineText" aria-live="polite"></p>
+    <span class="vn-next" id="cineNext" hidden></span>
+  </div>
+  <nav class="vn-menu" id="vnMenu" hidden>
+    <button type="button" id="vnLog">Histórico</button>
+    <button type="button" id="vnAuto" aria-pressed="false">Auto</button>
+    <button type="button" id="cineSkip">Pular</button>
+  </nav>
+  <div class="vn-choices" id="vnChoices" hidden></div>
+  <div class="vn-log" id="vnLogPanel" hidden>
+    <div class="vn-log-inner"><h2>Histórico</h2><ol id="vnLogList"></ol><button class="btn dark" id="vnLogClose" type="button">Fechar</button></div>
   </div>
   <div class="cine-card" id="cineCard" hidden>
     <h2 id="cardTitle"></h2>
@@ -2900,6 +2948,9 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       ["Vazio", "Empty", "Vacío"],
       ["Limpar", "Clear", "Borrar"],
       ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Histórico", "History", "Historial"],
+      ["Fechar", "Close", "Cerrar"],
+      ["Você vai ver só.", "Just watch me.", "Ya verás."],
       ["Carreira", "Career", "Carrera"],
       ["Músicas enviadas: {}", "Songs sent: {}", "Canciones enviadas: {}"],
       ["História", "Story", "Historia"],
@@ -3312,230 +3363,320 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     return { set, t: tr };
   })();
 
-  // ---------- story mode: cutscenes ----------
-  // A tiny top-down pixel stage (320 px wide world, scaled up) with walking actors, a typewriter
-  // dialogue box, title cards and an email client. Scripts are arrays of steps run in order.
+  // ---------- story mode: visual-novel cutscenes ----------
+  // Painted backgrounds on a canvas, big bust sprites with expressions (drawn as SVG), a
+  // rounded textbox with a name tab, quick menu (History / Auto / Skip) and choices.
   const Cine = (() => {
-    const root = $("cine"), cv = $("cineCanvas"), g = cv.getContext("2d");
+    const root = $("cine"), bg = $("cineBg"), stage = $("vnStage");
     const box = $("cineBox"), who = $("cineWho"), text = $("cineText"), card = $("cineCard"), mail = $("cineMail");
-    const WW = 320, WH = 180;
-    const cam = { x: WW / 2, y: WH / 2, scene: null };
-    let H = WH, scene = "rua", actors = {}, raf = 0, last = 0, clock = 0, fade = 1, fadeTo = 1, active = false;
-    let advance = null, typing = null, skipped = false;
-    const SPEAK = { "Léo": { color: "#f0a23b", f: 560 }, "Caio": { color: "#3dd6d0", f: 340 }, "Selo Noite Alta": { color: "#ff3df0", f: 440 } };
+    const T = (s) => I18N.t(s);
+    let active = false, advance = null, typing = null, skipped = false, auto = false, bgName = null;
+    const log = [];
+    const sprites = {};
+    const SPEAK = { "Léo": 560, "Caio": 340, "Selo Noite Alta": 440 };
 
-    function resize() {
-      H = Math.max(150, Math.round(WW * innerHeight / Math.max(1, innerWidth)));
-      cv.width = WW; cv.height = H;
+    // ---- character art ----
+    const OL = "#2a1f2e";
+    const CHARS = {
+      leo: { skin: "#b9784f", shade: "#9b6140", hair: "#1d1a22", iris: "#c27a2c", top: "#f0a23b", topShade: "#c9822a" },
+      caio: { skin: "#8a5636", shade: "#6f4228", hair: "#191216", iris: "#3b2618", top: "#2bb3b8", topShade: "#1f8d91" },
+    };
+    function eye(c, e, mirror) {
+      const tf = mirror ? ' transform="translate(400 0) scale(-1 1)"' : "";
+      let s;
+      if (e === "happy" || e === "grin") s = `<path d="M154 222 Q172 204 190 222" stroke="${OL}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+      else {
+        const big = e === "surprised";
+        const white = big ? `<ellipse cx="172" cy="218" rx="18" ry="16" fill="#fff" stroke="${OL}" stroke-width="3"/>` :
+          `<path d="M153 217 Q171 199 191 214 Q188 232 172 233 Q157 232 153 217 Z" fill="#fff" stroke="${OL}" stroke-width="3"/>`;
+        const ir = big ? 7 : 9.5;
+        s = white + `<circle cx="173" cy="219" r="${ir}" fill="${c.iris}"/><circle cx="173" cy="220" r="${ir * 0.48}" fill="#1a1016"/><circle cx="176.5" cy="214.5" r="3.2" fill="#fff"/>`;
+        if (e === "smug" || e === "sad") s += `<path d="M149 200 L195 200 L195 213 Q172 206 149 218 Z" fill="${c.skin}"/>`;
+        s += e === "smug" || e === "sad" ? `<path d="M151 216 Q172 205 194 212" stroke="${OL}" stroke-width="5" fill="none" stroke-linecap="round"/>` :
+          big ? "" : `<path d="M149 214 Q170 195 195 209" stroke="${OL}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+      }
+      const brows = {
+        sad: "M152 194 Q170 190 190 184", determined: "M152 186 Q172 190 192 198", surprised: "M152 182 Q172 170 192 180",
+        smug: mirror ? "M152 190 Q172 184 192 190" : "M152 182 Q172 172 192 182",
+      };
+      s += `<path d="${brows[e] || "M152 190 Q172 180 192 188"}" stroke="${c.hair}" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+      return `<g${tf}>${s}</g>`;
     }
-    // deterministic noise so building windows don't flicker between frames
+    function mouth(e) {
+      const m = {
+        happy: `<path d="M184 264 Q200 280 216 264" stroke="${OL}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+        grin: `<path d="M180 260 Q200 296 220 260 Z" fill="#7a2f3a" stroke="${OL}" stroke-width="3"/><path d="M184 262 L216 262 L212 269 L188 269 Z" fill="#fff"/>`,
+        surprised: `<ellipse cx="200" cy="270" rx="9" ry="11" fill="#7a2f3a" stroke="${OL}" stroke-width="3"/>`,
+        sad: `<path d="M186 276 Q200 266 214 276" stroke="${OL}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+        smug: `<path d="M184 270 Q204 277 217 261" stroke="${OL}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+        determined: `<path d="M186 268 Q200 274 214 266" stroke="${OL}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+      };
+      return m[e] || `<path d="M187 267 Q200 275 213 267" stroke="${OL}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+    }
+    function sprite(id, e) {
+      const c = CHARS[id];
+      let back = "", body, front;
+      if (id === "caio") {
+        back = `<g fill="${c.hair}" stroke="${OL}" stroke-width="3">` +
+          [[148, 140, 36], [182, 104, 38], [222, 102, 38], [256, 138, 36], [136, 180, 26], [266, 180, 26], [202, 92, 30]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join("") + "</g>";
+        body = `<path d="M38 620 C48 468 112 392 170 372 L200 386 L230 372 C288 392 352 468 362 620 Z" fill="${c.top}" stroke="${OL}" stroke-width="4"/>
+          <path d="M200 386 L200 620" stroke="${c.topShade}" stroke-width="5"/>
+          <path d="M150 362 L200 392 L250 362 L262 396 L200 420 L138 396 Z" fill="${c.topShade}" stroke="${OL}" stroke-width="3"/>
+          <path d="M80 520 Q120 500 150 520" stroke="${c.topShade}" stroke-width="5" fill="none"/>`;
+        front = `<path d="M142 176 Q150 132 200 128 Q250 132 258 176 Q238 150 200 150 Q162 150 142 176 Z" fill="${c.hair}"/>`;
+      } else {
+        body = `<path d="M38 620 C48 468 112 392 170 372 L200 384 L230 372 C288 392 352 468 362 620 Z" fill="${c.top}" stroke="${OL}" stroke-width="4"/>
+          <path d="M148 360 Q200 414 252 360 Q244 398 200 406 Q156 398 148 360 Z" fill="${c.topShade}" stroke="${OL}" stroke-width="3"/>
+          <path d="M184 404 L180 470 M216 404 L220 470" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+          <path d="M138 376 Q200 440 262 376" fill="none" stroke="#2b2733" stroke-width="13" stroke-linecap="round"/>
+          <rect x="114" y="350" width="36" height="50" rx="14" fill="#2b2733" stroke="${OL}" stroke-width="3"/>
+          <rect x="250" y="350" width="36" height="50" rx="14" fill="#2b2733" stroke="${OL}" stroke-width="3"/>
+          <rect x="122" y="362" width="20" height="26" rx="8" fill="#ff3df0"/><rect x="258" y="362" width="20" height="26" rx="8" fill="#ff3df0"/>`;
+        front = `<path d="M136 196 C128 120 160 84 204 84 C250 84 276 118 266 196 C258 160 246 140 228 134 C212 152 184 154 168 138 C152 148 142 168 136 196 Z" fill="${c.hair}" stroke="${OL}" stroke-width="3"/>
+          <path d="M132 156 C134 86 168 62 202 62 C238 62 270 86 270 156 C236 138 168 138 132 156 Z" fill="#f0a23b" stroke="${OL}" stroke-width="4"/>
+          <path d="M150 140 Q200 124 252 140" stroke="#c9822a" stroke-width="4" fill="none"/>`;
+      }
+      const blush = e === "happy" || e === "grin" ? `<ellipse cx="160" cy="246" rx="14" ry="7" fill="#ff7aa8" opacity=".45"/><ellipse cx="240" cy="246" rx="14" ry="7" fill="#ff7aa8" opacity=".45"/>` : "";
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 620">${back}
+        <path d="M178 286 L178 372 Q200 390 222 372 L222 286 Z" fill="${c.shade}" stroke="${OL}" stroke-width="3"/>
+        ${body}
+        <ellipse cx="139" cy="222" rx="11" ry="17" fill="${c.skin}" stroke="${OL}" stroke-width="3"/><ellipse cx="261" cy="222" rx="11" ry="17" fill="${c.skin}" stroke="${OL}" stroke-width="3"/>
+        <path d="M140 172 Q140 104 200 98 Q260 104 260 172 L258 232 Q250 292 200 308 Q150 292 142 232 Z" fill="${c.skin}" stroke="${OL}" stroke-width="4"/>
+        <path d="M144 176 Q200 160 256 176 L256 186 Q200 172 144 186 Z" fill="${c.shade}" opacity=".5"/>
+        ${blush}${eye(c, e, false)}${eye(c, e, true)}
+        <path d="M199 236 Q204 248 196 252" stroke="${c.shade}" stroke-width="3" fill="none" stroke-linecap="round"/>
+        ${mouth(e)}${front}</svg>`;
+      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    }
+    const POS = { left: "27%", center: "50%", right: "73%" };
+    function show(id, pos, e) {
+      let el = sprites[id];
+      if (!el) { el = document.createElement("img"); el.className = "vn-sprite enter"; el.alt = ""; stage.appendChild(el); sprites[id] = el; requestAnimationFrame(() => el.classList.remove("enter")); }
+      el.src = sprite(id, e || "normal"); el.style.left = POS[pos] || pos; el.dataset.e = e || "normal";
+    }
+    function face(id, e) { const el = sprites[id]; if (el && e && el.dataset.e !== e) { el.src = sprite(id, e); el.dataset.e = e; } }
+    function hide(id) { const el = sprites[id]; if (!el) return; el.classList.add("enter"); delete sprites[id]; setTimeout(() => el.remove(), 450); }
+    function clearSprites() { for (const id of Object.keys(sprites)) { sprites[id].remove(); delete sprites[id]; } }
+    function talking(id) { for (const [k, el] of Object.entries(sprites)) { el.classList.toggle("talk", k === id); if (k === id) { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; } } }
+
+    // ---- painted backgrounds ----
     const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+    function bokeh(c, w, h, n, cols) {
+      c.globalCompositeOperation = "lighter";
+      for (let i = 0; i < n; i++) {
+        const x = hash(i, 3) * w, y = hash(i, 7) * h * 0.8, r = 12 + hash(i, 11) * 40, col = cols[i % cols.length];
+        const gr = c.createRadialGradient(x, y, r * 0.2, x, y, r);
+        gr.addColorStop(0, `rgba(${col},.22)`); gr.addColorStop(1, `rgba(${col},0)`);
+        c.fillStyle = gr; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+      }
+      c.globalCompositeOperation = "source-over";
+    }
+    function vignette(c, w, h) {
+      const v = c.createRadialGradient(w / 2, h * 0.45, Math.min(w, h) * 0.3, w / 2, h / 2, Math.max(w, h) * 0.75);
+      v.addColorStop(0, "rgba(10,5,20,0)"); v.addColorStop(1, "rgba(10,5,20,.6)");
+      c.fillStyle = v; c.fillRect(0, 0, w, h);
+    }
+    function street(c, w, h) {
+      const sky = c.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, "#140f34"); sky.addColorStop(0.45, "#3d2160"); sky.addColorStop(0.72, "#b2497a"); sky.addColorStop(0.73, "#2a1c36"); sky.addColorStop(1, "#18111f");
+      c.fillStyle = sky; c.fillRect(0, 0, w, h);
+      for (let i = 0; i < 90; i++) { c.fillStyle = `rgba(255,255,255,${0.3 + hash(i, 1) * 0.6})`; c.fillRect(hash(i, 2) * w, hash(i, 5) * h * 0.4, 1.5, 1.5); }
+      const horizon = h * 0.72;
+      [[0.55, "#2a1a46", 0.16], [0.75, "#1b1230", 0.1]].forEach(([top, col, rate], L) => {
+        let x = 0, k = 0;
+        while (x < w) {
+          const bw = 40 + hash(k, L) * 90, bh = h * (top - 0.25 + hash(k, L + 9) * 0.3);
+          c.fillStyle = col; c.fillRect(x, horizon - bh, bw, bh);
+          for (let wy = horizon - bh + 10; wy < horizon - 10; wy += 16) for (let wx = x + 8; wx < x + bw - 10; wx += 14)
+            if (hash(wx, wy) < rate * 3) { c.fillStyle = `rgba(255,${190 + hash(wy, wx) * 50},${120 + hash(wx, 2) * 60},${0.5 + hash(wx, wy + 1) * 0.5})`; c.fillRect(wx, wy, 6, 8); }
+          x += bw + 6; k++;
+        }
+      });
+      // music shop on the right
+      const sx = w * 0.62, sw = w * 0.36, sy = h * 0.28;
+      c.fillStyle = "#2b1838"; c.fillRect(sx, sy, sw, horizon - sy + h * 0.06);
+      const glow = c.createLinearGradient(0, sy + 70, 0, horizon);
+      glow.addColorStop(0, "#ffcf8f"); glow.addColorStop(1, "#d9774a");
+      c.fillStyle = glow; c.fillRect(sx + 24, sy + 80, sw - 48, horizon - sy - 90);
+      c.fillStyle = "rgba(60,30,40,.55)"; for (let i = 0; i < 4; i++) c.fillRect(sx + 34 + i * (sw - 68) / 4, sy + 100, (sw - 68) / 4 - 14, 10);
+      c.fillStyle = "#c4c0b5"; c.fillRect(sx + sw * 0.4, sy + 130, sw * 0.2, sw * 0.12);
+      c.fillStyle = "#3b3a37"; for (let r = 0; r < 3; r++) for (let q = 0; q < 4; q++) c.fillRect(sx + sw * 0.41 + q * sw * 0.047, sy + 136 + r * sw * 0.035, sw * 0.04, sw * 0.028);
+      c.save(); c.shadowColor = "#ff3df0"; c.shadowBlur = 24; c.fillStyle = "#ffd1f6";
+      c.font = `700 ${Math.round(sw * 0.11)}px Silkscreen, monospace`; c.textAlign = "center"; c.fillText("MÚSICA", sx + sw / 2, sy + 56); c.restore();
+      // sidewalk and lamp
+      const walk = c.createLinearGradient(0, horizon, 0, h);
+      walk.addColorStop(0, "#3a2c48"); walk.addColorStop(1, "#1a1322");
+      c.fillStyle = walk; c.fillRect(0, horizon + h * 0.04, w, h);
+      const lx = w * 0.14;
+      c.fillStyle = "#120c1a"; c.fillRect(lx - 4, h * 0.2, 8, horizon - h * 0.2 + h * 0.06);
+      const lg = c.createRadialGradient(lx, h * 0.2, 4, lx, h * 0.2, h * 0.35);
+      lg.addColorStop(0, "rgba(255,200,130,.85)"); lg.addColorStop(0.12, "rgba(255,170,100,.35)"); lg.addColorStop(1, "rgba(255,150,90,0)");
+      c.fillStyle = lg; c.fillRect(0, 0, w, h);
+      bokeh(c, w, h, 22, ["255,140,170", "255,190,120", "120,220,230"]);
+      vignette(c, w, h);
+    }
+    function room(c, w, h) {
+      const wall = c.createLinearGradient(0, 0, 0, h);
+      wall.addColorStop(0, "#2e2147"); wall.addColorStop(0.7, "#3d2b58"); wall.addColorStop(0.71, "#4a3328"); wall.addColorStop(1, "#2e1f19");
+      c.fillStyle = wall; c.fillRect(0, 0, w, h);
+      // window with the city at night
+      const wx = w * 0.08, wy = h * 0.12, ww = w * 0.34, wh = h * 0.42;
+      const sky = c.createLinearGradient(0, wy, 0, wy + wh);
+      sky.addColorStop(0, "#151034"); sky.addColorStop(1, "#7a3a6e");
+      c.fillStyle = sky; c.fillRect(wx, wy, ww, wh);
+      c.fillStyle = "#ffe9d2"; c.beginPath(); c.arc(wx + ww * 0.75, wy + wh * 0.25, Math.min(ww, wh) * 0.09, 0, 7); c.fill();
+      let x = wx; let k = 0;
+      while (x < wx + ww) { const bw = 18 + hash(k, 4) * 30, bh = wh * (0.25 + hash(k, 8) * 0.4); c.fillStyle = "#1b1230"; c.fillRect(x, wy + wh - bh, bw, bh);
+        for (let yy = wy + wh - bh + 6; yy < wy + wh - 4; yy += 9) for (let xx = x + 4; xx < x + bw - 4; xx += 8) if (hash(xx, yy) > 0.6) { c.fillStyle = "rgba(255,210,140,.8)"; c.fillRect(xx, yy, 3, 4); }
+        x += bw + 3; k++; }
+      c.strokeStyle = "#1a1226"; c.lineWidth = 10; c.strokeRect(wx, wy, ww, wh);
+      c.beginPath(); c.moveTo(wx + ww / 2, wy); c.lineTo(wx + ww / 2, wy + wh); c.stroke();
+      c.fillStyle = "#c2507a"; c.fillRect(wx - w * 0.04, wy - 10, w * 0.05, wh + 30); c.fillRect(wx + ww - w * 0.01, wy - 10, w * 0.05, wh + 30);
+      // fairy lights
+      c.strokeStyle = "rgba(40,30,30,.8)"; c.lineWidth = 2; c.beginPath();
+      for (let i = 0; i <= 20; i++) { const px = (i / 20) * w, py = h * 0.06 + Math.sin(i * 0.9) * 10; i ? c.lineTo(px, py) : c.moveTo(px, py); } c.stroke();
+      for (let i = 0; i <= 20; i++) { const px = (i / 20) * w, py = h * 0.06 + Math.sin(i * 0.9) * 10 + 6;
+        const gl = c.createRadialGradient(px, py, 1, px, py, 22); const col = i % 3 ? "255,200,120" : "255,120,200";
+        gl.addColorStop(0, `rgba(${col},.9)`); gl.addColorStop(1, `rgba(${col},0)`); c.fillStyle = gl; c.fillRect(px - 22, py - 22, 44, 44); }
+      // posters
+      c.fillStyle = "#251747"; c.fillRect(w * 0.5, h * 0.16, w * 0.1, h * 0.2);
+      c.fillStyle = "#ff3df0"; c.fillRect(w * 0.515, h * 0.2, w * 0.07, h * 0.012); c.fillStyle = "#3dfcff"; c.fillRect(w * 0.515, h * 0.23, w * 0.05, h * 0.008);
+      c.fillStyle = "#f0a23b"; c.beginPath(); c.arc(w * 0.55, h * 0.3, w * 0.025, 0, 7); c.fill();
+      // desk with laptop and PADS·12
+      const dy = h * 0.6, dx = w * 0.58;
+      c.fillStyle = "#4a3426"; c.fillRect(dx, dy, w * 0.4, h * 0.05); c.fillStyle = "#33241b"; c.fillRect(dx + 10, dy + h * 0.05, 14, h * 0.4); c.fillRect(dx + w * 0.4 - 24, dy + h * 0.05, 14, h * 0.4);
+      c.fillStyle = "#2f2a33"; c.fillRect(dx + w * 0.04, dy - h * 0.13, w * 0.14, h * 0.13);
+      const sc = c.createLinearGradient(0, dy - h * 0.12, 0, dy); sc.addColorStop(0, "#3dfcff"); sc.addColorStop(1, "#2b6fd9");
+      c.fillStyle = sc; c.fillRect(dx + w * 0.048, dy - h * 0.12, w * 0.124, h * 0.11);
+      const lg = c.createRadialGradient(dx + w * 0.11, dy - h * 0.06, 4, dx + w * 0.11, dy - h * 0.06, h * 0.3);
+      lg.addColorStop(0, "rgba(61,252,255,.25)"); lg.addColorStop(1, "rgba(61,252,255,0)"); c.fillStyle = lg; c.fillRect(0, 0, w, h);
+      c.fillStyle = "#c4c0b5"; c.fillRect(dx + w * 0.22, dy - h * 0.05, w * 0.12, h * 0.05);
+      c.fillStyle = "#3b3a37"; for (let r = 0; r < 3; r++) for (let q = 0; q < 4; q++) c.fillRect(dx + w * 0.226 + q * w * 0.028, dy - h * 0.045 + r * h * 0.014, w * 0.022, h * 0.01);
+      bokeh(c, w, h, 10, ["255,200,120", "255,120,200"]);
+      vignette(c, w, h);
+    }
+    function paintBg(name) {
+      bgName = name;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2), w = innerWidth, h = innerHeight;
+      bg.width = Math.round(w * dpr); bg.height = Math.round(h * dpr);
+      const c = bg.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (name === "rua") street(c, w, h); else if (name === "quarto") room(c, w, h); else { c.fillStyle = "#0d0a14"; c.fillRect(0, 0, w, h); }
+    }
+    async function scene(name) {
+      bg.style.opacity = "0"; await wait(0.45);
+      clearSprites(); paintBg(name);
+      bg.style.opacity = "1"; await wait(0.35);
+    }
 
-    function drawStreet() {
-      g.fillStyle = "#0e0c18"; g.fillRect(0, 0, WW, WH);
-      // buildings along the top, the music shop on the right
-      for (let x = 0; x < 214; x += 34) {
-        g.fillStyle = x % 68 ? "#231a3a" : "#1c1530"; g.fillRect(x, 0, 32, 44);
-        for (let wy = 6; wy < 40; wy += 8) for (let wx = x + 4; wx < x + 28; wx += 7)
-          if (hash(wx, wy) > 0.45) { g.fillStyle = hash(wy, wx) > 0.5 ? "#ffd28c" : "#f6c27a"; g.globalAlpha = 0.5 + hash(wx + 1, wy) * 0.5; g.fillRect(wx, wy, 3, 4); }
-        g.globalAlpha = 1;
-      }
-      g.fillStyle = "#2e1f45"; g.fillRect(216, 0, 96, 46);
-      g.fillStyle = "#14101f"; g.fillRect(222, 6, 84, 26);
-      g.fillStyle = "#c4c0b5"; g.fillRect(232, 12, 22, 14); // a PADS·12 in the window
-      g.fillStyle = "#3b3a37"; for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) g.fillRect(234 + c * 5, 14 + r * 4, 4, 3);
-      const neon = 0.75 + Math.sin(clock * 3) * 0.25;
-      g.fillStyle = `rgba(255,61,240,${neon})`; g.font = "8px Silkscreen, monospace"; g.fillText("MUSICA", 262, 24);
-      g.fillStyle = "#4a3a20"; g.fillRect(254, 38, 16, 8); // door
-      // sidewalks and road
-      g.fillStyle = "#2a2638"; g.fillRect(0, 44, WW, 30); g.fillRect(0, 130, WW, 50);
-      g.strokeStyle = "#353046"; g.lineWidth = 1;
-      for (let x = 0; x < WW; x += 16) { g.beginPath(); g.moveTo(x + 0.5, 44); g.lineTo(x + 0.5, 74); g.stroke(); g.beginPath(); g.moveTo(x + 0.5, 130); g.lineTo(x + 0.5, 180); g.stroke(); }
-      g.fillStyle = "#16131f"; g.fillRect(0, 74, WW, 56);
-      g.fillStyle = "rgba(255,214,150,.6)"; for (let x = 4; x < WW; x += 28) g.fillRect(x, 101, 14, 2);
-      // street lamps
-      for (const lx of [40, 150, 200]) {
-        const gl = g.createRadialGradient(lx, 68, 1, lx, 68, 34);
-        gl.addColorStop(0, "rgba(255,178,102,.35)"); gl.addColorStop(1, "rgba(255,178,102,0)");
-        g.fillStyle = gl; g.fillRect(lx - 34, 34, 68, 68);
-        g.fillStyle = "#0c0a14"; g.fillRect(lx - 1, 66, 3, 3);
-        g.fillStyle = "#ffcf8f"; g.fillRect(lx, 67, 1, 1);
-      }
-    }
-    function drawRoom() {
-      g.fillStyle = "#1a1226"; g.fillRect(0, 0, WW, WH);
-      g.fillStyle = "#2b1d3a"; g.fillRect(8, 8, WW - 16, WH - 8);
-      // plank floor
-      for (let y = 20; y < WH - 4; y += 8) for (let x = 20; x < WW - 20; x += 32) {
-        g.fillStyle = (x / 32 + y / 8) % 2 ? "#6b4a33" : "#634430"; g.fillRect(x + ((y / 8) % 2) * 16 - 16, y, 32, 8);
-      }
-      g.fillStyle = "#2b1d3a"; g.fillRect(8, 8, 12, WH); g.fillRect(WW - 20, 8, 12, WH); g.fillRect(8, 8, WW - 16, 12);
-      g.fillStyle = "#6b4a33"; g.fillRect(148, WH - 12, 24, 12); // doorway
-      // window + moonlight
-      g.fillStyle = "#9fb3d9"; g.fillRect(120, 8, 50, 6);
-      g.fillStyle = "rgba(180,200,255,.10)"; g.beginPath(); g.moveTo(120, 20); g.lineTo(170, 20); g.lineTo(190, 90); g.lineTo(110, 90); g.fill();
-      // bed
-      g.fillStyle = "#3a2a20"; g.fillRect(26, 26, 50, 76);
-      g.fillStyle = "#e8e2f0"; g.fillRect(30, 30, 42, 14);
-      g.fillStyle = "#b8352a"; g.fillRect(30, 48, 42, 50);
-      g.fillStyle = "#8a2620"; for (let y = 52; y < 98; y += 8) g.fillRect(30, y, 42, 2);
-      // rug
-      g.fillStyle = "#4a2d5a"; g.beginPath(); g.ellipse(160, 112, 46, 26, 0, 0, Math.PI * 2); g.fill();
-      g.strokeStyle = "#ff3df0"; g.globalAlpha = 0.35; g.lineWidth = 2; g.stroke(); g.globalAlpha = 1;
-      // desk with laptop and the PADS·12
-      g.fillStyle = "#4a3426"; g.fillRect(206, 24, 88, 30);
-      g.fillStyle = "#2f2a33"; g.fillRect(222, 28, 20, 14);
-      const glow = 0.6 + Math.sin(clock * 2) * 0.1;
-      g.fillStyle = `rgba(61,252,255,${glow})`; g.fillRect(224, 30, 16, 9);
-      g.fillStyle = "#c4c0b5"; g.fillRect(252, 28, 26, 18);
-      g.fillStyle = "#3b3a37"; for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) g.fillRect(254 + c * 6, 31 + r * 5, 5, 4);
-      g.fillStyle = "#222"; g.beginPath(); g.arc(232, 64, 7, 0, Math.PI * 2); g.fill();
-      // poster
-      g.fillStyle = "#251747"; g.fillRect(40, 10, 22, 8); g.fillStyle = "#ff3df0"; g.fillRect(44, 12, 14, 2); g.fillStyle = "#3dfcff"; g.fillRect(44, 15, 10, 1);
-    }
-    function drawActor(a) {
-      const moving = a.tx != null;
-      const bob = moving ? Math.sin(clock * 14) * 0.6 : 0;
-      const x = Math.round(a.x), y = Math.round(a.y + bob);
-      g.fillStyle = "rgba(0,0,0,.35)"; g.beginPath(); g.ellipse(x, y + 6, 6, 3, 0, 0, Math.PI * 2); g.fill();
-      if (moving) {
-        const s = Math.sin(clock * 14) > 0 ? 1 : -1;
-        g.fillStyle = "#1d1a22";
-        g.fillRect(x - 3 + a.fx * 2 * s, y + 2 + a.fy * 2 * s, 2, 3);
-        g.fillRect(x + 1 - a.fx * 2 * s, y + 2 - a.fy * 2 * s, 2, 3);
-      }
-      g.fillStyle = a.body; g.beginPath(); g.ellipse(x, y + 1, 6, 4, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = a.skin; g.fillRect(x - 7, y, 2, 2); g.fillRect(x + 5, y, 2, 2);
-      g.fillStyle = a.skin; g.beginPath(); g.arc(x, y - 1, 3.5, 0, Math.PI * 2); g.fill();
-      g.fillStyle = a.hair; g.beginPath(); g.arc(x - a.fx * 0.8, y - 1 - a.fy * 0.8, 3.2, 0, Math.PI * 2); g.fill();
-      if (a.cap) { g.fillStyle = a.cap; g.fillRect(Math.round(x + a.fx * 3 - 2), Math.round(y - 1 + a.fy * 3 - 1), 4, 2); }
-    }
-    function frame(now) {
-      const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now; clock += dt;
-      fade += (fadeTo - fade) * Math.min(1, dt * 4);
-      for (const a of Object.values(actors)) {
-        if (a.tx == null) continue;
-        const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy), step = a.speed * dt;
-        if (d <= step) { a.x = a.tx; a.y = a.ty; a.tx = null; const r = a.done; a.done = null; r && r(); }
-        else { a.x += (dx / d) * step; a.y += (dy / d) * step; a.fx = dx / d; a.fy = dy / d; }
-      }
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.fillStyle = "#0e0c18"; g.fillRect(0, 0, WW, H);
-      // camera: zoomed in, easing toward the on-screen actors, clamped to the set
-      const on = Object.values(actors).filter((a) => a.x > 0 && a.x < WW);
-      const tx = on.length ? on.reduce((s, a) => s + a.x, 0) / on.length : WW / 2;
-      const ty = on.length ? on.reduce((s, a) => s + a.y, 0) / on.length : WH / 2;
-      if (cam.scene !== scene) { cam.x = tx; cam.y = ty; cam.scene = scene; }
-      cam.x += (tx - cam.x) * Math.min(1, dt * 3); cam.y += (ty - cam.y) * Math.min(1, dt * 3);
-      const z = (scene === "quarto" ? 1.4 : 1.8) * (H > WH * 1.2 ? 1.5 : 1), hw = WW / (2 * z), hh = H / (2 * z);
-      const cx = Math.max(hw, Math.min(WW - hw, cam.x)), cy = hh * 2 >= WH ? WH / 2 : Math.max(hh, Math.min(WH - hh, cam.y));
-      g.setTransform(z, 0, 0, z, Math.round(WW / 2 - cx * z), Math.round(H / 2 - cy * z));
-      scene === "quarto" ? drawRoom() : drawStreet();
-      Object.values(actors).sort((p, q) => p.y - q.y).forEach(drawActor);
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      if (fade > 0.01) { g.fillStyle = `rgba(6,5,12,${fade})`; g.fillRect(0, 0, WW, H); }
-      if (active) raf = requestAnimationFrame(frame);
-    }
-
-    const LEO = { body: "#f0a23b", skin: "#c68a5a", hair: "#1d1a22", cap: "#f0a23b" };
-    const CAIO = { body: "#2bb3b8", skin: "#8d5a3b", hair: "#2a1d14" };
-    function place(name, x, y, look, face) { actors[name] = { ...look, x, y, tx: null, fx: face[0], fy: face[1], speed: 46 }; }
+    // ---- text ----
     const wait = (s) => new Promise((r) => setTimeout(r, s * 1000));
-    function walk(name, x, y) { return new Promise((r) => { const a = actors[name]; if (!a) return r(); a.tx = x; a.ty = y; a.done = r; }); }
     function beep(f) {
       try {
-        if (ctx.state !== "running") return;
+        if (ctx.state !== "running" || !f) return;
         const o = ctx.createOscillator(), gg = ctx.createGain(), t = ctx.currentTime;
-        o.type = "square"; o.frequency.value = f * (0.95 + Math.random() * 0.1);
-        gg.gain.setValueAtTime(0.025, t); gg.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-        o.connect(gg).connect(master); o.start(t); o.stop(t + 0.05);
+        o.type = "triangle"; o.frequency.value = f * (0.96 + Math.random() * 0.08);
+        gg.gain.setValueAtTime(0.03, t); gg.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+        o.connect(gg).connect(master); o.start(t); o.stop(t + 0.06);
       } catch (e) {}
     }
-    const T = (s) => I18N.t(s);
-    function waitInput() { return new Promise((r) => { advance = r; }); }
+    function waitInput(len) {
+      return new Promise((r) => {
+        advance = r;
+        if (auto) setTimeout(() => { if (advance === r) { advance = null; r(); } }, 1400 + (len || 20) * 35);
+      });
+    }
     async function typeInto(el, str, f) {
       el.textContent = "";
       let i = 0, done = false;
       typing = () => { done = true; };
       while (i < str.length && !done && !skipped) {
         i++; el.textContent = str.slice(0, i);
-        if (f && i % 2) beep(f);
-        await wait(0.028);
+        if (i % 2) beep(f);
+        await wait(0.026);
       }
       el.textContent = str; typing = null;
     }
-    async function say(name, line) {
+    async function say(name, line, id, e) {
       if (skipped) return;
-      const sp = SPEAK[name] || { color: "#fff", f: 400 };
-      box.hidden = false; who.textContent = T(name); who.style.color = sp.color;
-      await typeInto(text, T(line), sp.f);
+      if (id) { face(id, e); talking(id); } else talking(null);
+      const t = T(line);
+      box.hidden = false; $("vnMenu").hidden = false;
+      who.textContent = name ? T(name) : "";
+      log.push([who.textContent, t]);
+      await typeInto(text, t, SPEAK[name]);
       if (skipped) return;
       $("cineNext").hidden = false;
-      await waitInput();
+      await waitInput(t.length);
       $("cineNext").hidden = true;
     }
-    async function showCard(title, body, button) {
-      if (skipped) return;
+    async function choose(options) {
+      if (skipped) return 0;
       box.hidden = true;
+      const wrap = $("vnChoices"); wrap.textContent = ""; wrap.hidden = false;
+      const pick = await new Promise((r) => options.forEach((o, i) => {
+        const b = document.createElement("button"); b.type = "button"; b.textContent = T(o); b.onclick = () => r(i); wrap.appendChild(b);
+      }));
+      wrap.hidden = true;
+      return pick;
+    }
+    async function showCard(title, body, button) {
+      box.hidden = true; $("vnMenu").hidden = true;
       card.hidden = false;
       $("cardTitle").textContent = T(title); $("cardBody").textContent = body ? T(body) : "";
-      const b = $("cardBtn"); b.textContent = T(button || "Continuar"); b.hidden = false;
-      await waitInput();
+      $("cardBtn").textContent = T(button || "Continuar");
+      await new Promise((r) => { advance = r; });
       card.hidden = true;
     }
-    function fadeOut() { fadeTo = 1; return wait(0.8); }
-    function fadeIn() { fadeTo = 0; return wait(0.6); }
 
     function open() {
-      active = true; skipped = false; resize(); actors = {}; fade = 1; fadeTo = 1;
-      root.hidden = false; document.body.classList.add("cine-on");
-      box.hidden = true; card.hidden = true; mail.hidden = true; $("cineNext").hidden = true;
+      active = true; skipped = false; root.hidden = false; document.body.classList.add("cine-on");
+      box.hidden = true; card.hidden = true; mail.hidden = true; $("cineNext").hidden = true; $("vnChoices").hidden = true; $("vnLogPanel").hidden = true;
+      bg.style.opacity = "0"; clearSprites();
       if (ctx.state !== "running") ctx.resume();
-      last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
     }
-    function close() {
-      active = false; cancelAnimationFrame(raf);
-      root.hidden = true; document.body.classList.remove("cine-on");
-      advance = null;
-    }
+    function close() { active = false; root.hidden = true; document.body.classList.remove("cine-on"); advance = null; clearSprites(); }
     function next() {
+      if (!$("vnLogPanel").hidden || !$("vnChoices").hidden) return;
       if (typing) { typing(); return; }
       if (advance) { const r = advance; advance = null; r(); }
     }
-    root.addEventListener("click", (e) => { if (e.target.closest("button, input, a")) return; next(); });
-    $("cardBtn").onclick = next;
-    $("cineSkip").onclick = () => { skipped = true; if (typing) typing(); if (advance) { const r = advance; advance = null; r(); } };
+    root.addEventListener("click", (e) => { if (e.target.closest("button, input, a, .vn-log, .cine-mail")) return; next(); });
+    $("cardBtn").onclick = () => { if (advance) { const r = advance; advance = null; r(); } };
+    $("cineSkip").onclick = () => { skipped = true; if (typing) typing(); if (advance && card.hidden) { const r = advance; advance = null; r(); } };
+    $("vnAuto").onclick = () => { auto = !auto; $("vnAuto").setAttribute("aria-pressed", String(auto)); if (auto && !typing && advance && card.hidden) next(); };
+    $("vnLog").onclick = () => {
+      const ol = $("vnLogList"); ol.textContent = "";
+      log.slice(-60).forEach(([n, t]) => { const li = document.createElement("li"); const b = document.createElement("b"); b.textContent = n; li.append(b, " ", t); ol.appendChild(li); });
+      $("vnLogPanel").hidden = false; ol.lastChild && ol.lastChild.scrollIntoView({ block: "end" });
+    };
+    $("vnLogClose").onclick = () => { $("vnLogPanel").hidden = true; };
     document.addEventListener("keydown", (e) => {
       if (!active) return;
-      if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); next(); }
-      else if (e.code === "Escape") $("cineSkip").click();
+      if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); if (!card.hidden) $("cardBtn").click(); else next(); }
+      else if (e.code === "Escape") { if (!$("vnLogPanel").hidden) $("vnLogPanel").hidden = true; else $("cineSkip").click(); }
     });
-    addEventListener("resize", () => { if (active) resize(); });
+    addEventListener("resize", () => { if (active && bgName) paintBg(bgName); });
 
     // ---- scripts ----
     async function intro() {
       open();
-      scene = "rua";
-      place("leo", 136, 60, LEO, [1, 0]); place("caio", 168, 60, CAIO, [-1, 0]);
-      await fadeIn();
-      await say("Caio", "Então é sério? Você quer mesmo ser produtor?");
-      await say("Léo", "Sério. Um dia minhas músicas vão tocar em todo lugar.");
-      await say("Caio", "Cara, você nem tem equipamento.");
-      await say("Caio", "E ninguém entra numa gravadora assim, do nada.");
-      await say("Léo", "Então eu vou ser o primeiro que você conhece.");
-      await say("Caio", "Tá bom... me avisa quando o telefone tocar.");
-      box.hidden = true;
-      if (!skipped) { actors.caio.speed = 60; walk("caio", -20, 60); await wait(0.6); await walk("leo", 262, 50); }
-      await fadeOut();
+      await scene("rua");
+      show("caio", "right", "smug"); show("leo", "left", "determined");
+      await say("Caio", "Então é sério? Você quer mesmo ser produtor?", "caio", "smug");
+      await say("Léo", "Sério. Um dia minhas músicas vão tocar em todo lugar.", "leo", "determined");
+      await say("Caio", "Cara, você nem tem equipamento.", "caio", "grin");
+      await say("Caio", "E ninguém entra numa gravadora assim, do nada.", "caio", "smug");
+      const c = await choose(["Então eu vou ser o primeiro que você conhece.", "Você vai ver só."]);
+      await say("Léo", c ? "Você vai ver só." : "Então eu vou ser o primeiro que você conhece.", "leo", "determined");
+      await say("Caio", "Tá bom... me avisa quando o telefone tocar.", "caio", "normal");
+      hide("caio");
+      skipped = false;
       await showCard("Naquela noite...", "Naquela noite, Léo gastou tudo o que tinha num PADS·12.");
-      scene = "quarto"; actors = {};
-      place("leo", 160, 166, LEO, [0, -1]);
-      await fadeIn();
-      if (!skipped) await walk("leo", 232, 66);
-      if (actors.leo) { actors.leo.fx = 0; actors.leo.fy = -1; }
-      await say("Léo", "Pronto. Agora é comigo.");
-      await say("Léo", "Música autoral, do zero. Nada de copiar ninguém.");
-      await say("Léo", "Vou mandar cada demo pro Selo Noite Alta até eles me contratarem.");
+      await scene("quarto");
+      show("leo", "center", "happy");
+      await say("Léo", "Pronto. Agora é comigo.", "leo", "happy");
+      await say("Léo", "Música autoral, do zero. Nada de copiar ninguém.", "leo", "normal");
+      await say("Léo", "Vou mandar cada demo pro Selo Noite Alta até eles me contratarem.", "leo", "determined");
       skipped = false;
       await showCard("OBJETIVO", "Produza músicas, baixe e envie pro Selo Noite Alta. Ruim vale 0, mediana 25 e muito boa 100 pontos. Chegue a 500 pra ser contratado.", "Começar a produzir");
       close();
@@ -3543,13 +3684,11 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
 
     async function email(song, result, after) {
       open();
-      scene = "quarto";
-      place("leo", 232, 66, LEO, [0, -1]);
-      await fadeIn();
-      await say("Léo", ["Lá vai mais uma.", "Essa ficou boa... eu acho.", "Vamos ver o que eles acham dessa."][song.n % 3]);
+      await scene("quarto");
+      show("leo", "left", "normal");
+      await say("Léo", ["Lá vai mais uma.", "Essa ficou boa... eu acho.", "Vamos ver o que eles acham dessa."][song.n % 3], "leo", song.n % 3 === 1 ? "happy" : "normal");
       skipped = false;
-      box.hidden = true;
-      // compose
+      box.hidden = true; $("vnMenu").hidden = true;
       mail.hidden = false; $("mailCompose").hidden = false; $("mailReply").hidden = true;
       $("mailTo").textContent = "demos@noitealta.rec";
       $("mailSubject").textContent = T(`Demo: ${song.name}`);
@@ -3560,7 +3699,6 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       await new Promise((r) => { $("mailSend").onclick = r; });
       $("mailSend").disabled = true; $("mailSend").textContent = T("Enviado!");
       beep(880); await wait(1.1);
-      // reply
       $("mailCompose").hidden = true; $("mailReply").hidden = false;
       $("replyHead").textContent = T("Nova mensagem do Selo Noite Alta");
       $("replyTitle").textContent = T(result.title);
@@ -3572,10 +3710,12 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       $("replyOk").textContent = T("Continuar");
       await new Promise((r) => { $("replyOk").onclick = r; });
       mail.hidden = true;
-      await say("Léo", result.points >= 100 ? "ISSO! Eles curtiram de verdade!" : result.points > 0 ? "Dá pra melhorar. Bora pra próxima." : "Ai... volta pro estúdio, Léo.");
+      const e = result.points >= 100 ? "grin" : result.points > 0 ? "normal" : "sad";
+      await say("Léo", result.points >= 100 ? "ISSO! Eles curtiram de verdade!" : result.points > 0 ? "Dá pra melhorar. Bora pra próxima." : "Ai... volta pro estúdio, Léo.", "leo", e);
       if (after === "half") {
-        await say("Caio", "Ouvi tua última demo. Até que tá boa, hein.");
-        await say("Léo", "Falei que ia dar certo.");
+        show("caio", "right", "smug");
+        await say("Caio", "Ouvi tua última demo. Até que tá boa, hein.", "caio", "smug");
+        await say("Léo", "Falei que ia dar certo.", "leo", "grin");
       }
       if (after === "end") { await ending(true); return; }
       close();
@@ -3584,21 +3724,18 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     async function ending(already) {
       if (!already) open();
       skipped = false;
-      box.hidden = true;
-      await fadeOut();
+      clearSprites(); box.hidden = true;
       await showCard("O telefone toca...", "");
-      scene = "quarto"; actors = {}; place("leo", 232, 66, LEO, [0, 1]);
-      await fadeIn();
+      await scene("quarto");
+      show("leo", "center", "surprised");
       await say("Selo Noite Alta", "Léo? Aqui é do Selo Noite Alta. Queremos te contratar.");
-      await say("Léo", "...Sério?! SIM! Claro que sim!");
-      await fadeOut();
-      scene = "rua"; actors = {};
-      place("leo", 136, 60, LEO, [1, 0]); place("caio", 168, 60, CAIO, [-1, 0]);
-      await fadeIn();
-      await say("Caio", "Fiquei sabendo. Tá, eu tava errado.");
-      await say("Caio", "Você conseguiu, produtor.");
-      await say("Léo", "Eu te avisei.");
-      await fadeOut();
+      await say("Léo", "...Sério?! SIM! Claro que sim!", "leo", "grin");
+      await scene("rua");
+      show("leo", "left", "happy"); show("caio", "right", "sad");
+      await say("Caio", "Fiquei sabendo. Tá, eu tava errado.", "caio", "sad");
+      await say("Caio", "Você conseguiu, produtor.", "caio", "happy");
+      await say("Léo", "Eu te avisei.", "leo", "grin");
+      skipped = false;
       await showCard("FIM — Léo foi contratado!", "Continue produzindo à vontade.", "Continuar");
       close();
     }
