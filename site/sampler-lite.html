@@ -322,6 +322,13 @@ body { padding-block: 10px 24px; }
 .slice.hit { animation: hit .7s ease-out; }
 .slice:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
 .pad.custom .meta span:first-child::after { content: " ★"; color: var(--lit); }
+.piecebar { display: grid; gap: 10px; background: var(--case-hi); border: 1px solid var(--case-lo); border-radius: 8px; padding: 12px; }
+.piecehead { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.piecehead b { font-family: var(--f-label); font-weight: 400; font-size: 16px; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.piecehead .btns { margin-left: auto; }
+.piecegrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 10px 16px; }
+.pad.muted { opacity: .45; }
+.seq .rl.muted { opacity: .45; text-decoration: line-through; }
 .kitbox { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .lang { width: auto; padding: 4px 8px; font: 400 12px var(--f-label); letter-spacing: .04em; }
 </style>
@@ -475,6 +482,23 @@ body { padding-block: 10px 24px; }
   </section>
 
   <section class="pads" id="drumPads" aria-label="Bateria" hidden></section>
+  <section class="piecebar" id="pieceBar" hidden>
+    <div class="piecehead">
+      <span class="label">Peça selecionada</span>
+      <b id="pieceName">Bumbo</b>
+      <span class="btns">
+        <button class="btn" id="pieceMute" type="button" aria-pressed="false">Mudo</button>
+        <button class="btn" id="pieceReset" type="button">Zerar peça</button>
+      </span>
+    </div>
+    <div class="piecegrid">
+      <div class="field"><label class="label" for="pVol">Volume <span id="pVolVal">100%</span></label><input type="range" id="pVol" min="0" max="150" value="100"></div>
+      <div class="field"><label class="label" for="pPitch">Afinação <span id="pPitchVal">0 st</span></label><input type="range" id="pPitch" min="-12" max="12" value="0"></div>
+      <div class="field"><label class="label" for="pLen">Duração <span id="pLenVal">100%</span></label><input type="range" id="pLen" min="10" max="100" value="100"></div>
+      <div class="field"><label class="label" for="pPan">Pan <span id="pPanVal">C</span></label><input type="range" id="pPan" min="-100" max="100" step="5" value="0"></div>
+      <div class="field"><label class="label" for="pCut">Filtro <span id="pCutVal">aberto</span></label><input type="range" id="pCut" min="0" max="100" value="100"></div>
+    </div>
+  </section>
   <section class="chordbar" id="seqWrap" hidden>
     <div class="transport">
       <button class="btn dark" id="seqPlay" type="button" aria-pressed="false">Tocar</button>
@@ -1641,9 +1665,26 @@ body { padding-block: 10px 24px; }
       if (!b) return;
       if (ctx.state !== "running") ctx.resume();
       const t = Math.max(when || 0, ctx.currentTime);
+      const pc = pieceCtl[i];
+      if (pc.mute) return;
       const s = ctx.createBufferSource(); s.buffer = b;
-      const g = ctx.createGain(); g.gain.value = vel;
-      s.connect(g).connect(input); s.start(t);
+      s.playbackRate.value = 2 ** (pc.pitch / 12);
+      const level = vel * pc.vol / 100;
+      const g = ctx.createGain(); g.gain.setValueAtTime(level, t);
+      let node = s;
+      if (pc.cut < 100) {
+        const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.Q.value = 0.8;
+        f.frequency.value = 180 * 2 ** ((pc.cut / 100) * 6.8);   // 180 Hz .. ~20 kHz
+        node.connect(f); node = f;
+      }
+      node.connect(g);
+      let tail = g;
+      if (pc.pan && ctx.createStereoPanner) { const pn = ctx.createStereoPanner(); pn.pan.value = pc.pan / 100; g.connect(pn); tail = pn; }
+      tail.connect(input); s.start(t);
+      if (pc.len < 100) {
+        const end = t + (b.duration / s.playbackRate.value) * pc.len / 100;
+        g.gain.setValueAtTime(level, Math.max(t, end - 0.02)); g.gain.linearRampToValueAtTime(0, end); s.stop(end + 0.01);
+      }
       // a closed hat chokes a ringing open hat, like a real foot on the pedal
       if (i === 2 && openHat) { openHat.gain.setTargetAtTime(0, t, 0.012); openHat = null; }
       if (i === 3) openHat = g;
@@ -1752,7 +1793,7 @@ body { padding-block: 10px 24px; }
       $("lcdLen").textContent = `SWING ${swing}%`;
     }
     function save() { savePrefs(); }
-    function prefs() { return { grid, bpm, swing, preset, humanize, phaser, mix, drumKit: kitId }; }
+    function prefs() { return { grid, bpm, swing, preset, humanize, phaser, mix, drumKit: kitId, pieces: pieceCtl }; }
     function load(p) {
       if (!p) return;
       if (Array.isArray(p.grid) && p.grid.length === 8) grid = p.grid.map((r) => Array.from({ length: 16 }, (_, s) => [0, 1, 2].includes(r[s]) ? r[s] : 0));
@@ -1761,6 +1802,11 @@ body { padding-block: 10px 24px; }
       if (PRESETS[p.preset]) preset = p.preset;
       humanize = p.humanize ?? humanize; phaser = p.phaser ?? phaser;
       if (p.mix) for (const k of Object.keys(mix)) if (typeof p.mix[k] === "number") mix[k] = p.mix[k];
+      if (Array.isArray(p.pieces)) p.pieces.slice(0, KIT.length).forEach((pc, i) => {
+        if (!pc) return;
+        for (const k of ["vol", "pitch", "len", "pan", "cut"]) if (typeof pc[k] === "number") pieceCtl[i][k] = pc[k];
+        pieceCtl[i].mute = !!pc.mute;
+      });
     }
     function syncUi() {
       $("bpm").value = bpm; $("swing").value = swing; $("swingVal").textContent = swing; $("presetSel").value = preset;
@@ -1794,6 +1840,7 @@ body { padding-block: 10px 24px; }
     let selDrum = 0;
     function paintName(i) {
       drumEls[i].querySelector(".name").textContent = pieceName(i);
+      if (i === selDrum && $("pieceName")) $("pieceName").textContent = pieceName(i);
       drumEls[i].setAttribute("aria-label", `${pieceName(i)}, tecla ${KEYS[i]}`);
       // the sequencer row follows the piece, so its label and step names update too
       const l = $("seqlabel-" + i);
@@ -1804,6 +1851,7 @@ body { padding-block: 10px 24px; }
     function selectDrum(i) {
       drumEls[selDrum].classList.remove("selected");
       selDrum = i; drumEls[i].classList.add("selected");
+      syncPiece();
     }
     async function storeCustom(i) {
       try {
@@ -1930,6 +1978,44 @@ body { padding-block: 10px 24px; }
     }
     $("drumKitSel").onchange = (e) => setKit(e.target.value);
 
+    // ---- per-piece controls (volume, tuning, length, pan, filter, mute) for the selected piece ----
+    const PIECE_DEFAULT = { vol: 100, pitch: 0, len: 100, pan: 0, cut: 100, mute: false };
+    const pieceCtl = KIT.map(() => ({ ...PIECE_DEFAULT }));
+    const PIECE_IN = { pVol: "vol", pPitch: "pitch", pLen: "len", pPan: "pan", pCut: "cut" };
+    function showVals() {
+      const pc = pieceCtl[selDrum];
+      $("pVolVal").textContent = pc.vol + "%";
+      $("pPitchVal").textContent = (pc.pitch > 0 ? "+" : "") + pc.pitch + " st";
+      $("pLenVal").textContent = pc.len + "%";
+      $("pPanVal").textContent = pc.pan === 0 ? "C" : pc.pan < 0 ? "◀ " + -pc.pan : pc.pan + " ▶";
+      $("pCutVal").textContent = pc.cut >= 100 ? "aberto" : pc.cut + "%";
+    }
+    function syncPiece() {
+      const pc = pieceCtl[selDrum];
+      $("pieceName").textContent = pieceName(selDrum);
+      for (const [id, k] of Object.entries(PIECE_IN)) $(id).value = pc[k];
+      $("pieceMute").setAttribute("aria-pressed", String(pc.mute));
+      showVals();
+    }
+    function paintMute(i) {
+      drumEls[i].classList.toggle("muted", pieceCtl[i].mute);
+      const l = $("seqlabel-" + i);
+      if (l) l.classList.toggle("muted", pieceCtl[i].mute);
+    }
+    for (const [id, k] of Object.entries(PIECE_IN)) {
+      $(id).oninput = (e) => { pieceCtl[selDrum][k] = +e.target.value; showVals(); save(); };
+      $(id).onchange = () => { if (!playing) hit(selDrum, 0.9); };  // audition the tweak
+    }
+    $("pieceMute").onclick = () => {
+      const pc = pieceCtl[selDrum];
+      pc.mute = !pc.mute; paintMute(selDrum); syncPiece(); save();
+      status(pc.mute ? `${pieceName(selDrum)} no mudo.` : `${pieceName(selDrum)} voltou a tocar.`);
+    };
+    $("pieceReset").onclick = () => {
+      pieceCtl[selDrum] = { ...PIECE_DEFAULT }; paintMute(selDrum); syncPiece(); save();
+      status(`Ajustes de ${pieceName(selDrum)} zerados.`);
+    };
+
     selectDrum(0);
     $("drumReplace").onclick = () => $("drumFile").click();
     $("drumFile").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) replaceWith(selDrum, f); };
@@ -1954,7 +2040,7 @@ body { padding-block: 10px 24px; }
     return {
       show() { syncUi(); Keys.startScope(); lcd(); },
       hide() { Keys.stopScope(); },
-      lcd, stop, onKey, prefs, load: (p) => { load(p); syncUi(); applyMix(); if (p && p.drumKit) setKit(p.drumKit, true); },
+      lcd, stop, onKey, prefs, load: (p) => { load(p); syncUi(); applyMix(); for (let i = 0; i < KIT.length; i++) paintMute(i); syncPiece(); if (p && p.drumKit) setKit(p.drumKit, true); },
       hitAt, isPlaying: () => playing, barSeconds: () => (60 / bpm) * 4, bpm: () => bpm,
     };
   })();
@@ -2183,7 +2269,7 @@ body { padding-block: 10px 24px; }
   const MODE_IDS = {
     pads: ["padControls", "pads", "helpPads", "loadBtn", "resetBtn", "kitBox"],
     keys: ["keyControls", "chordBar", "pianoWrap", "helpKeys"],
-    drums: ["drumControls", "drumPads", "seqWrap", "helpDrums"],
+    drums: ["drumControls", "drumPads", "pieceBar", "seqWrap", "helpDrums"],
     chop: ["chopControls", "chopWrap", "helpChop"],
   };
   function setMode(m) {
@@ -2722,6 +2808,17 @@ body { padding-block: 10px 24px; }
       ["Vazio", "Empty", "Vacío"],
       ["Limpar", "Clear", "Borrar"],
       ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Peça selecionada", "Selected piece", "Pieza seleccionada"],
+      ["Volume", "Volume", "Volumen"],
+      ["Afinação", "Tuning", "Afinación"],
+      ["Duração", "Length", "Duración"],
+      ["Filtro", "Filter", "Filtro"],
+      ["aberto", "open", "abierto"],
+      ["Mudo", "Mute", "Silencio"],
+      ["Zerar peça", "Reset piece", "Restablecer pieza"],
+      ["{} no mudo.", "{} muted.", "{} silenciado."],
+      ["{} voltou a tocar.", "{} unmuted.", "{} vuelve a sonar."],
+      ["Ajustes de {} zerados.", "{} settings reset.", "Ajustes de {} restablecidos."],
       ["Kit orgânico", "Organic kit", "Kit orgánico"],
       ["Kit da bateria", "Drum kit", "Kit de batería"],
       ["Aro", "Rim", "Aro"],
