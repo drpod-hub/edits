@@ -1645,14 +1645,14 @@ body { padding-block: 10px 24px; }
     function paintCell(r, s) {
       const c = cells[r][s], v = grid[r][s];
       c.dataset.v = v;
-      c.setAttribute("aria-label", `${KIT[r][0]}, passo ${s + 1}: ${["desligado", "ligado", "fantasma"][v]}`);
+      c.setAttribute("aria-label", `${pieceName(r)}, passo ${s + 1}: ${["desligado", "ligado", "fantasma"][v]}`);
     }
     function buildSeq() {
       seq.textContent = "";
       const blank = document.createElement("span"); blank.className = "rl"; seq.appendChild(blank);
       for (let s = 0; s < 16; s++) { const n = document.createElement("span"); n.className = "sn"; n.textContent = s % 4 ? "·" : s / 4 + 1; seq.appendChild(n); }
       KIT.forEach(([name], r) => {
-        const l = document.createElement("span"); l.className = "rl"; l.textContent = name; seq.appendChild(l);
+        const l = document.createElement("span"); l.className = "rl"; l.id = "seqlabel-" + r; l.textContent = pieceName(r); l.title = pieceName(r); seq.appendChild(l);
         cells[r] = [];
         for (let s = 0; s < 16; s++) {
           const c = document.createElement("button");
@@ -1748,10 +1748,16 @@ body { padding-block: 10px 24px; }
     // ---- your own sounds on the drum pieces ----
     // custom[i] replaces the synthesized piece i; it still runs through the same bus.
     const custom = Array(KIT.length).fill(null);
+    const pieceName = (i) => (custom[i] ? custom[i].name : KIT[i][0]);
     const ROW_CAT = [0, 1, 4, 5, 9, 8, 6, 11]; // drum row -> Kit category (kick, snare, hat, open hat, hi tom, low tom, perc, fx/crash)
     let selDrum = 0;
     function paintName(i) {
-      drumEls[i].querySelector(".name").textContent = custom[i] ? custom[i].name : KIT[i][0];
+      drumEls[i].querySelector(".name").textContent = pieceName(i);
+      drumEls[i].setAttribute("aria-label", `${pieceName(i)}, tecla ${KEYS[i]}`);
+      // the sequencer row follows the piece, so its label and step names update too
+      const l = $("seqlabel-" + i);
+      if (l) { l.textContent = pieceName(i); l.title = pieceName(i); }
+      if (cells[i]) for (let st = 0; st < 16; st++) paintCell(i, st);
       drumEls[i].classList.toggle("custom", !!custom[i]);
     }
     function selectDrum(i) {
