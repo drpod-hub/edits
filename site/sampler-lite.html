@@ -321,6 +321,7 @@ body { padding-block: 10px 24px; }
 .slice:disabled { opacity: .3; cursor: default; }
 .slice.hit { animation: hit .7s ease-out; }
 .slice:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+.pad.custom .meta span:first-child::after { content: " ★"; color: var(--lit); }
 .kitbox { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .lang { width: auto; padding: 4px 8px; font: 400 12px var(--f-label); letter-spacing: .04em; }
 </style>
@@ -414,6 +415,11 @@ body { padding-block: 10px 24px; }
       <div class="krow">
         <button class="btn" id="phaserBtn" type="button" aria-pressed="true">Phaser</button>
         <button class="btn" id="humanBtn" type="button" aria-pressed="true">Humanizar</button>
+      </div>
+      <div class="krow">
+        <button class="btn" id="drumReplace" type="button">Trocar som da peça</button>
+        <button class="btn" id="drumRestore" type="button">Som original</button>
+        <button class="btn dark" id="drumKitBtn" type="button">Importar kit</button>
       </div>
     </div>
 
@@ -546,7 +552,7 @@ body { padding-block: 10px 24px; }
     Bateria abafada e esmagada, inspirada no som psicodélico do Tame Impala: cada batida passa por saturação de fita,
     compressão pesada, phaser girando e uma sala pequena. Toque nos pads ou em <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
     <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. No sequenciador, clique num passo: 1 clique liga, 2 cliques vira nota fantasma
-    (mais fraca), 3 desliga. <kbd>Espaço</kbd> toca e para. Deixe a batida rolando e troque pro Teclado MIDI pra tocar acordes por cima.
+    (mais fraca), 3 desliga. Pra usar seus sons, toque numa peça e clique em <em>Trocar som da peça</em>, arraste um arquivo em cima do pad ou use <em>Importar kit</em>. <kbd>Espaço</kbd> toca e para. Deixe a batida rolando e troque pro Teclado MIDI pra tocar acordes por cima.
   </p>
 
   <p class="help" id="helpChop" data-i18n-html="helpChop" hidden>
@@ -567,6 +573,8 @@ body { padding-block: 10px 24px; }
   <input type="file" id="fileMulti" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" multiple hidden>
   <input type="file" id="fileOne" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
   <input type="file" id="bgFile" accept="image/*" hidden>
+  <input type="file" id="drumFile" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
+  <input type="file" id="drumKitFile" accept=".zip,application/zip,application/x-zip-compressed,audio/*,.wav,.mp3,.ogg,.m4a,.aif,.aiff,.flac" multiple hidden>
   <input type="file" id="chopFile" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
   <input type="file" id="keysFile" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
   <input type="file" id="kitFile" accept=".zip,application/zip,application/x-zip-compressed,audio/*,.wav,.mp3,.ogg,.m4a,.aif,.aiff,.flac" multiple hidden>
@@ -1590,7 +1598,7 @@ body { padding-block: 10px 24px; }
     }
 
     function hit(i, vel, when) {
-      const b = bufs[i];
+      const b = custom[i] ? custom[i].buffer : bufs[i];
       if (!b) return;
       if (ctx.state !== "running") ctx.resume();
       const t = Math.max(when || 0, ctx.currentTime);
@@ -1616,10 +1624,17 @@ body { padding-block: 10px 24px; }
         if (Repeat.on) Repeat.hold("p" + e.pointerId, "drum", i); else live(i);
       });
       b.addEventListener("click", (e) => { if (e.detail === 0) live(i); });
+      b.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); b.classList.add("drop"); });
+      b.addEventListener("dragleave", () => b.classList.remove("drop"));
+      b.addEventListener("drop", (e) => {
+        e.preventDefault(); e.stopPropagation(); b.classList.remove("drop"); document.body.classList.remove("dragging");
+        const fl = Array.from(e.dataTransfer.files);
+        if (fl.some((f) => /\.(zip|rar|7z)$/i.test(f.name))) importKit(fl); else if (fl[0]) replaceWith(i, fl[0]);
+      });
       drumEls[i] = b; padsBox.appendChild(b);
     });
     function flashDrum(i) { const el = drumEls[i]; neon(el); el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); }
-    function live(i) { hit(i, 0.9); flashDrum(i); lastHit = i; lcd(); Looper.rec({ type: "drum", i, vel: 0.9 }); }
+    function live(i) { hit(i, 0.9); flashDrum(i); lastHit = i; selectDrum(i); lcd(); Looper.rec({ type: "drum", i, vel: 0.9 }); }
     function hitAt(i, vel, when) {
       hit(i, vel, when);
       setTimeout(() => flashDrum(i), Math.max(0, (when - ctx.currentTime) * 1000));
@@ -1693,7 +1708,7 @@ body { padding-block: 10px 24px; }
       if (mode !== "drums") return;
       $("lcdPad").textContent = "BATERIA";
       $("lcdKey").textContent = bpm + " BPM";
-      $("lcdName").textContent = (lastHit >= 0 ? KIT[lastHit][0] : PRESETS[preset][0]).toUpperCase();
+      $("lcdName").textContent = (lastHit >= 0 ? (custom[lastHit] ? custom[lastHit].name : KIT[lastHit][0]) : PRESETS[preset][0]).toUpperCase();
       $("lcdFile").textContent = playing && cur >= 0 ? `passo ${String(cur + 1).padStart(2, "0")}/16 · tempo ${Math.floor(cur / 4) + 1}` : "parado · Espaço toca";
       $("lcdLen").textContent = `SWING ${swing}%`;
     }
@@ -1729,6 +1744,80 @@ body { padding-block: 10px 24px; }
       status(`Groove: ${label}, ${b} BPM.`);
     };
     $("seqClear").onclick = () => { grid = parse(PRESETS.vazio[3]); syncUi(); save(); status("Sequenciador limpo."); };
+
+    // ---- your own sounds on the drum pieces ----
+    // custom[i] replaces the synthesized piece i; it still runs through the same bus.
+    const custom = Array(KIT.length).fill(null);
+    const ROW_CAT = [0, 1, 4, 5, 9, 8, 6, 11]; // drum row -> Kit category (kick, snare, hat, open hat, hi tom, low tom, perc, fx/crash)
+    let selDrum = 0;
+    function paintName(i) {
+      drumEls[i].querySelector(".name").textContent = custom[i] ? custom[i].name : KIT[i][0];
+      drumEls[i].classList.toggle("custom", !!custom[i]);
+    }
+    function selectDrum(i) {
+      drumEls[selDrum].classList.remove("selected");
+      selDrum = i; drumEls[i].classList.add("selected");
+    }
+    async function storeCustom(i) {
+      try {
+        const d = await db(), st = d.transaction("pads", "readwrite").objectStore("pads");
+        if (custom[i]) st.put({ name: custom[i].name, bytes: custom[i].bytes }, "drum" + i); else st.delete("drum" + i);
+      } catch (e) {}
+    }
+    function setCustom(i, rec) { custom[i] = rec; paintName(i); storeCustom(i); }
+    async function replaceWith(i, f) {
+      try {
+        const bytes = await f.arrayBuffer();
+        const buffer = await decode(bytes);
+        setCustom(i, { name: cleanName(f.name), bytes, buffer });
+        selectDrum(i); lastHit = i; lcd();
+        status(`${KIT[i][0]} agora toca ${custom[i].name}.`);
+      } catch (e) { status("Não deu pra abrir esse som.", true); }
+    }
+    async function importKit(fileList) {
+      const r = await Kit.collect(fileList);
+      if (!r) return;
+      if (!r.list.length) { status("Nenhum som encontrado nesse kit.", true); return; }
+      const files = r.list.sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }));
+      const used = new Set();
+      const take = (cat) => files.find((f) => !used.has(f) && Kit.category(f.path) === cat);
+      let ok = 0;
+      for (let row = 0; row < KIT.length; row++) {
+        let f = take(ROW_CAT[row]);
+        if (!f && row === 4) f = take(8);       // a kit with only one kind of tom
+        if (!f && row === 5) f = take(9);
+        if (!f && row === 6) f = take(7);
+        if (!f) continue;
+        used.add(f);
+        try {
+          const bytes = await f.get();
+          const buffer = await decode(bytes);
+          setCustom(row, { name: cleanName(f.path.split(/[\\/]/).pop()), bytes, buffer });
+          ok++;
+        } catch (e) {}
+      }
+      lcd();
+      status(`Kit ${r.name}: ${ok} peças da bateria trocadas.`);
+    }
+    (async () => {
+      try {
+        const d = await db();
+        for (let i = 0; i < KIT.length; i++) {
+          const rec = await new Promise((res) => { const q = d.transaction("pads").objectStore("pads").get("drum" + i); q.onsuccess = () => res(q.result); q.onerror = () => res(null); });
+          if (rec && rec.bytes) { custom[i] = { name: rec.name, bytes: rec.bytes, buffer: await decode(rec.bytes) }; paintName(i); }
+        }
+      } catch (e) {}
+    })();
+    selectDrum(0);
+    $("drumReplace").onclick = () => $("drumFile").click();
+    $("drumFile").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) replaceWith(selDrum, f); };
+    $("drumRestore").onclick = () => {
+      if (!custom[selDrum]) return;
+      setCustom(selDrum, null); lcd();
+      status(`${KIT[selDrum][0]} voltou ao som original.`);
+    };
+    $("drumKitBtn").onclick = () => $("drumKitFile").click();
+    $("drumKitFile").onchange = (e) => { importKit(e.target.files); e.target.value = ""; };
 
     buildSeq(); applyMix();
     Promise.all(KIT.map(([, sec, b]) => render(sec, b))).then((b) => { bufs = b; }).catch(() => {});
@@ -2087,27 +2176,31 @@ body { padding-block: 10px 24px; }
       const ok = await fill(false);
       status(`Kit ${kitName}: ${ok} pads preenchidos com ${files.length} sons encontrados.`);
     }
-    async function fromZip(file) {
-      if (!window.JSZip) { status("Não deu pra abrir esse .zip.", true); return; }
-      status(`Abrindo kit ${file.name}…`);
-      try {
-        const zip = await JSZip.loadAsync(file);
-        const list = [];
-        zip.forEach((rel, entry) => {
-          if (!entry.dir && AUDIO.test(rel) && !/__macosx|(^|\/)\._/i.test(rel)) list.push({ path: rel, get: () => entry.async("arraybuffer") });
-        });
-        await load(list, file.name.replace(/\.zip$/i, ""));
-      } catch (e) { status("Não deu pra abrir esse .zip.", true); }
-    }
-    async function importFiles(fileList) {
+    // Turns a .zip, a folder or loose files into [{ path, get() }] plus a kit name (null on failure).
+    async function collect(fileList) {
       const all = Array.from(fileList);
-      if (!all.length) return;
-      if (all.some((f) => /\.rar$|\.7z$/i.test(f.name))) { status("Arquivos .rar não são suportados. Extraia e importe o .zip ou os arquivos.", true); return; }
+      if (!all.length) return null;
+      if (all.some((f) => /\.rar$|\.7z$/i.test(f.name))) { status("Arquivos .rar não são suportados. Extraia e importe o .zip ou os arquivos.", true); return null; }
       const zip = all.find((f) => /\.zip$/i.test(f.name));
-      if (zip) { await fromZip(zip); return; }
+      if (zip) {
+        if (!window.JSZip) { status("Não deu pra abrir esse .zip.", true); return null; }
+        status(`Abrindo kit ${zip.name}…`);
+        try {
+          const z = await JSZip.loadAsync(zip);
+          const list = [];
+          z.forEach((rel, entry) => {
+            if (!entry.dir && AUDIO.test(rel) && !/__macosx|(^|\/)\._/i.test(rel)) list.push({ path: rel, get: () => entry.async("arraybuffer") });
+          });
+          return { list, name: zip.name.replace(/\.zip$/i, "") };
+        } catch (e) { status("Não deu pra abrir esse .zip.", true); return null; }
+      }
       const list = all.filter((f) => AUDIO.test(f.name)).map((f) => ({ path: f.webkitRelativePath || f.name, get: () => f.arrayBuffer() }));
       const rel = all[0].webkitRelativePath;
-      await load(list, rel ? rel.split("/")[0] : "importado");
+      return { list, name: rel ? rel.split("/")[0] : "importado" };
+    }
+    async function importFiles(fileList) {
+      const r = await collect(fileList);
+      if (r) await load(r.list, r.name);
     }
 
     $("kitBtn").onclick = () => $("kitFile").click();
@@ -2119,7 +2212,7 @@ body { padding-block: 10px 24px; }
       await fill(true);
       status(`Nova combinação do kit ${kitName}.`);
     };
-    return { importFiles };
+    return { importFiles, collect, category };
   })();
 
   // ---------- chop ----------
@@ -2507,6 +2600,11 @@ body { padding-block: 10px 24px; }
       ["Vazio", "Empty", "Vacío"],
       ["Limpar", "Clear", "Borrar"],
       ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Trocar som da peça", "Replace piece sound", "Cambiar sonido de la pieza"],
+      ["Som original", "Original sound", "Sonido original"],
+      ["Kit {}: {} peças da bateria trocadas.", "Kit {}: {} drum pieces replaced.", "Kit {}: {} piezas de la batería cambiadas."],
+      ["{} agora toca {}.", "{} now plays {}.", "{} ahora suena {}."],
+      ["{} voltou ao som original.", "{} is back to its original sound.", "{} volvió a su sonido original."],
       ["Carregar sample", "Load sample", "Cargar sample"],
       ["Tocar tudo", "Play all", "Tocar todo"],
       ["Dividir em", "Split into", "Dividir en"],
@@ -2682,7 +2780,7 @@ body { padding-block: 10px 24px; }
         helpDrums: `A dead, squashed kit inspired by Tame Impala's psychedelic sound: every hit goes through tape saturation,
     heavy compression, a swirling phaser and a small room. Tap the pads or <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
     <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. In the sequencer, click a step: 1 click turns it on, 2 clicks make it a ghost note
-    (softer), 3 turn it off. <kbd>Space</kbd> plays and stops. Leave the beat running and switch to MIDI Keys to play chords over it.`,
+    (softer), 3 turn it off. To use your own sounds, tap a piece and click <em>Replace piece sound</em>, drop a file on the pad or use <em>Import kit</em>. <kbd>Space</kbd> plays and stops. Leave the beat running and switch to MIDI Keys to play chords over it.`,
         helpChop: `Load any audio (a song, a loop, a vocal) and chop it however you like: click the waveform to drop a marker,
     drag to adjust and double-click to delete. Or use <em>Split</em> and <em>Detect hits</em>. Each slice plays from its button
     or <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>,
@@ -2704,7 +2802,7 @@ body { padding-block: 10px 24px; }
         helpDrums: `Batería apagada y aplastada, inspirada en el sonido psicodélico de Tame Impala: cada golpe pasa por saturación de cinta,
     compresión fuerte, un phaser girando y una sala pequeña. Toca los pads o <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
     <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. En el secuenciador, haz clic en un paso: 1 clic lo activa, 2 clics lo vuelven nota fantasma
-    (más suave), 3 lo apagan. <kbd>Espacio</kbd> toca y para. Deja el ritmo sonando y cambia a Teclado MIDI para tocar acordes encima.`,
+    (más suave), 3 lo apagan. Para usar tus sonidos, toca una pieza y haz clic en <em>Cambiar sonido de la pieza</em>, suelta un archivo sobre el pad o usa <em>Importar kit</em>. <kbd>Espacio</kbd> toca y para. Deja el ritmo sonando y cambia a Teclado MIDI para tocar acordes encima.`,
         helpChop: `Carga cualquier audio (una canción, un loop, una voz) y córtalo como quieras: haz clic en la forma de onda para poner un marcador,
     arrástralo para ajustar y haz doble clic para borrarlo. O usa <em>Dividir</em> y <em>Detectar golpes</em>. Cada corte suena con su botón
     o con <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>,
