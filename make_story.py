@@ -259,6 +259,7 @@ class City:
                            col=[[(120, 88, 58), (70, 120, 40), (150, 150, 150), (90, 70, 50)][i % 4]
                                 for i in range(nd)])
         ns = 150
+        self.bubbles = Bubbles()
         self.wind = dict(x=rng.uniform(0, W + 1200, ns), y=rng.uniform(80, H - 80, ns),
                          v=rng.uniform(2800, 6500, ns), ln=rng.uniform(150, 560, ns),
                          a=rng.integers(30, 95, ns))
@@ -371,19 +372,12 @@ class City:
         if dust > 0:
             frame.alpha_composite(Image.new("RGBA", (W, H), (150, 108, 70, int(110 * min(1, dust)))))
 
-        if fx.get("flash"):
-            a = math.exp(-t / 0.18)
-            if a > 0.01:
-                frame.alpha_composite(Image.new("RGBA", (W, H), (255, 250, 235, int(255 * a))))
+        warm = param(fx, "warm", u)
+        if warm > 0:
+            frame.alpha_composite(Image.new("RGBA", (W, H), (255, 160, 80, int(90 * min(1, warm)))))
 
-        shake = param(fx, "shake", u)
-        if shake > 0:
-            rng = np.random.default_rng(idx)
-            ox, oy = rng.uniform(-shake, shake, 2)
-            sc = 1 + 2.4 * shake / W
-            frame = frame.transform((W, H), Image.AFFINE,
-                                    (1 / sc, 0, (W - W / sc) / 2 + ox, 0, 1 / sc, (H - H / sc) / 2 + oy),
-                                    resample=Image.BILINEAR)
+        if fx.get("thoughts"):
+            self.bubbles.draw(frame, gt, param(fx, "thoughts", u), fx.get("mood", "busy"))
         return frame
 
     @lru_cache(maxsize=64)
@@ -395,6 +389,126 @@ class City:
         arr[..., :3] = col.astype(np.uint8)
         arr[..., 3] = a[:, None].astype(np.uint8)
         return Image.fromarray(arr, "RGBA")
+
+
+THOUGHTS = {
+    "busy": ["did I lock the door?", "pizza tonight?", "I'm so late", "nice shoes", "what's my password?",
+             "is he looking at me?", "should've stayed in bed", "I love this song", "3 more hours...",
+             "don't trip", "rent is due", "call mom back", "what was her name?", "cute dog!",
+             "I'm starving", "am I being weird?", "need coffee", "did I say that out loud?",
+             "where did I park?", "ugh, Mondays", "text him back", "is it going to rain?"],
+    "kind": ["they seem nice", "love that jacket", "they're funny", "I should say hi", "great smile",
+             "wish we talked more", "they're so cool", "good vibes", "they look kind", "I like them"],
+}
+
+
+@lru_cache(maxsize=256)
+def bubble_img(text):
+    f = font("Poppins-SemiBold.ttf", 30)
+    tw = int(f.getlength(text))
+    bw, bh, pad = tw + 48, 64, 24
+    img = Image.new("RGBA", (bw + 2 * pad, bh + 60 + 2 * pad), (0, 0, 0, 0))
+    sh = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    for layer, col, off in ((sh, (0, 0, 0, 90), 4), (img, (255, 255, 255, 240), 0)):
+        d = ImageDraw.Draw(layer)
+        d.rounded_rectangle([pad, pad + off, pad + bw, pad + bh + off], 30, fill=col)
+        d.ellipse([pad + 26, pad + bh + 8 + off, pad + 44, pad + bh + 26 + off], fill=col)
+        d.ellipse([pad + 14, pad + bh + 34 + off, pad + 24, pad + bh + 44 + off], fill=col)
+    out = sh.filter(ImageFilter.GaussianBlur(6))
+    out.alpha_composite(img)
+    ImageDraw.Draw(out).text((pad + 24, pad + 13), text, font=f, fill=(30, 30, 40, 255))
+    return out
+
+
+class Bubbles:
+    """Thought bubbles popping in and out above the crowd."""
+    SLOTS, PERIOD = 22, 2.6
+
+    def draw(self, frame, gt, amount, mood):
+        pool = THOUGHTS[mood]
+        n = int(round(amount * self.SLOTS))
+        for k in range(n):
+            ph = gt / self.PERIOD + k / self.SLOTS * 3.7
+            cyc, u = int(ph), ph - int(ph)
+            h = (k * 7919 + cyc * 104729) % 100003
+            img = bubble_img(pool[h % len(pool)])
+            x = 40 + (h * 37 % 1000) / 1000 * (W - 80 - img.width)
+            y = 560 + (h * 61 % 1000) / 1000 * 560
+            life = u * self.PERIOD
+            a = min(1, life / 0.18) * (1 - smooth((life - (self.PERIOD - 0.35)) / 0.35))
+            if a <= 0:
+                continue
+            sc = 0.6 + 0.4 * ease_out(life / 0.25)
+            im = img.resize((int(img.width * sc), int(img.height * sc)), Image.BILINEAR)
+            if a < 1:
+                im.putalpha(im.getchannel("A").point(lambda v: int(v * a)))
+            frame.alpha_composite(im, (int(x + img.width * (1 - sc) / 2), int(y + img.height * (1 - sc))))
+
+
+# ---------------------------------------------------------------- neuron scene
+
+class Neurons:
+    """A slowly turning 3D web of neurons with signal pulses (drawn at half res)."""
+
+    def __init__(self, seed=5, n=260):
+        rng = np.random.default_rng(seed)
+        p = rng.standard_normal((n, 3))
+        p /= np.linalg.norm(p, axis=1)[:, None]
+        self.p = p * rng.uniform(0.25, 1, (n, 1)) ** 0.5
+        d = np.linalg.norm(self.p[:, None] - self.p[None], axis=-1)
+        self.edges = sorted({tuple(sorted((i, j))) for i in range(n) for j in np.argsort(d[i])[1:4]})
+        m = len(self.edges)
+        self.pulse = dict(e=rng.integers(0, m, 600), off=rng.uniform(0, 1, 600), v=rng.uniform(0.6, 1.6, 600))
+        self.size = rng.uniform(1.5, 4, n)
+        y = np.linspace(0, 1, H // 2)[:, None]
+        bg = (np.array([10, 6, 28]) + np.array([16, 10, 40]) * y)[:, None, :] * np.ones((1, W // 2, 1))
+        self.bg = Image.fromarray(bg.astype(np.uint8), "RGB")
+
+    def render(self, gt, fx, u, t, idx):
+        w, h = W // 2, H // 2
+        yaw = gt * 0.12 + math.radians(param(fx, "yaw", u, 0))
+        zoom = param(fx, "zoom", u, 1.0)
+        act = param(fx, "activity", u, 0.4)
+        heat = param(fx, "heat", u)  # 0 calm blue/violet -> 1 overload red
+        cy_ = param(fx, "cy", u, 1040) / 2
+        c, s = math.cos(yaw), math.sin(yaw)
+        x = self.p[:, 0] * c + self.p[:, 2] * s
+        z = -self.p[:, 0] * s + self.p[:, 2] * c + 2.6
+        y = self.p[:, 1]
+        f = 820 * zoom / 2
+        sx, sy = w / 2 + f * x / z, cy_ - f * y / z
+        depth = np.clip((3.6 - z) / 2, 0.15, 1)
+
+        base = np.array([120, 110, 255]) * (1 - heat) + np.array([255, 70, 60]) * heat
+        hot = np.array([150, 230, 255]) * (1 - heat) + np.array([255, 210, 120]) * heat
+        lines = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        d = ImageDraw.Draw(lines)
+        for i, j in self.edges:
+            a = int(70 * (depth[i] + depth[j]) / 2)
+            d.line([(sx[i], sy[i]), (sx[j], sy[j])], fill=tuple(int(v) for v in base) + (a,), width=1)
+        for i in range(len(sx)):
+            r = self.size[i] * depth[i] * zoom
+            d.ellipse([sx[i] - r, sy[i] - r, sx[i] + r, sy[i] + r],
+                      fill=tuple(int(v) for v in base * 0.6 + 100) + (int(200 * depth[i]),))
+        glow = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        g = ImageDraw.Draw(glow)
+        q = self.pulse
+        npulse = int(act * len(q["e"]))
+        for k in range(npulse):
+            i, j = self.edges[q["e"][k]]
+            v = (q["off"][k] + gt * q["v"][k] * (1 + 1.5 * heat)) % 1
+            px, py = sx[i] + (sx[j] - sx[i]) * v, sy[i] + (sy[j] - sy[i]) * v
+            r = 2.5 * zoom
+            g.ellipse([px - r, py - r, px + r, py + r], fill=tuple(int(c_) for c_ in hot) + (255,))
+        frame = self.bg.convert("RGBA")
+        frame.alpha_composite(lines)
+        frame.alpha_composite(glow.filter(ImageFilter.GaussianBlur(4)))
+        frame.alpha_composite(glow.filter(ImageFilter.GaussianBlur(1.2)))
+        flick = param(fx, "flicker", u)
+        if flick > 0:
+            a = np.random.default_rng(idx).uniform(0, 1) ** 3 * flick
+            frame.alpha_composite(Image.new("RGBA", (w, h), (255, 60, 50, int(120 * a))))
+        return frame.resize((W, H), Image.BILINEAR)
 
 
 # ---------------------------------------------------------------- globe scene
@@ -646,14 +760,15 @@ def build_audio(cfg, beats, starts, total, path):
 
     # per-beat envelopes sampled at 50 Hz, then interpolated
     kt = np.arange(0, total, 0.02)
-    env = {k: np.zeros(len(kt)) for k in ("wind", "shake", "amb", "space")}
+    env = {k: np.zeros(len(kt)) for k in ("wind", "shake", "amb", "space", "buzz")}
     for j, tt in enumerate(kt):
         i = min(len(beats) - 1, int(np.searchsorted(starts, tt, "right") - 1))
         b, u = beats[i], (tt - starts[i]) / beats[i]["dur"]
         fx = b.get("fx", {})
         env["wind"][j] = param(fx, "wind", u)
         env["shake"][j] = min(1, param(fx, "shake", u) / 30)
-        env["amb"][j] = 1.0 if b["scene"] == "city" and not fx else 0
+        env["amb"][j] = 1.0 if b["scene"] == "city" and not (set(fx) - {"thoughts", "mood", "warm"}) else 0
+        env["buzz"][j] = param(fx, "thoughts", u) if b["scene"] == "city" else param(fx, "heat", u)
         env["space"][j] = 1.0 if b["scene"] != "city" else 0
     sm = lambda a: np.convolve(a, np.ones(15) / 15, "same")
     E = {k: np.interp(t, kt, sm(v)) for k, v in env.items()}
@@ -693,7 +808,13 @@ def build_audio(cfg, beats, starts, total, path):
             tt = np.arange(L) / SR
             booms[i0:i0 + L] += fft_band(rng.standard_normal(L), lo=300, hi=3000) * np.sin(np.pi * tt / 1.0) ** 2 * 0.25
 
-    mix = pad + amb + birds + wind + rumble + booms
+    # crowd murmur: many detuned formant-ish voices, louder with more thoughts
+    murmur = sum(fft_band(rng.standard_normal(n), lo=f * 0.8, hi=f * 1.25) *
+                 (0.5 + 0.5 * np.sin(2 * np.pi * t * rng.uniform(2, 5) + rng.uniform(0, 6))) ** 2
+                 for f in (350, 520, 800, 1200, 1700))
+    murmur = murmur * 0.12 * E["buzz"] ** 1.5
+
+    mix = pad + amb + birds + wind + rumble + booms + murmur
     fade = np.clip((total - t) / 1.5, 0, 1) * np.clip(t / 0.4, 0, 1)
     mix *= fade
     mix /= max(1e-6, np.abs(mix).max()) / 0.85
@@ -721,7 +842,9 @@ class Story:
         self.starts = np.concatenate([[0], np.cumsum([b["dur"] for b in self.beats])])
         self.total = float(self.starts[-1])
         self.city = City()
-        self.globe = Globe() if any(b["scene"] in ("globe", "end") for b in self.beats) else None
+        bgs = {b.get("fx", {}).get("bg", "globe") if b["scene"] == "end" else b["scene"] for b in self.beats}
+        self.globe = Globe() if "globe" in bgs else None
+        self.neurons = Neurons() if "neurons" in bgs else None
         self.launch_t = next((self.starts[i] + b["fx"].get("launch_at", 0)
                               for i, b in enumerate(self.beats) if b.get("fx", {}).get("launch")), None)
 
@@ -737,10 +860,29 @@ class Story:
         prev = self.beats[i - 1] if i else None
         nxt = self.beats[i + 1] if i + 1 < len(self.beats) else None
 
-        if b["scene"] == "city":
+        scene = fx.get("bg", "globe") if b["scene"] == "end" else b["scene"]
+        if scene == "city":
             img = self.city.render(gt, fx, u, t, self.launch_t, idx)
+        elif scene == "neurons":
+            img = self.neurons.render(gt, fx, u, t, idx)
+            dim = param(fx, "dim", u)
+            if dim > 0:
+                img.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, int(255 * dim))))
         else:
             img = self.globe.render(gt, fx, u)
+
+        if fx.get("flash"):
+            a = math.exp(-t / 0.18)
+            if a > 0.01:
+                img.alpha_composite(Image.new("RGBA", (W, H), (255, 250, 235, int(255 * a))))
+        shake = param(fx, "shake", u)
+        if shake > 0:
+            rng = np.random.default_rng(idx)
+            ox, oy = rng.uniform(-shake, shake, 2)
+            sc = 1 + 2.4 * shake / W
+            img = img.transform((W, H), Image.AFFINE,
+                                (1 / sc, 0, (W - W / sc) / 2 + ox, 0, 1 / sc, (H - H / sc) / 2 + oy),
+                                resample=Image.BILINEAR)
 
         # scene cut: quick dip from black
         if prev and prev["scene"] != b["scene"] and t < 0.35:

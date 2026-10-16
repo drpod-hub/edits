@@ -1,0 +1,76 @@
+{
+  "output": "output/mind_reading.mp4",
+  "fps": 30,
+  "handle": "@yourhandle",
+  "title": ["WHAT IF YOU", "COULD *READ MINDS*?"],
+  "disclaimer": "A thought experiment · mostly",
+  "voiceover": "assets/audio/mind_reading_vo.mp3",
+  "music": "",
+  "music_gain": 0.35,
+
+  "beats": [
+    {"scene": "city", "dur": 3.5, "title": true},
+
+    {"scene": "city", "dur": 5.0,
+     "caption": "You wake up, step outside, and the world sounds... *different*.",
+     "hud": {"tag": "Day one", "label": "Location", "value": "CENTRAL PARK", "sub": "New York"},
+     "right": {"label": "Minds in range", "value": "0"},
+     "fx": {"thoughts": [0, 0.08]}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "Every person you pass, you can *hear* what they're thinking.",
+     "hud": {"tag": "It starts", "label": "Thoughts per person", "value": "6,200", "unit": "/ day",
+             "sub": "Queen's University, 2020"},
+     "right": {"label": "Minds in range", "value": {"from": 0, "to": 40, "dur": 5.0}},
+     "fx": {"thoughts": [0.1, 0.3]}},
+
+    {"scene": "neurons", "dur": 5.5,
+     "caption": "Each one is a storm of signals across *86 billion* neurons.",
+     "hud": {"tag": "How it works", "label": "Neurons per brain", "value": "86", "unit": "billion",
+             "sub": "Linked by trillions of synapses"},
+     "right": {"label": "Signal speed", "value": "120", "unit": "m/s", "sub": "at the fastest"},
+     "fx": {"zoom": [1.5, 1.0], "activity": [0.25, 0.5]}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "In a crowd of 1,000 people, that's over *100 thoughts every second*.",
+     "hud": {"tag": "Overload", "label": "Thoughts per second", "value": {"from": 0, "to": 108, "dur": 4.0},
+             "sub": "From 1,000 people"},
+     "right": {"label": "Minds in range", "value": {"from": 40, "to": 1000, "dur": 4.0}},
+     "fx": {"thoughts": [0.4, 1.0], "shake": [0, 3]}},
+
+    {"scene": "city", "dur": 5.0,
+     "caption": "But your brain can only follow *one voice* at a time.",
+     "hud": {"tag": "The cocktail party effect", "label": "Voices you can follow", "value": "1",
+             "sub": "The rest becomes noise"},
+     "right": {"label": "Minds in range", "value": "1,000"},
+     "fx": {"thoughts": 1.0, "shake": [3, 5], "dust": [0, 0.15]}},
+
+    {"scene": "neurons", "dur": 5.0,
+     "caption": "Every crowd becomes a *roar* you can't switch off.",
+     "hud": {"tag": "No off switch", "label": "Volume", "value": "MAX", "sub": "Day and night"},
+     "fx": {"activity": [0.6, 1.0], "heat": [0.3, 1.0], "flicker": [0.3, 1.0], "zoom": [1.0, 1.3],
+            "shake": [3, 8]}},
+
+    {"scene": "city", "dur": 5.0,
+     "caption": "But you'd also learn something *surprising*.",
+     "hud": {"tag": "The twist", "label": "Location", "value": "CENTRAL PARK", "sub": "Golden hour"},
+     "fx": {"thoughts": [0, 0.15], "mood": "kind", "warm": [0.2, 0.6]}},
+
+    {"scene": "city", "dur": 6.0,
+     "caption": "Most people like you *more than you think*.",
+     "hud": {"tag": "The liking gap", "label": "What they think of you", "value": "BETTER",
+             "sub": "Than you'd guess"},
+     "right": {"label": "First measured", "value": "2018", "sub": "Psychological Science"},
+     "fx": {"thoughts": [0.2, 0.55], "mood": "kind", "warm": 0.6}},
+
+    {"scene": "neurons", "dur": 5.5,
+     "caption": "And the loudest mind in the room? *Yours.*",
+     "hud": {"tag": "The loudest voice", "label": "Thoughts today", "value": {"from": 0, "to": 6200, "dur": 4.5},
+             "sub": "All yours"},
+     "fx": {"zoom": [0.8, 1.4], "activity": 0.45, "heat": 0}},
+
+    {"scene": "end", "dur": 5.0,
+     "caption": "Follow for the next *what if*.",
+     "fx": {"bg": "neurons", "zoom": 1.4, "activity": 0.35, "dim": 0.5}}
+  ]
+}

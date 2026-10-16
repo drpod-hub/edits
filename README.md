@@ -70,4 +70,10 @@ Each beat in `beats` takes `scene` (`city`, `globe`, `end`), `dur`, `caption`,
 `fx` values are constants or `[start, end]` ramps across the beat:
 
 - city: `shake`, `wind`, `debris`, `dust`, `scorch`, `lean`, `flash`, `launch` (+`launch_at`)
+- city: `thoughts` (0–1 density of thought bubbles), `mood` (`busy` / `kind`), `warm` (golden-hour tint)
 - globe: `yaw`, `tilt`, `radius`, `cy`, `drain` (oceans to the poles), `sun_az`, `sun_el`, `dim`
+- neurons: `zoom`, `activity` (signal pulses), `heat` (calm blue → overload red), `flicker`, `yaw`, `cy`
+- end: `bg` picks the scene behind the end card (`globe` or `neurons`) plus that scene's fx
+- any scene: `flash`, `shake`
+
+Stories: `story_earth_stops.json` (Earth stops spinning), `story_mind_reading.json` (mind reading).
