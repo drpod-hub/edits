@@ -286,6 +286,21 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
 /* chord names are case-sensitive (m7 vs M7): keep them out of the all-caps face */
 .chip { font-family: var(--f-body) !important; font-weight: 600 !important; font-size: 14px !important; }
 .rootsel { width: auto !important; }
+.chopwrap { display: grid; gap: 8px; }
+.wavebox { background: var(--pad); border-radius: 8px; padding: 6px; box-shadow: 0 2px 0 rgba(255,255,255,.4), inset 0 2px 8px rgba(0,0,0,.45); }
+#chopWave { display: block; width: 100%; height: clamp(140px, 22vw, 200px); touch-action: pan-y; cursor: crosshair; }
+.slices { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 620px) { .slices { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.slice {
+  aspect-ratio: 1; max-width: 100%; border: 0; border-radius: 6px; padding: 0; cursor: pointer;
+  background: var(--pad); color: var(--pad-ink); font-family: var(--f-label);
+  display: grid; place-items: center; align-content: center; gap: 2px; box-shadow: 0 3px 0 #1f1e1c;
+}
+.slice span { font-size: 15px; }
+.slice small { font-size: 10px; opacity: .6; }
+.slice:disabled { opacity: .3; cursor: default; }
+.slice.hit { animation: hit .7s ease-out; }
+.slice:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
 .kitbox { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .lang { width: auto; padding: 4px 8px; font: 400 12px var(--f-label); letter-spacing: .04em; }
 </style>
@@ -298,6 +313,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
         <button type="button" id="modePads" aria-pressed="true">Sampler</button>
         <button type="button" id="modeKeys" aria-pressed="false">Teclado MIDI</button>
         <button type="button" id="modeDrums" aria-pressed="false">Bateria orgânica</button>
+        <button type="button" id="modeChop" aria-pressed="false">Chop</button>
       </div>
     </div>
     <p>16-bit · 44.1 kHz · 12 vozes</p>
@@ -381,6 +397,25 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       </div>
     </div>
 
+    <div class="controls" id="chopControls" hidden>
+      <div class="btns">
+        <button class="btn dark" id="chopLoad" type="button">Carregar sample</button>
+        <button class="btn" id="chopPlay" type="button">Tocar tudo</button>
+      </div>
+      <div class="krow">
+        <label class="label" for="chopN">Dividir em</label>
+        <select id="chopN" class="rootsel"><option>2</option><option>4</option><option selected>8</option><option>12</option></select>
+        <button class="btn" id="chopSplit" type="button">Dividir</button>
+        <button class="btn" id="chopDetect" type="button">Detectar batidas</button>
+      </div>
+      <div class="krow">
+        <button class="btn" id="chopDel" type="button">Apagar marcador</button>
+        <button class="btn" id="chopClear" type="button">Limpar marcadores</button>
+        <button class="btn" id="chopMono" type="button" aria-pressed="true">Mono</button>
+      </div>
+      <div class="btns"><button class="btn dark" id="chopSend" type="button">Mandar pros pads</button></div>
+    </div>
+
     <div class="controls" id="padControls">
       <div class="field">
         <label class="label" for="padName">Nome do pad</label>
@@ -405,6 +440,12 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
   </section>
   <section class="pianowrap" id="pianoWrap" hidden>
     <div class="piano" id="piano" aria-label="Teclado"></div>
+  </section>
+
+  <section class="chopwrap" id="chopWrap" hidden>
+    <div class="wavebox"><canvas id="chopWave" aria-label="Forma de onda do sample"></canvas></div>
+    <span class="label">Fatias</span>
+    <div class="slices" id="chopSlices"></div>
   </section>
 
   <section class="pads" id="drumPads" aria-label="Bateria" hidden></section>
@@ -486,6 +527,13 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     (mais fraca), 3 desliga. <kbd>Espaço</kbd> toca e para. Deixe a batida rolando e troque pro Teclado MIDI pra tocar acordes por cima.
   </p>
 
+  <p class="help" id="helpChop" data-i18n-html="helpChop" hidden>
+    Carregue qualquer áudio (uma música, um loop, um vocal) e corte do jeito que quiser: clique na forma de onda pra pôr um marcador,
+    arraste pra ajustar e clique duas vezes pra apagar. Ou use <em>Dividir</em> e <em>Detectar batidas</em>. Cada fatia toca no botão dela
+    ou em <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>,
+    <kbd>Espaço</kbd> toca o sample inteiro. <em>Mono</em> faz uma fatia cortar a anterior. <em>Mandar pros pads</em> leva as fatias pro Sampler.
+  </p>
+
   <p class="help" id="helpPads" data-i18n-html="helpPads">
     Baixou um kit? Use <em>Importar kit</em> (.zip, pasta ou vários arquivos) e cada som vai pro pad certo pelo nome: kick, snare, hat, 808…
     Ou escolha vários arquivos de áudio (WAV, MP3, OGG, M4A) e eles vão para os pads em ordem, do pad 1 em diante:
@@ -497,6 +545,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
   <input type="file" id="fileMulti" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" multiple hidden>
   <input type="file" id="fileOne" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
   <input type="file" id="bgFile" accept="image/*" hidden>
+  <input type="file" id="chopFile" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
   <input type="file" id="keysFile" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
   <input type="file" id="kitFile" accept=".zip,application/zip,application/x-zip-compressed,audio/*,.wav,.mp3,.ogg,.m4a,.aif,.aiff,.flac" multiple hidden>
   <input type="file" id="kitFolder" webkitdirectory multiple hidden>
@@ -774,6 +823,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
   function drawLcd() {
     if (mode === "keys") { Keys.lcd(); return; }
     if (mode === "drums") { Drums.lcd(); return; }
+    if (mode === "chop") { Chop.lcd(); return; }
     const i = selected, p = pads[i];
     $("lcdPad").textContent = "PAD " + String(i + 1).padStart(2, "0");
     $("lcdKey").textContent = KEY_LABEL[i];
@@ -1021,7 +1071,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     Object.assign(pads[selected], { kind: "empty", name: "", fileName: "", buffer: null, bytes: null });
     savePad(selected); drawPad(selected); status(`Pad ${selected + 1} limpo.`);
   };
-  $("stopBtn").onclick = () => { Looper.stop(); stopAll(); Keys.allOff(); Drums.stop(); status("Tudo parado."); };
+  $("stopBtn").onclick = () => { Looper.stop(); stopAll(); Keys.allOff(); Drums.stop(); Chop.stop(); status("Tudo parado."); };
   $("resetBtn").onclick = async () => {
     stopAll(); await clearStore(); await loadExamples();
     for (let i = 0; i < N; i++) drawPad(i);
@@ -1701,6 +1751,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       const delay = Math.max(0, (when - ctx.currentTime) * 1000);
       if (ev.type === "pad") play(ev.i, when);
       else if (ev.type === "drum") Drums.hitAt(ev.i, ev.vel, when);
+      else if (ev.type === "chop") Chop.playAt(ev.i, when);
       else if (ev.type === "on") setTimeout(() => state === "play" && Keys.loopOn(ev.ms, ev.vel), delay);
       else if (ev.type === "off") setTimeout(() => Keys.loopOff(ev.ms), delay);
     }
@@ -1898,39 +1949,43 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     pads: ["padControls", "pads", "helpPads", "loadBtn", "resetBtn", "kitBox"],
     keys: ["keyControls", "chordBar", "pianoWrap", "helpKeys"],
     drums: ["drumControls", "drumPads", "seqWrap", "helpDrums"],
+    chop: ["chopControls", "chopWrap", "helpChop"],
   };
   function setMode(m) {
     const prev = mode;
     mode = m;
-    [["modePads", "pads"], ["modeKeys", "keys"], ["modeDrums", "drums"]].forEach(([id, k]) => $(id).setAttribute("aria-pressed", String(k === m)));
+    [["modePads", "pads"], ["modeKeys", "keys"], ["modeDrums", "drums"], ["modeChop", "chop"]].forEach(([id, k]) => $(id).setAttribute("aria-pressed", String(k === m)));
     for (const [k, ids] of Object.entries(MODE_IDS)) ids.forEach((id) => { $(id).hidden = k !== m; });
     if (prev === "keys" && m !== "keys") Keys.hide();
     if (prev === "drums" && m !== "drums") Drums.hide();
+    if (prev === "chop" && m !== "chop") Chop.hide();
     Repeat.releaseAll();
-    $("repeatBox").hidden = m === "keys";
+    $("repeatBox").hidden = m === "keys" || m === "chop";
     stopAll();
-    if (m === "keys") Keys.show(); else if (m === "drums") Drums.show(); else drawLcd();
+    if (m === "keys") Keys.show(); else if (m === "drums") Drums.show(); else if (m === "chop") Chop.show(); else drawLcd();
     savePrefs();
   }
   $("modePads").onclick = () => { setMode("pads"); status("Modo sampler."); };
   $("modeKeys").onclick = () => { setMode("keys"); status("Modo teclado. Escolha um acorde e toque."); };
   $("modeDrums").onclick = () => { setMode("drums"); status("Bateria orgânica. Espaço toca o groove."); };
+  $("modeChop").onclick = () => { setMode("chop"); status("Modo chop. Toque na forma de onda pra marcar um corte."); };
 
   document.addEventListener("keyup", (e) => {
     if (e.target.matches("input, select, textarea")) return;
     if (e.key === "Shift") Repeat.shift(false);
-    if (mode === "drums" && e.code === "Space") { e.preventDefault(); return; }
+    if ((mode === "drums" || mode === "chop") && e.code === "Space") { e.preventDefault(); return; }
     if (mode !== "keys") { Repeat.release("k" + e.code); return; }
     Keys.onKey(e, false);
   });
 
   document.addEventListener("keydown", (e) => {
     if (e.target.matches("input, select, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.key === "Escape") { Looper.stop(); stopAll(); Keys.allOff(); Drums.stop(); status("Tudo parado."); return; }
+    if (e.key === "Escape") { Looper.stop(); stopAll(); Keys.allOff(); Drums.stop(); Chop.stop(); status("Tudo parado."); return; }
     if (e.code === "KeyL") { if (!e.repeat) Looper.toggle(); return; }
     if (e.key === "Shift") { if (mode !== "keys") Repeat.shift(true); return; }
     if (mode === "keys") { Keys.onKey(e, true); return; }
     if (mode === "drums") { Drums.onKey(e); return; }
+    if (mode === "chop") { Chop.onKey(e); return; }
     const i = CODE_TO_PAD[e.code];
     if (i === undefined || e.repeat) return;
     e.preventDefault();
@@ -2043,6 +2098,332 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     return { importFiles };
   })();
 
+  // ---------- chop ----------
+  // Load any audio, mark slice starts on a big waveform (click to add, drag to move),
+  // or split evenly / by detected hits. Up to 12 slices play on the pad keys and can be
+  // sent to the Sampler pads as their own sounds.
+  const Chop = (() => {
+    const COLORS = ["#ff3df0", "#3dfcff", "#7dff3d", "#ffe83d", "#ff8a3d", "#9d6bff"];
+    let snd = null;          // { name, buffer, bytes, example }
+    let markers = [], sel = -1, drag = -1, last = 0, mono = true;
+    let voice = null, whole = null, play = null, playPos = null, raf = 0;
+    let peaks = null, cssW = 0, cssH = 0;
+    const cv = $("chopWave"), g = cv.getContext("2d");
+    const sliceEls = [];
+
+    for (let i = 0; i < N; i++) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "slice"; b.id = "slice" + (i + 1);
+      b.innerHTML = `<span>${i + 1}</span><small>${KEY_LABEL[i]}</small>`;
+      b.setAttribute("aria-label", `Fatia ${i + 1}, tecla ${KEY_LABEL[i]}`);
+      b.addEventListener("pointerdown", (e) => { if (e.button !== 0) return; e.preventDefault(); live(i); });
+      b.addEventListener("click", (e) => { if (e.detail === 0) live(i); });
+      $("chopSlices").appendChild(b); sliceEls.push(b);
+    }
+
+    const dur = () => (snd ? snd.buffer.duration : 0);
+    const ranges = () => markers.map((m, i) => [m, i + 1 < markers.length ? markers[i + 1] : dur()]);
+    const tx = (t) => (t / dur()) * cssW;
+
+    function sizeCanvas() {
+      const r = cv.getBoundingClientRect();
+      if (!r.width) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cssW = r.width; cssH = r.height;
+      cv.width = Math.round(cssW * dpr); cv.height = Math.round(cssH * dpr);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      computePeaks();
+    }
+    function computePeaks() {
+      peaks = null;
+      if (!snd || !cssW) return;
+      const d = snd.buffer.getChannelData(0), n = Math.max(1, Math.floor(cssW)), step = d.length / n;
+      peaks = new Float32Array(n * 2);
+      for (let x = 0; x < n; x++) {
+        let lo = 0, hi = 0;
+        const a = Math.floor(x * step), b = Math.min(d.length, Math.floor((x + 1) * step)), inc = Math.max(1, (b - a) >> 7);
+        for (let j = a; j < b; j += inc) { const v = d[j]; if (v < lo) lo = v; if (v > hi) hi = v; }
+        peaks[x * 2] = lo; peaks[x * 2 + 1] = hi;
+      }
+    }
+    function draw() {
+      if (!cssW) return;
+      g.clearRect(0, 0, cssW, cssH);
+      if (!snd || !peaks) return;
+      ranges().forEach(([a, b], i) => { g.fillStyle = COLORS[i % COLORS.length] + "26"; g.fillRect(tx(a), 0, tx(b) - tx(a), cssH); });
+      const mid = cssH / 2;
+      g.fillStyle = css("--pad-ink");
+      for (let x = 0; x < peaks.length / 2; x++) {
+        const lo = peaks[x * 2], hi = peaks[x * 2 + 1];
+        g.fillRect(x, mid - hi * mid * 0.9, 1, Math.max(1, (hi - lo) * mid * 0.9));
+      }
+      g.font = "700 11px " + css("--f-label");
+      markers.forEach((m, i) => {
+        const x = Math.round(tx(m)) + 0.5, c = i === sel ? "#ffffff" : COLORS[i % COLORS.length];
+        g.strokeStyle = c; g.lineWidth = i === sel ? 2 : 1.5;
+        g.beginPath(); g.moveTo(x, 0); g.lineTo(x, cssH); g.stroke();
+        g.fillStyle = c; g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 18, 0); g.lineTo(x + 18, 14); g.lineTo(x, 20); g.fill();
+        g.fillStyle = "#1d1c1a"; g.fillText(String(i + 1), x + 3, 11);
+      });
+      if (playPos != null) { g.fillStyle = "#ffffff"; g.fillRect(tx(playPos), 0, 2, cssH); }
+    }
+    function tick() {
+      if (!play) { playPos = null; draw(); return; }
+      const pos = play.off + (ctx.currentTime - play.t0);
+      if (pos >= play.end) { play = null; playPos = null; if (whole) stopWhole(); draw(); return; }
+      playPos = ctx.currentTime >= play.t0 ? pos : null;
+      draw();
+      raf = requestAnimationFrame(tick);
+    }
+    function follow(t0, off, end) { play = { t0, off, end }; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); }
+
+    function sliceBuf(i) {
+      const [a, b] = ranges()[i], buf = snd.buffer, sr = buf.sampleRate;
+      const s = Math.floor(a * sr), e = Math.max(s + 2, Math.floor(b * sr));
+      const out = ctx.createBuffer(buf.numberOfChannels, e - s, sr);
+      const fade = Math.min(Math.floor(sr * 0.004), (e - s) >> 2);
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+        const d = out.getChannelData(ch);
+        d.set(buf.getChannelData(ch).subarray(s, e));
+        for (let k = 0; k < fade; k++) { d[k] *= k / fade; d[d.length - 1 - k] *= k / fade; }
+      }
+      return out;
+    }
+    function toWav(buf) {
+      const ch = buf.numberOfChannels, sr = buf.sampleRate, n = buf.length;
+      const ab = new ArrayBuffer(44 + n * ch * 2), v = new DataView(ab);
+      const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+      w(0, "RIFF"); v.setUint32(4, 36 + n * ch * 2, true); w(8, "WAVE"); w(12, "fmt ");
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, ch, true); v.setUint32(24, sr, true);
+      v.setUint32(28, sr * ch * 2, true); v.setUint16(32, ch * 2, true); v.setUint16(34, 16, true);
+      w(36, "data"); v.setUint32(40, n * ch * 2, true);
+      const chans = Array.from({ length: ch }, (_, c) => buf.getChannelData(c));
+      let o = 44;
+      for (let i = 0; i < n; i++) for (let c = 0; c < ch; c++) {
+        const s = Math.max(-1, Math.min(1, chans[c][i]));
+        v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true); o += 2;
+      }
+      return ab;
+    }
+
+    function stopWhole() {
+      if (whole) { try { whole.stop(); } catch (e) {} whole = null; }
+      $("chopPlay").textContent = "Tocar tudo";
+    }
+    function playSlice(i, when) {
+      const rs = ranges();
+      if (!snd || i >= rs.length) return false;
+      if (ctx.state !== "running") ctx.resume();
+      const [a, b] = rs[i], len = Math.max(0.01, b - a), t = Math.max(when || 0, ctx.currentTime);
+      if (mono && voice) { try { voice.g.gain.cancelScheduledValues(t); voice.g.gain.setTargetAtTime(0, t, 0.005); voice.src.stop(t + 0.05); } catch (e) {} }
+      stopWhole();
+      const src = ctx.createBufferSource(); src.buffer = snd.buffer;
+      const gn = ctx.createGain();
+      gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(1, t + 0.004);
+      gn.gain.setValueAtTime(1, t + Math.max(0.005, len - 0.006)); gn.gain.linearRampToValueAtTime(0, t + len);
+      src.connect(gn).connect(master); src.start(t, a, len);
+      voice = { src, g: gn };
+      follow(t, a, a + len);
+      const el = sliceEls[i];
+      setTimeout(() => { neon(el); el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); }, Math.max(0, (t - ctx.currentTime) * 1000));
+      return true;
+    }
+    function live(i) {
+      if (!playSlice(i)) { status(snd ? "Essa fatia ainda não existe. Marque mais cortes." : "Carregue um sample primeiro.", true); return; }
+      last = i; sel = i; draw(); lcd();
+      Looper.rec({ type: "chop", i });
+    }
+    function toggleWhole() {
+      if (!snd) return;
+      if (whole) { stopWhole(); play = null; return; }
+      if (ctx.state !== "running") ctx.resume();
+      if (voice) { try { voice.src.stop(); } catch (e) {} voice = null; }
+      const src = ctx.createBufferSource(); src.buffer = snd.buffer; src.connect(master);
+      const t = ctx.currentTime; src.start(t); whole = src;
+      src.onended = () => { if (whole === src) stopWhole(); };
+      $("chopPlay").textContent = "Parar";
+      follow(t, 0, dur());
+    }
+
+    function changed() {
+      const n = markers.length;
+      sliceEls.forEach((b, i) => { b.disabled = i >= n; });
+      if (last >= n) last = Math.max(0, n - 1);
+      draw(); lcd();
+    }
+    function setMarkers(list) { markers = list.slice(0, N).sort((a, b) => a - b); sel = -1; changed(); save(); }
+    function split(n) { const d = dur(); setMarkers(Array.from({ length: n }, (_, k) => (k * d) / n)); }
+    function detect() {
+      const buf = snd.buffer, d = buf.getChannelData(0), sr = buf.sampleRate, hop = 512;
+      const env = [];
+      for (let i = 0; i + hop < d.length; i += hop) { let s = 0; for (let j = 0; j < hop; j++) s += d[i + j] * d[i + j]; env.push(Math.sqrt(s / hop)); }
+      const flux = env.map((v, i) => (i ? Math.max(0, v - env[i - 1]) : v));
+      const mean = flux.reduce((a, b) => a + b, 0) / flux.length;
+      const sd = Math.sqrt(flux.reduce((a, b) => a + (b - mean) ** 2, 0) / flux.length);
+      const gap = Math.ceil((0.11 * sr) / hop), cands = [];
+      for (let i = 1; i < flux.length - 1; i++)
+        if (flux[i] > mean + sd * 0.8 && flux[i] >= flux[i - 1] && flux[i] >= flux[i + 1]) cands.push([i, flux[i]]);
+      cands.sort((a, b) => b[1] - a[1]);
+      const picked = [];
+      for (const [i] of cands) { if (picked.every((p) => Math.abs(p - i) >= gap)) picked.push(i); if (picked.length >= N) break; }
+      return picked.sort((a, b) => a - b).map((i) => Math.max(0, (i * hop) / sr - 0.005));
+    }
+
+    // waveform editing: click adds a marker, drag moves one, double-click deletes
+    const xOf = (e) => Math.max(0, Math.min(cssW, e.clientX - cv.getBoundingClientRect().left));
+    cv.addEventListener("pointerdown", (e) => {
+      if (!snd || e.button !== 0) return;
+      const x = xOf(e);
+      let near = -1, best = 12;
+      markers.forEach((m, i) => { const dd = Math.abs(tx(m) - x); if (dd < best) { best = dd; near = i; } });
+      if (near < 0) {
+        if (markers.length >= N) { status("Máximo de 12 fatias.", true); return; }
+        markers.push((x / cssW) * dur());
+        markers.sort((a, b) => a - b);
+        near = markers.indexOf(markers.find((m) => Math.abs(tx(m) - x) < 0.5));
+      }
+      sel = drag = near;
+      cv.setPointerCapture(e.pointerId);
+      changed();
+    });
+    cv.addEventListener("pointermove", (e) => {
+      if (drag < 0) return;
+      const lo = drag > 0 ? markers[drag - 1] + 0.01 : 0, hi = drag + 1 < markers.length ? markers[drag + 1] - 0.01 : dur() - 0.01;
+      markers[drag] = Math.max(lo, Math.min(hi, (xOf(e) / cssW) * dur()));
+      changed();
+    });
+    const endDrag = () => { if (drag >= 0) { drag = -1; save(); } };
+    cv.addEventListener("pointerup", endDrag);
+    cv.addEventListener("pointercancel", endDrag);
+    cv.addEventListener("dblclick", () => { if (sel >= 0) delSel(); });
+    function delSel() {
+      if (sel < 0 || !markers.length) { status("Clique num marcador pra selecionar.", true); return; }
+      markers.splice(sel, 1); sel = -1; changed(); save(); status("Marcador apagado.");
+    }
+
+    async function load(f) {
+      try {
+        const bytes = await f.arrayBuffer();
+        const buffer = await decode(bytes);
+        snd = { name: cleanName(f.name), buffer, bytes, example: false };
+        computePeaks();
+        const hits = detect();
+        if (hits.length >= 2) { setMarkers(hits); status(`Sample ${snd.name} carregado. ${hits.length} batidas encontradas.`); }
+        else { split(8); status(`Sample ${snd.name} carregado. Dividido em 8 partes iguais.`); }
+      } catch (e) { status("Não deu pra abrir esse som.", true); }
+    }
+    async function save() {
+      if (!snd || snd.example) return;
+      try { const d = await db(); d.transaction("pads", "readwrite").objectStore("pads").put({ name: snd.name, bytes: snd.bytes, markers }, "chopSample"); } catch (e) {}
+    }
+    async function demo() {
+      const sr = 44100, beat = 60 / 100, len = beat * 8, e8 = beat / 2;
+      const [K, S, Hc, Ho, B] = await Promise.all([0, 1, 4, 5, 10].map((k) => render(EXAMPLES[k][1], EXAMPLES[k][2])));
+      const oc = new OfflineAudioContext(1, Math.ceil(sr * len), sr);
+      const hit = (b, t, gn = 1) => { const s = oc.createBufferSource(); s.buffer = b; const gg = oc.createGain(); gg.gain.value = gn; s.connect(gg).connect(oc.destination); s.start(t); };
+      for (let bar = 0; bar < 2; bar++) {
+        const t0 = bar * beat * 4;
+        hit(K, t0); hit(K, t0 + e8 * 3); hit(K, t0 + e8 * 5, 0.8); hit(S, t0 + beat); hit(S, t0 + beat * 3); hit(B, t0, 0.6);
+        for (let k = 0; k < 8; k++) hit(k === 7 ? Ho : Hc, t0 + k * e8, 0.5);
+      }
+      [[220, 261.63, 329.63], [174.61, 220, 261.63]].forEach((chord, bar) => [0, 1.5, 2.5].forEach((bt) => {
+        const t = bar * beat * 4 + bt * beat;
+        chord.forEach((f) => {
+          const o = oc.createOscillator(); o.type = "sawtooth"; o.frequency.value = f * 2;
+          const lp = oc.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1800;
+          const gg = oc.createGain(); gg.gain.setValueAtTime(0.0001, t); gg.gain.exponentialRampToValueAtTime(0.09, t + 0.01); gg.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+          o.connect(lp).connect(gg).connect(oc.destination); o.start(t); o.stop(t + 0.5);
+        });
+      }));
+      snd = { name: "Loop de exemplo", buffer: await oc.startRendering(), bytes: null, example: true };
+      computePeaks();
+      markers = Array.from({ length: 8 }, (_, k) => (k * len) / 8);
+      changed();
+    }
+    (async () => {
+      try {
+        const d = await db();
+        const rec = await new Promise((res) => { const r = d.transaction("pads").objectStore("pads").get("chopSample"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); });
+        if (rec && rec.bytes) {
+          snd = { name: rec.name, bytes: rec.bytes, buffer: await decode(rec.bytes), example: false };
+          computePeaks(); markers = (rec.markers || [0]).slice(0, N); changed();
+          return;
+        }
+      } catch (e) {}
+      try { await demo(); } catch (e) {}
+    })();
+
+    function lcd() {
+      if (mode !== "chop") return;
+      const rs = ranges();
+      $("lcdPad").textContent = "CHOP";
+      $("lcdKey").textContent = `${rs.length} FATIAS`;
+      $("lcdName").textContent = snd ? snd.name.toUpperCase() : "—";
+      $("lcdLen").textContent = snd ? dur().toFixed(2) + "s" : "";
+      const lw = $("lcdWave");
+      lw.hidden = false;
+      if (snd && rs[last]) {
+        const [a, b] = rs[last];
+        $("lcdFile").textContent = `fatia ${last + 1}: ${a.toFixed(2)}s – ${b.toFixed(2)}s`;
+        waveform(lw, sliceBuf(last), css("--lcd-ink"));
+      } else {
+        $("lcdFile").textContent = "toque no áudio pra cortar";
+        waveform(lw, null, css("--lcd-ink"));
+      }
+    }
+
+    $("chopLoad").onclick = () => $("chopFile").click();
+    $("chopFile").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) load(f); };
+    $("chopPlay").onclick = toggleWhole;
+    $("chopSplit").onclick = () => { if (!snd) return; const n = +$("chopN").value; split(n); status(`Dividido em ${n} partes iguais.`); };
+    $("chopDetect").onclick = () => {
+      if (!snd) return;
+      const hits = detect();
+      if (hits.length >= 2) { setMarkers(hits); status(`${hits.length} batidas encontradas.`); }
+      else status("Nenhuma batida clara encontrada.", true);
+    };
+    $("chopDel").onclick = delSel;
+    $("chopClear").onclick = () => { if (!snd) return; setMarkers([0]); status("Marcadores limpos."); };
+    $("chopMono").onclick = () => { mono = !mono; $("chopMono").setAttribute("aria-pressed", String(mono)); };
+    $("chopSend").onclick = () => {
+      if (!snd) return;
+      const rs = ranges();
+      rs.forEach((_, i) => {
+        const buffer = sliceBuf(i);
+        Object.assign(pads[i], { kind: "file", name: `Chop ${i + 1}`, fileName: `${snd.name}-chop${i + 1}.wav`, buffer, bytes: toWav(buffer) });
+        savePad(i); drawPad(i);
+      });
+      status(`${rs.length} fatias enviadas pros pads 1–${rs.length}. Abra o Sampler pra tocar.`);
+    };
+    const box = $("chopWave").parentNode;
+    box.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); });
+    box.addEventListener("drop", (e) => {
+      e.preventDefault(); e.stopPropagation(); document.body.classList.remove("dragging");
+      const f = Array.from(e.dataTransfer.files).find((x) => x.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|aac|flac|aiff?)$/i.test(x.name));
+      if (f) load(f);
+    });
+    addEventListener("resize", () => { if (mode === "chop") { sizeCanvas(); draw(); } });
+
+    function onKey(e) {
+      if (e.code === "Space") { e.preventDefault(); if (!e.repeat) toggleWhole(); return; }
+      if (e.code === "Delete" || e.code === "Backspace") { e.preventDefault(); delSel(); return; }
+      const i = CODE_TO_PAD[e.code];
+      if (i === undefined || e.repeat) return;
+      e.preventDefault(); live(i);
+    }
+    function stop() {
+      stopWhole();
+      if (voice) { try { voice.src.stop(); } catch (e) {} voice = null; }
+      play = null; playPos = null; draw();
+    }
+    return {
+      show() { sizeCanvas(); changed(); },
+      hide: stop,
+      stop, lcd, onKey,
+      playAt: (i, when) => playSlice(i, when),
+    };
+  })();
+
   // ---------- languages ----------
   // The page is written in Portuguese; this layer swaps every visible string (and aria-label/title)
   // for English or Spanish as it appears, using exact phrases and "{}" templates.
@@ -2102,6 +2483,36 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       ["Vazio", "Empty", "Vacío"],
       ["Limpar", "Clear", "Borrar"],
       ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Carregar sample", "Load sample", "Cargar sample"],
+      ["Tocar tudo", "Play all", "Tocar todo"],
+      ["Dividir em", "Split into", "Dividir en"],
+      ["Dividir", "Split", "Dividir"],
+      ["Detectar batidas", "Detect hits", "Detectar golpes"],
+      ["Apagar marcador", "Delete marker", "Borrar marcador"],
+      ["Limpar marcadores", "Clear markers", "Borrar marcadores"],
+      ["Mandar pros pads", "Send to pads", "Enviar a los pads"],
+      ["Fatias", "Slices", "Cortes"],
+      ["Loop de exemplo", "Example loop", "Loop de ejemplo"],
+      ["{} FATIAS", "{} SLICES", "{} CORTES"],
+      ["fatia {}: {}s – {}s", "slice {}: {}s – {}s", "corte {}: {}s – {}s"],
+      ["toque no áudio pra cortar", "click the audio to chop", "toca el audio para cortar"],
+      ["Forma de onda do sample", "Sample waveform", "Forma de onda del sample"],
+      ["Fatia {}, tecla {}", "Slice {}, key {}", "Corte {}, tecla {}"],
+      ["Modo chop.", "Chop mode.", "Modo chop."],
+      ["Toque na forma de onda pra marcar um corte.", "Click the waveform to mark a cut.", "Toca la forma de onda para marcar un corte."],
+      ["Máximo de 12 fatias.", "12 slices max.", "Máximo de 12 cortes."],
+      ["Dividido em {} partes iguais.", "Split into {} equal parts.", "Dividido en {} partes iguales."],
+      ["{} batidas encontradas.", "{} hits found.", "{} golpes encontrados."],
+      ["Nenhuma batida clara encontrada.", "No clear hits found.", "No se encontraron golpes claros."],
+      ["Marcador apagado.", "Marker deleted.", "Marcador borrado."],
+      ["Marcadores limpos.", "Markers cleared.", "Marcadores borrados."],
+      ["Clique num marcador pra selecionar.", "Click a marker to select it.", "Haz clic en un marcador para seleccionarlo."],
+      ["{} fatias enviadas pros pads 1–{}.", "{} slices sent to pads 1–{}.", "{} cortes enviados a los pads 1–{}."],
+      ["Abra o Sampler pra tocar.", "Open the Sampler to play them.", "Abre el Sampler para tocarlos."],
+      ["Sample {} carregado.", "Sample {} loaded.", "Sample {} cargado."],
+      ["Essa fatia ainda não existe.", "That slice doesn't exist yet.", "Ese corte todavía no existe."],
+      ["Marque mais cortes.", "Mark more cuts.", "Marca más cortes."],
+      ["Carregue um sample primeiro.", "Load a sample first.", "Carga un sample primero."],
       ["Importar som", "Import sound", "Importar sonido"],
       ["Nota base", "Root note", "Nota base"],
       ["Seu som: {}", "Your sound: {}", "Tu sonido: {}"],
@@ -2248,6 +2659,10 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     heavy compression, a swirling phaser and a small room. Tap the pads or <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
     <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. In the sequencer, click a step: 1 click turns it on, 2 clicks make it a ghost note
     (softer), 3 turn it off. <kbd>Space</kbd> plays and stops. Leave the beat running and switch to MIDI Keys to play chords over it.`,
+        helpChop: `Load any audio (a song, a loop, a vocal) and chop it however you like: click the waveform to drop a marker,
+    drag to adjust and double-click to delete. Or use <em>Split</em> and <em>Detect hits</em>. Each slice plays from its button
+    or <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>,
+    <kbd>Space</kbd> plays the whole sample. <em>Mono</em> makes each slice cut the previous one. <em>Send to pads</em> puts the slices in the Sampler.`,
         mhelp: `Tap the pads with as many fingers as you like. Hold a pad with Note repeat on to repeat it.
     On iPhone, turn off silent mode to hear sound. This version keeps its sounds separate from the full version.`,
       },
@@ -2266,6 +2681,10 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     compresión fuerte, un phaser girando y una sala pequeña. Toca los pads o <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
     <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. En el secuenciador, haz clic en un paso: 1 clic lo activa, 2 clics lo vuelven nota fantasma
     (más suave), 3 lo apagan. <kbd>Espacio</kbd> toca y para. Deja el ritmo sonando y cambia a Teclado MIDI para tocar acordes encima.`,
+        helpChop: `Carga cualquier audio (una canción, un loop, una voz) y córtalo como quieras: haz clic en la forma de onda para poner un marcador,
+    arrástralo para ajustar y haz doble clic para borrarlo. O usa <em>Dividir</em> y <em>Detectar golpes</em>. Cada corte suena con su botón
+    o con <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd>,
+    <kbd>Espacio</kbd> toca el sample entero. <em>Mono</em> hace que cada corte corte al anterior. <em>Enviar a los pads</em> lleva los cortes al Sampler.`,
         mhelp: `Toca los pads con todos los dedos que quieras. Mantén un pad con Note repeat activado para repetirlo.
     En iPhone, quita el modo silencio para oír. Esta versión guarda sus sonidos aparte de la versión completa.`,
       },
@@ -2384,7 +2803,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
   select(0);
   try {
     const p = JSON.parse(localStorage.getItem("pads12-prefs") || "null");
-    if (p) { Keys.load(p.keys); Drums.load(p.drums); if (p.mode === "keys" || p.mode === "drums") setMode(p.mode); }
+    if (p) { Keys.load(p.keys); Drums.load(p.drums); if (["keys", "drums", "chop"].includes(p.mode)) setMode(p.mode); }
   } catch (e) {}
   (async () => {
     try { await loadExamples(); } catch (e) {}
