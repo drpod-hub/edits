@@ -1,0 +1,2396 @@
+<title>Sampler de 12 Pads</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Barlow:wght@400;500&family=VT323&display=swap">
+<style>
+/* Layout: one piece of grey hardware on a desk — LCD and edit strip on top, 4×3 rubber pads below, numbered from bottom-left like a real sampler. */
+:root {
+  --desk: #dcd8cf;
+  --case: #c4c0b5;
+  --case-hi: #d6d2c8;
+  --case-lo: #a29e93;
+  --ink: #2c2b28;
+  --ink-soft: #5b5850;
+  --pad: #3b3a37;
+  --pad-hi: #4a4945;
+  --pad-ink: #d9d5ca;
+  --pad-dim: #8d897f;
+  --lit: #f0a23b;
+  --lit-ink: #2a1a05;
+  --lit-dim: #a3712f;
+  --rec: #b8352a;
+  --neon-1: #ff3df0;
+  --neon-2: #3dfcff;
+  --neon-3: #7dff3d;
+  --neon-4: #ffe83d;
+  --lcd: #a7b99d;
+  --lcd-ink: #1f2a1c;
+  --lcd-dim: #5f6f58;
+  --error: #9b2d1f;
+
+  --f-label: "Silkscreen", "Courier New", ui-monospace, monospace;
+  --f-body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --f-lcd: "VT323", "Courier New", ui-monospace, monospace;
+
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+}
+.device {
+  max-width: 760px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, var(--case-hi), var(--case) 18%, var(--case) 85%, var(--case-lo));
+  border-radius: 14px;
+  padding: clamp(14px, 3.5vw, 28px);
+  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 -2px 0 rgba(0,0,0,.12) inset, 0 18px 40px -18px rgba(40,36,28,.45);
+  display: grid;
+  gap: 18px;
+}
+.brand {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  font-family: var(--f-label); text-transform: uppercase;
+}
+.brand h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: .08em; text-wrap: balance; }
+.brand h1 span { color: var(--ink-soft); font-weight: 500; }
+.brand p { margin: 0; font-size: 13px; letter-spacing: .12em; color: var(--ink-soft); }
+
+.top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 620px) { .top { grid-template-columns: minmax(0, 1fr); } }
+
+.lcd-bezel { background: #2e2d2a; border-radius: 8px; padding: 8px; box-shadow: 0 2px 0 rgba(255,255,255,.4); }
+.lcd {
+  background: var(--lcd);
+  color: var(--lcd-ink);
+  font-family: var(--f-lcd);
+  border-radius: 3px;
+  padding: 10px 12px;
+  min-height: 132px;
+  display: grid; align-content: start; gap: 2px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.25) inset, 0 6px 14px -8px rgba(0,0,0,.4) inset;
+  min-width: 0;
+}
+.lcd .row { display: flex; justify-content: space-between; gap: 10px; font-size: 22px; line-height: 1.05; white-space: nowrap; overflow: hidden; }
+.lcd .row > span { overflow: hidden; text-overflow: ellipsis; }
+.lcd .big { font-size: 34px; }
+.lcd .dim { color: var(--lcd-dim); }
+.lcd canvas { width: 100%; height: 34px; display: block; margin-top: 4px; }
+.lcd .status { font-size: 19px; color: var(--lcd-dim); white-space: normal; }
+.lcd .status.err { color: var(--error); }
+
+.controls { display: grid; gap: 10px; align-content: start; }
+.label { font-family: var(--f-label); font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); }
+.field { display: grid; gap: 4px; }
+.field input[type="text"] {
+  font: 500 15px var(--f-body); color: var(--ink);
+  background: var(--case-hi); border: 1px solid var(--case-lo); border-radius: 5px; padding: 7px 9px; width: 100%;
+}
+input[type="range"] { width: 100%; accent-color: var(--ink); }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  font-family: var(--f-label); font-size: 14px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink); background: var(--case-hi);
+  border: 1px solid var(--case-lo); border-bottom-width: 3px; border-radius: 6px;
+  padding: 8px 12px; cursor: pointer;
+}
+.btn:active { border-bottom-width: 1px; transform: translateY(2px); }
+.btn.dark { background: var(--pad); color: var(--pad-ink); border-color: #252422; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:focus-visible, .pad:focus-visible, input:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+
+.strip { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; border-top: 1px solid var(--case-lo); padding-top: 14px; }
+.strip .master { display: flex; align-items: center; gap: 10px; flex: 1 1 200px; max-width: 280px; }
+
+.pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 2vw, 14px); }
+.pad {
+  position: relative;
+  aspect-ratio: 1; max-width: 100%;
+  background: radial-gradient(120% 120% at 30% 20%, var(--pad-hi), var(--pad) 60%);
+  color: var(--pad-ink);
+  border: 0; border-radius: 9px;
+  box-shadow: 0 3px 0 #1f1e1c, 0 6px 10px -4px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.08) inset;
+  padding: 8px; cursor: pointer;
+  display: grid; grid-template-rows: auto 1fr auto; text-align: left;
+  font-family: var(--f-label);
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: background-color .25s, box-shadow .25s;
+}
+.pad .meta { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; letter-spacing: .1em; color: var(--pad-dim); }
+.pad .key { border: 1px solid currentColor; border-radius: 3px; padding: 0 4px; line-height: 1.3; }
+.pad .name { align-self: center; font-size: clamp(13px, 2.6vw, 19px); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pad.empty .name { color: var(--pad-dim); font-weight: 500; }
+.pad canvas { width: 100%; height: 22%; display: block; opacity: .75; }
+.pad.selected { box-shadow: 0 3px 0 #1f1e1c, 0 6px 10px -4px rgba(0,0,0,.5), 0 0 0 2px var(--lit); }
+.pad.hit { animation: hit .7s ease-out; }
+.pad.hit .name { animation: glow .7s ease-out; }
+.pad.drop { box-shadow: 0 0 0 3px var(--lit), 0 3px 0 #1f1e1c; background: var(--pad-hi); }
+/* each hit runs the lettering through a neon rainbow and back to normal */
+@keyframes hit {
+  0% { color: var(--neon-1); transform: translateY(3px); box-shadow: 0 0 0 #1f1e1c, 0 0 18px var(--neon-1); }
+  12% { transform: none; }
+  25% { color: var(--neon-2); box-shadow: 0 3px 0 #1f1e1c, 0 0 14px var(--neon-2); }
+  50% { color: var(--neon-3); box-shadow: 0 3px 0 #1f1e1c, 0 0 9px var(--neon-3); }
+  75% { color: var(--neon-4); }
+  100% { color: var(--pad-ink); }
+}
+@keyframes glow {
+  0%, 60% { text-shadow: 0 0 6px currentColor, 0 0 14px currentColor; }
+  100% { text-shadow: none; }
+}
+.pad.hit .meta { color: inherit; }
+
+.help { font-size: 14px; line-height: 1.5; color: var(--ink-soft); max-width: 65ch; margin: 0; }
+.help kbd { font-family: var(--f-label); font-weight: 600; border: 1px solid var(--case-lo); border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; background: var(--case-hi); color: var(--ink); }
+
+.backdrop { position: fixed; inset: 0; z-index: -1; background: var(--desk); background-size: cover; background-position: center; }
+.backdrop .scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.bgbar { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch {
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer; padding: 0;
+  border: 2px solid var(--case-hi); box-shadow: 0 0 0 1px var(--case-lo), 0 2px 4px rgba(0,0,0,.25);
+  background-size: cover; background-position: center;
+}
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink), 0 2px 4px rgba(0,0,0,.25); }
+.swatch:focus-visible { outline: 2px solid var(--lit); outline-offset: 3px; }
+.colorpick { display: inline-flex; align-items: center; gap: 6px; }
+.colorpick input { width: 34px; height: 34px; padding: 0; border: 1px solid var(--case-lo); border-radius: 6px; background: var(--case-hi); cursor: pointer; }
+
+.brand-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.modes { display: inline-flex; background: var(--case-lo); border-radius: 8px; padding: 3px; gap: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.2) inset; }
+.modes button {
+  font-family: var(--f-label); font-size: 14px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; background: transparent; color: var(--ink);
+}
+.modes button[aria-pressed="true"] { background: var(--pad); color: var(--lit); box-shadow: 0 2px 0 #1f1e1c; }
+.modes button:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+select {
+  font: 500 15px var(--f-body); color: var(--ink);
+  background: var(--case-hi); border: 1px solid var(--case-lo); border-radius: 5px; padding: 7px 9px; width: 100%;
+}
+.krow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.octave { display: inline-flex; align-items: center; gap: 6px; }
+.octave output { font-family: var(--f-lcd); font-size: 24px; min-width: 1.4ch; text-align: center; }
+.btn[aria-pressed="true"] { background: var(--pad); color: var(--lit); border-color: #252422; }
+.chordbar { display: grid; gap: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-family: var(--f-label); font-size: 14px; font-weight: 600; letter-spacing: .04em;
+  border: 1px solid var(--case-lo); border-bottom-width: 2px; border-radius: 5px;
+  background: var(--case-hi); color: var(--ink); padding: 5px 9px; cursor: pointer; min-width: 40px;
+}
+.chip[aria-pressed="true"] { background: var(--pad); color: var(--lit); border-color: #252422; }
+.chip:focus-visible { outline: 2px solid var(--lit); outline-offset: 2px; }
+.pianowrap { overflow-x: auto; padding-bottom: 6px; }
+.piano {
+  position: relative; display: flex; min-width: 440px; height: clamp(140px, 28vw, 210px);
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  background: #1d1c1a; border-radius: 8px; padding: 10px 8px 8px; box-shadow: 0 2px 0 rgba(255,255,255,.4);
+}
+.piano .w, .piano .b {
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px;
+  font-family: var(--f-label); font-weight: 600; letter-spacing: .06em; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.piano .w {
+  flex: 1; position: relative; background: linear-gradient(180deg, #e9e5da, #faf7ef 12%, #f2eee3);
+  border: 1px solid #8f8a7f; border-radius: 0 0 6px 6px; margin-right: -1px; padding-bottom: 8px;
+  color: #7c776c; font-size: 11px; box-shadow: 0 4px 0 #c9c4b7 inset, 0 -3px 0 #d8d3c7 inset;
+}
+.piano .w .n { color: #3a3833; font-size: 12px; }
+.piano .b {
+  position: absolute; top: 10px; height: 60%; z-index: 2;
+  background: linear-gradient(180deg, #2b2a27, #3f3e3a 85%, #1a1917);
+  border-radius: 0 0 4px 4px; color: #9c978b; font-size: 10px; padding-bottom: 6px;
+  box-shadow: 0 3px 4px rgba(0,0,0,.45);
+}
+.piano .w.on { background: linear-gradient(180deg, #e88d1f, var(--lit)); color: var(--lit-ink); }
+.piano .w.on .n { color: var(--lit-ink); }
+.piano .b.on { background: linear-gradient(180deg, #b86a10, var(--lit)); color: var(--lit-ink); }
+.piano .hint { opacity: .85; }
+
+.mix { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+.transport { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; }
+.transport .tfield { display: inline-flex; align-items: center; gap: 6px; }
+.transport input[type="number"] {
+  font: 400 24px var(--f-lcd); width: 64px; color: var(--ink);
+  background: var(--case-hi); border: 1px solid var(--case-lo); border-radius: 5px; padding: 2px 6px;
+}
+.transport input[type="range"] { width: 110px; }
+.transport select { width: auto; }
+.seqscroll { overflow-x: auto; padding-bottom: 6px; }
+.seq { display: grid; grid-template-columns: 88px repeat(16, minmax(18px, 1fr)); gap: 4px; min-width: 520px; align-items: center; }
+.seq .rl { font-family: var(--f-label); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seq .sn { font-family: var(--f-lcd); font-size: 18px; text-align: center; color: var(--ink-soft); }
+.cell {
+  aspect-ratio: 1; max-width: 100%; border: 0; border-radius: 3px; padding: 0; cursor: pointer;
+  background: var(--pad); box-shadow: 0 2px 0 #1f1e1c;
+}
+.cell.beat { background: var(--pad-hi); }
+.cell[data-v="1"] { background: var(--lit); }
+.cell[data-v="2"] { background: var(--lit-dim); }
+.cell.now { box-shadow: 0 0 0 2px var(--case-hi), 0 2px 0 #1f1e1c; transform: translateY(1px); }
+.cell:focus-visible { outline: 2px solid var(--lit); outline-offset: 1px; }
+
+.btn.loop::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--rec); margin-right: 7px; vertical-align: 1px; }
+.btn.loop.rec { background: var(--rec); color: #fff; border-color: #7d1f17; animation: recpulse 1s ease-in-out infinite; }
+.btn.loop.rec::before { background: #fff; }
+.btn.loop.looping { background: var(--pad); color: var(--lit); border-color: #252422; }
+.btn.loop.looping::before { background: var(--lit); border-radius: 2px; }
+@keyframes recpulse { 50% { box-shadow: 0 0 0 4px rgba(184,53,42,.35); } }
+.loopmeter { display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-lcd); font-size: 19px; color: var(--ink); }
+.loopmeter .track { width: 90px; height: 8px; border-radius: 4px; background: var(--case-lo); overflow: hidden; }
+.loopmeter .fillbar { display: block; height: 100%; width: 0; background: var(--rec); }
+.btn.loop.looping ~ .loopmeter .fillbar { background: var(--lit-dim); }
+@media (prefers-reduced-motion: reduce) { .btn.loop.rec { animation: none; } }
+
+.repeatbox { display: inline-flex; gap: 6px; align-items: center; }
+.repeatbox select { width: auto; padding: 6px 8px; }
+#recAudioBtn.recording { background: var(--rec); color: #fff; border-color: #7d1f17; font-variant-numeric: tabular-nums; }
+.take { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; background: var(--case-hi); border: 1px solid var(--case-lo); border-radius: 8px; padding: 10px 12px; }
+.take audio { flex: 1 1 220px; min-width: 0; max-width: 100%; height: 36px; }
+.takeinfo { font-family: var(--f-lcd); font-size: 20px; color: var(--ink-soft); }
+
+body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes hit { 0% { color: var(--neon-1); } 100% { color: var(--pad-ink); } }
+  @keyframes glow { 0%, 100% { text-shadow: none; } }
+  .btn:active { transform: none; }
+}
+
+/* Silkscreen: pixel face, crisp at multiples of 8px */
+.brand h1, .brand p, .label, .btn, .chip, .modes button, .pad, .pad .name, .pad .meta,
+.seq .rl, .piano .w, .piano .b, .help kbd { font-weight: 400 !important; letter-spacing: .03em !important; }
+.pad .name { font-size: clamp(11px, 2.1vw, 16px); }
+.modes button, .btn, .chip { font-size: 12px; }
+.brand h1 { letter-spacing: .02em !important; }
+@media (max-width: 520px) {
+  .pad .name { white-space: normal; overflow-wrap: anywhere; line-height: 1.15; font-size: clamp(9px, 2.7vw, 13px); letter-spacing: 0 !important; }
+  .pad .meta { letter-spacing: 0 !important; }
+  .pad .meta { font-size: 10px; }
+}
+.field input[type="text"], select { font-weight: 400; }
+/* chord names are case-sensitive (m7 vs M7): keep them out of the all-caps face */
+.chip { font-family: var(--f-body) !important; font-weight: 600 !important; font-size: 14px !important; }
+.rootsel { width: auto !important; }
+.kitbox { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+.lang { width: auto; padding: 4px 8px; font: 400 12px var(--f-label); letter-spacing: .04em; }
+</style>
+
+<main class="device" id="device">
+  <header class="brand">
+    <div class="brand-left">
+      <h1>PADS·12</h1>
+      <div class="modes" role="group" aria-label="Modo">
+        <button type="button" id="modePads" aria-pressed="true">Sampler</button>
+        <button type="button" id="modeKeys" aria-pressed="false">Teclado MIDI</button>
+        <button type="button" id="modeDrums" aria-pressed="false">Bateria orgânica</button>
+      </div>
+    </div>
+    <p>16-bit · 44.1 kHz · 12 vozes</p>
+    <select id="langSel" class="lang" aria-label="Idioma">
+      <option value="pt">PT</option>
+      <option value="en">EN</option>
+      <option value="es">ES</option>
+    </select>
+  </header>
+
+  <section class="top">
+    <div class="lcd-bezel">
+      <div class="lcd" aria-live="polite">
+        <div class="row big"><span id="lcdPad">PAD 01</span><span id="lcdKey" class="dim">A</span></div>
+        <div class="row"><span id="lcdName">KICK</span></div>
+        <div class="row dim"><span id="lcdFile">kit de exemplo</span><span id="lcdLen"></span></div>
+        <canvas id="lcdWave" width="600" height="68" aria-hidden="true"></canvas>
+        <div class="row status" id="lcdStatus">Kit de exemplo carregado. Toque num pad ou carregue seus sons.</div>
+      </div>
+    </div>
+
+    <div class="controls" id="keyControls" hidden>
+      <div class="field">
+        <label class="label" for="instSel">Som</label>
+        <select id="instSel">
+          <option value="ep">Piano elétrico</option>
+          <option value="pad">Pad</option>
+          <option value="pluck">Pluck</option>
+          <option value="organ">Órgão</option>
+          <option value="bass">Baixo synth</option>
+          <option value="sample">Sample do pad selecionado</option>
+        </select>
+      </div>
+      <div class="krow">
+        <label class="label" for="rootSel">Nota base</label>
+        <select id="rootSel" class="rootsel" disabled></select>
+      </div>
+      <div class="field">
+        <label class="label" for="invSel">Inversão</label>
+        <select id="invSel">
+          <option value="0">Fundamental</option>
+          <option value="1">1ª inversão</option>
+          <option value="2">2ª inversão</option>
+          <option value="3">3ª inversão</option>
+        </select>
+      </div>
+      <div class="krow">
+        <span class="octave"><span class="label">Oitava</span>
+          <button class="btn" id="octDown" type="button" aria-label="Oitava abaixo">−</button>
+          <output id="octVal">3</output>
+          <button class="btn" id="octUp" type="button" aria-label="Oitava acima">+</button>
+        </span>
+        <button class="btn" id="sustainBtn" type="button" aria-pressed="false">Sustain</button>
+        <button class="btn" id="keysImport" type="button">Importar som</button>
+        <button class="btn" id="midiBtn" type="button">Conectar MIDI</button>
+      </div>
+    </div>
+
+    <div class="controls" id="drumControls" hidden>
+      <div class="mix">
+        <div class="field">
+          <label class="label" for="dComp">Compressão <span id="dCompVal">70</span></label>
+          <input type="range" id="dComp" min="0" max="100" value="70">
+        </div>
+        <div class="field">
+          <label class="label" for="dSat">Saturação <span id="dSatVal">45</span></label>
+          <input type="range" id="dSat" min="0" max="100" value="45">
+        </div>
+        <div class="field">
+          <label class="label" for="dRoom">Sala <span id="dRoomVal">25</span></label>
+          <input type="range" id="dRoom" min="0" max="100" value="25">
+        </div>
+        <div class="field">
+          <label class="label" for="dTone">Brilho <span id="dToneVal">55</span></label>
+          <input type="range" id="dTone" min="0" max="100" value="55">
+        </div>
+      </div>
+      <div class="krow">
+        <button class="btn" id="phaserBtn" type="button" aria-pressed="true">Phaser</button>
+        <button class="btn" id="humanBtn" type="button" aria-pressed="true">Humanizar</button>
+      </div>
+    </div>
+
+    <div class="controls" id="padControls">
+      <div class="field">
+        <label class="label" for="padName">Nome do pad</label>
+        <input type="text" id="padName" maxlength="24" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="label" for="padVol">Volume do pad <span id="padVolVal">100</span></label>
+        <input type="range" id="padVol" min="0" max="150" value="100">
+      </div>
+      <div class="btns">
+        <button class="btn" id="replaceBtn" type="button">Trocar som</button>
+        <button class="btn" id="clearBtn" type="button">Limpar pad</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="pads" id="pads" aria-label="Pads"></section>
+
+  <section class="chordbar" id="chordBar" hidden>
+    <span class="label">Acorde por tecla</span>
+    <div class="chips" id="chordChips" role="group" aria-label="Tipo de acorde"></div>
+  </section>
+  <section class="pianowrap" id="pianoWrap" hidden>
+    <div class="piano" id="piano" aria-label="Teclado"></div>
+  </section>
+
+  <section class="pads" id="drumPads" aria-label="Bateria" hidden></section>
+  <section class="chordbar" id="seqWrap" hidden>
+    <div class="transport">
+      <button class="btn dark" id="seqPlay" type="button" aria-pressed="false">Tocar</button>
+      <span class="tfield"><label class="label" for="bpm">BPM</label><input type="number" id="bpm" min="60" max="180" value="104"></span>
+      <span class="tfield"><label class="label" for="swing">Swing <span id="swingVal">12</span>%</label><input type="range" id="swing" min="0" max="60" value="12"></span>
+      <select id="presetSel" aria-label="Groove pronto">
+        <option value="groove">Groove psicodélico</option>
+        <option value="disco">Disco lento</option>
+        <option value="lenta">Lenta e pesada</option>
+        <option value="vazio">Vazio</option>
+      </select>
+      <button class="btn" id="seqClear" type="button">Limpar</button>
+    </div>
+    <div class="seqscroll"><div class="seq" id="seq"></div></div>
+  </section>
+
+  <div class="strip">
+    <div class="btns">
+      <span class="kitbox" id="kitBox">
+        <button class="btn dark" id="kitBtn" type="button">Importar kit</button>
+        <button class="btn" id="kitFolderBtn" type="button">Importar pasta</button>
+        <button class="btn" id="kitShuffle" type="button" hidden>Outra combinação</button>
+      </span>
+      <button class="btn" id="loadBtn" type="button">Carregar sons</button>
+      <button class="btn loop" id="loopBtn" type="button">Gravar loop</button>
+      <button class="btn" id="overdubBtn" type="button" aria-pressed="false" hidden>Overdub</button>
+      <span class="loopmeter" id="loopMeter" hidden><span class="track"><span class="fillbar" id="loopFill"></span></span><span id="loopInfo"></span></span>
+      <button class="btn" id="stopBtn" type="button">Parar tudo</button>
+      <button class="btn" id="resetBtn" type="button">Kit de exemplo</button>
+      <span class="repeatbox" id="repeatBox">
+        <button class="btn" id="repeatBtn" type="button" aria-pressed="false">Note repeat</button>
+        <select id="repeatRate" aria-label="Divisão do note repeat">
+          <option value="1/4">1/4</option>
+          <option value="1/8">1/8</option>
+          <option value="1/8T">1/8 T</option>
+          <option value="1/16" selected>1/16</option>
+          <option value="1/16T">1/16 T</option>
+          <option value="1/32">1/32</option>
+        </select>
+      </span>
+      <button class="btn" id="recAudioBtn" type="button">Gravar áudio</button>
+    </div>
+    <div class="master">
+      <label class="label" for="masterVol">Master</label>
+      <input type="range" id="masterVol" min="0" max="100" value="85">
+    </div>
+  </div>
+
+  <div class="take" id="takeBox" hidden>
+    <span class="label">Sua gravação</span>
+    <audio id="takeAudio" controls preload="metadata"></audio>
+    <span class="takeinfo" id="takeInfo"></span>
+    <button class="btn dark" id="takeSave" type="button">Baixar áudio</button>
+  </div>
+
+  <div class="bgbar">
+    <span class="label">Fundo</span>
+    <div class="swatches" id="swatches" role="group" aria-label="Fundo da página"></div>
+    <label class="colorpick label" for="bgColor">Cor <input type="color" id="bgColor" value="#dcd8cf"></label>
+    <button class="btn" id="bgImgBtn" type="button">Usar imagem</button>
+    <button class="btn" id="reactBtn" type="button" aria-pressed="true">Reage ao som</button>
+  </div>
+
+  <p class="help" id="helpKeys" data-i18n-html="helpKeys" hidden>
+    Escolha um tipo de acorde e cada tecla vira um acorde inteiro com aquela nota como base. Em <em>Nota</em> você toca nota por nota
+    e o visor mostra o nome do acorde que você montou. Teclado do computador: <kbd>Z</kbd>–<kbd>M</kbd> oitava de baixo
+    (<kbd>S</kbd><kbd>D</kbd><kbd>G</kbd><kbd>H</kbd><kbd>J</kbd> são as pretas), <kbd>Q</kbd>–<kbd>U</kbd> oitava de cima
+    (<kbd>2</kbd><kbd>3</kbd><kbd>5</kbd><kbd>6</kbd><kbd>7</kbd> pretas), <kbd>↑</kbd><kbd>↓</kbd> mudam a oitava, segure <kbd>Espaço</kbd> para sustain.
+    Com <em>Importar som</em> qualquer áudio vira instrumento afinado nas teclas. Tem um teclado MIDI de verdade? Ligue no computador e clique em Conectar MIDI.
+  </p>
+
+  <p class="help" id="helpDrums" data-i18n-html="helpDrums" hidden>
+    Bateria abafada e esmagada, inspirada no som psicodélico do Tame Impala: cada batida passa por saturação de fita,
+    compressão pesada, phaser girando e uma sala pequena. Toque nos pads ou em <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
+    <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. No sequenciador, clique num passo: 1 clique liga, 2 cliques vira nota fantasma
+    (mais fraca), 3 desliga. <kbd>Espaço</kbd> toca e para. Deixe a batida rolando e troque pro Teclado MIDI pra tocar acordes por cima.
+  </p>
+
+  <p class="help" id="helpPads" data-i18n-html="helpPads">
+    Baixou um kit? Use <em>Importar kit</em> (.zip, pasta ou vários arquivos) e cada som vai pro pad certo pelo nome: kick, snare, hat, 808…
+    Ou escolha vários arquivos de áudio (WAV, MP3, OGG, M4A) e eles vão para os pads em ordem, do pad 1 em diante:
+    <em>1 Kick</em>, <em>2 Snare</em> e assim por diante. Arraste arquivos em cima de um pad para começar dali.
+    Teclado: <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> pads 1–4, <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> pads 5–8,
+    <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> pads 9–12, <kbd>Esc</kbd> para tudo. Seus sons ficam salvos só neste navegador.
+  </p>
+
+  <input type="file" id="fileMulti" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" multiple hidden>
+  <input type="file" id="fileOne" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
+  <input type="file" id="bgFile" accept="image/*" hidden>
+  <input type="file" id="keysFile" accept="audio/*,.wav,.mp3,.ogg,.m4a,.aac,.flac,.aif,.aiff" hidden>
+  <input type="file" id="kitFile" accept=".zip,application/zip,application/x-zip-compressed,audio/*,.wav,.mp3,.ogg,.m4a,.aif,.aiff,.flac" multiple hidden>
+  <input type="file" id="kitFolder" webkitdirectory multiple hidden>
+</main>
+<div class="backdrop" id="backdrop" aria-hidden="true"></div>
+
+<script>
+(() => {
+  const N = 12;
+  // Grid is drawn top to bottom, but pads are numbered from the bottom-left (pad 1 = bottom-left).
+  const GRID_ORDER = [8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3];
+  const KEY_LABEL = ["A","S","D","F","Q","W","E","R","1","2","3","4"];
+  const CODE_TO_PAD = { KeyA:0, KeyS:1, KeyD:2, KeyF:3, KeyQ:4, KeyW:5, KeyE:6, KeyR:7, Digit1:8, Digit2:9, Digit3:10, Digit4:11 };
+
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  const master = ctx.createGain();
+  master.gain.value = 0.85;
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -10; comp.ratio.value = 4;
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 2048;
+  master.connect(comp); comp.connect(ctx.destination); comp.connect(analyser);
+  let mode = "pads";
+  const voices = new Set();
+
+  const pads = Array.from({ length: N }, () => ({ kind: "empty", name: "", fileName: "", buffer: null, bytes: null, volume: 1 }));
+  let selected = 0;
+
+  const $ = (id) => document.getElementById(id);
+  const padsEl = $("pads");
+  const padEls = [];
+
+  // ---------- storage (IndexedDB, best effort) ----------
+  let dbp = null;
+  function db() {
+    if (dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open("pads12", 1);
+        r.onupgradeneeded = () => r.result.createObjectStore("pads");
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  async function savePad(i) {
+    try {
+      const d = await db();
+      const p = pads[i];
+      const rec = { kind: p.kind, name: p.name, fileName: p.fileName, volume: p.volume, bytes: p.kind === "file" ? p.bytes : null };
+      d.transaction("pads", "readwrite").objectStore("pads").put(rec, i);
+    } catch (e) {}
+  }
+  async function clearStore() {
+    try {
+      const d = await db(), store = d.transaction("pads", "readwrite").objectStore("pads");
+      for (let i = 0; i < N; i++) store.delete(i);
+    } catch (e) {}
+  }
+  async function saveBg(rec) {
+    try { const d = await db(); d.transaction("pads", "readwrite").objectStore("pads").put(rec, "bg"); } catch (e) {}
+  }
+  async function loadBg() {
+    try {
+      const d = await db();
+      return await new Promise((res) => { const r = d.transaction("pads").objectStore("pads").get("bg"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); });
+    } catch (e) { return null; }
+  }
+  async function loadStore() {
+    try {
+      const d = await db();
+      const store = d.transaction("pads").objectStore("pads");
+      const all = await Promise.all(Array.from({ length: N }, (_, i) => new Promise((res) => {
+        const r = store.get(i); r.onsuccess = () => res(r.result); r.onerror = () => res(null);
+      })));
+      let restored = 0;
+      for (let i = 0; i < N; i++) {
+        const rec = all[i];
+        if (!rec) continue;
+        const p = pads[i];
+        p.volume = rec.volume ?? 1;
+        if (rec.kind === "file" && rec.bytes) {
+          try {
+            p.buffer = await decode(rec.bytes);
+            Object.assign(p, { kind: "file", name: rec.name, fileName: rec.fileName, bytes: rec.bytes });
+            restored++;
+          } catch (e) {}
+        } else if (rec.kind === "empty") {
+          Object.assign(p, { kind: "empty", name: "", fileName: "", buffer: null, bytes: null });
+        } else if (rec.kind === "example") {
+          p.name = rec.name || p.name;
+        }
+      }
+      return restored;
+    } catch (e) { return 0; }
+  }
+
+  // ---------- audio ----------
+  function decode(bytes) {
+    // decodeAudioData detaches its input, so hand it a copy and keep the original for storage.
+    const copy = bytes.slice(0);
+    return new Promise((res, rej) => {
+      const p = ctx.decodeAudioData(copy, res, rej);
+      if (p && p.then) p.then(res, rej);
+    });
+  }
+  function play(i, when) {
+    const p = pads[i], fromLoop = when !== undefined;
+    if (fromLoop) setTimeout(() => flash(i), Math.max(0, (when - ctx.currentTime) * 1000));
+    else { flash(i); select(i); Looper.rec({ type: "pad", i }); }
+    if (!p.buffer) return;
+    if (ctx.state !== "running") ctx.resume();
+    const src = ctx.createBufferSource();
+    src.buffer = p.buffer;
+    const g = ctx.createGain();
+    g.gain.value = p.volume;
+    src.connect(g).connect(master);
+    src.start(fromLoop ? Math.max(when, ctx.currentTime) : 0);
+    voices.add(src);
+    src.onended = () => voices.delete(src);
+  }
+  function stopAll() {
+    voices.forEach((s) => { try { s.stop(); } catch (e) {} });
+    voices.clear();
+  }
+
+  // ---------- example kit (synthesized, no files needed) ----------
+  async function render(seconds, build) {
+    const sr = 44100;
+    const oc = new OfflineAudioContext(1, Math.ceil(sr * seconds), sr);
+    build(oc, oc.destination);
+    return oc.startRendering();
+  }
+  function noise(oc, seconds) {
+    const b = oc.createBuffer(1, Math.ceil(oc.sampleRate * seconds), oc.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const s = oc.createBufferSource(); s.buffer = b; return s;
+  }
+  function env(oc, peak, decay, t0 = 0, attack = 0.001) {
+    const g = oc.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + attack + decay);
+    return g;
+  }
+  function filt(oc, type, f, q = 0.7) { const b = oc.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; }
+  function tone(oc, out, type, f0, f1, sweep, peak, decay) {
+    const o = oc.createOscillator(); o.type = type;
+    o.frequency.setValueAtTime(f0, 0);
+    o.frequency.exponentialRampToValueAtTime(f1, sweep);
+    o.connect(env(oc, peak, decay)).connect(out);
+    o.start(0); o.stop(decay + 0.05);
+  }
+  const EXAMPLES = [
+    ["Kick", 0.6, (oc, out) => tone(oc, out, "sine", 160, 42, 0.12, 1, 0.5)],
+    ["Snare", 0.35, (oc, out) => {
+      const n = noise(oc, 0.35); n.connect(filt(oc, "highpass", 1400)).connect(env(oc, 0.7, 0.2)).connect(out); n.start(0);
+      tone(oc, out, "triangle", 220, 170, 0.05, 0.6, 0.1);
+    }],
+    ["Clap", 0.4, (oc, out) => {
+      [0, 0.011, 0.023].forEach((t) => { const n = noise(oc, 0.05); n.connect(filt(oc, "bandpass", 1300, 1.2)).connect(env(oc, 0.9, 0.012, t)).connect(out); n.start(t); });
+      const n = noise(oc, 0.4); n.connect(filt(oc, "bandpass", 1300, 1)).connect(env(oc, 0.8, 0.22, 0.03)).connect(out); n.start(0.03);
+    }],
+    ["Rim", 0.12, (oc, out) => {
+      const o = oc.createOscillator(); o.type = "square"; o.frequency.value = 1700;
+      o.connect(filt(oc, "bandpass", 1700, 4)).connect(env(oc, 0.9, 0.04)).connect(out); o.start(0); o.stop(0.1);
+    }],
+    ["Hat fechado", 0.12, (oc, out) => { const n = noise(oc, 0.12); n.connect(filt(oc, "highpass", 7500)).connect(env(oc, 0.6, 0.05)).connect(out); n.start(0); }],
+    ["Hat aberto", 0.5, (oc, out) => { const n = noise(oc, 0.5); n.connect(filt(oc, "highpass", 7000)).connect(env(oc, 0.5, 0.38)).connect(out); n.start(0); }],
+    ["Shaker", 0.18, (oc, out) => { const n = noise(oc, 0.18); n.connect(filt(oc, "bandpass", 6000, 1.5)).connect(env(oc, 0.7, 0.1, 0, 0.025)).connect(out); n.start(0); }],
+    ["Cowbell", 0.45, (oc, out) => {
+      const bp = filt(oc, "bandpass", 2600, 0.8), g = env(oc, 0.5, 0.35);
+      [540, 800].forEach((f) => { const o = oc.createOscillator(); o.type = "square"; o.frequency.value = f; o.connect(bp); o.start(0); o.stop(0.45); });
+      bp.connect(g).connect(out);
+    }],
+    ["Tom grave", 0.55, (oc, out) => tone(oc, out, "sine", 130, 80, 0.3, 0.9, 0.45)],
+    ["Tom agudo", 0.45, (oc, out) => tone(oc, out, "sine", 220, 150, 0.25, 0.85, 0.35)],
+    ["808", 1.4, (oc, out) => {
+      const o = oc.createOscillator(); o.type = "sine";
+      o.frequency.setValueAtTime(75, 0); o.frequency.exponentialRampToValueAtTime(52, 0.15);
+      const sh = oc.createWaveShaper(); const c = new Float32Array(256);
+      for (let i = 0; i < 256; i++) { const x = i / 128 - 1; c[i] = Math.tanh(2.2 * x); }
+      sh.curve = c;
+      o.connect(sh).connect(env(oc, 0.8, 1.25, 0, 0.004)).connect(out); o.start(0); o.stop(1.4);
+    }],
+    ["Zap", 0.22, (oc, out) => tone(oc, out, "sine", 1400, 90, 0.16, 0.7, 0.2)],
+  ];
+  async function loadExamples(only) {
+    const bufs = await Promise.all(EXAMPLES.map(([, s, b]) => render(s, b)));
+    bufs.forEach((buf, i) => {
+      if (only && !only(i)) return;
+      Object.assign(pads[i], { kind: "example", name: EXAMPLES[i][0], fileName: "kit de exemplo", buffer: buf, bytes: null, volume: 1 });
+    });
+  }
+
+  // ---------- assigning files ----------
+  const cleanName = (fn) => fn.replace(/\.[^.]+$/, "").replace(/^\s*\d{1,2}\s*[-_.)\s]+/, "").replace(/[_-]+/g, " ").trim() || fn;
+  function audioFiles(list) {
+    return Array.from(list)
+      .filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|aac|flac|aiff?|opus|webm)$/i.test(f.name))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
+  }
+  async function assign(files, start) {
+    files = audioFiles(files);
+    if (!files.length) { status("Nenhum arquivo de áudio encontrado. Use WAV, MP3, OGG ou M4A.", true); return; }
+    const room = N - start;
+    const used = files.slice(0, room);
+    const failed = [];
+    let ok = 0;
+    for (let k = 0; k < used.length; k++) {
+      const i = start + k, f = used[k];
+      try {
+        const bytes = await f.arrayBuffer();
+        const buffer = await decode(bytes);
+        Object.assign(pads[i], { kind: "file", name: cleanName(f.name), fileName: f.name, buffer, bytes });
+        savePad(i); drawPad(i); ok++;
+      } catch (e) { failed.push(f.name); }
+    }
+    select(start);
+    const first = start + 1, last = start + used.length;
+    let msg = ok === 1 && used.length === 1 ? `${used[0].name} no pad ${first}.` : `${ok} sons nos pads ${first}–${last}.`;
+    if (files.length > room) msg += ` ${files.length - room} ficaram de fora (só cabem 12).`;
+    if (failed.length) msg += ` Não deu pra abrir: ${failed.join(", ")}.`;
+    status(msg, failed.length > 0 && ok === 0);
+  }
+
+  // ---------- UI ----------
+  function waveform(canvas, buffer, color) {
+    const c = canvas.getContext("2d"), w = canvas.width, h = canvas.height;
+    c.clearRect(0, 0, w, h);
+    if (!buffer) { c.fillStyle = color; c.fillRect(0, h / 2, w, 1); return; }
+    const d = buffer.getChannelData(0), step = Math.max(1, Math.floor(d.length / w));
+    let peak = 0;
+    for (let i = 0; i < d.length; i += 16) peak = Math.max(peak, Math.abs(d[i]));
+    const norm = peak > 0 ? 1 / peak : 1;
+    c.fillStyle = color;
+    for (let x = 0; x < w; x++) {
+      let m = 0;
+      for (let j = x * step, e = Math.min(d.length, j + step); j < e; j += 4) m = Math.max(m, Math.abs(d[j]));
+      const bh = Math.max(1, m * norm * h * 0.95);
+      c.fillRect(x, (h - bh) / 2, 1, bh);
+    }
+  }
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  function build() {
+    GRID_ORDER.forEach((i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "pad"; b.id = "pad" + (i + 1);
+      b.innerHTML = `<span class="meta"><span>PAD ${i + 1}</span><span class="key">${KEY_LABEL[i]}</span></span><span class="name"></span><canvas width="120" height="30" aria-hidden="true"></canvas>`;
+      b.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault(); b.focus({ preventScroll: true });
+        if (Repeat.on) Repeat.hold("p" + e.pointerId, "pad", i); else play(i);
+      });
+      b.addEventListener("click", (e) => { if (e.detail === 0) play(i); });
+      b.addEventListener("dragover", (e) => { e.preventDefault(); e.stopPropagation(); b.classList.add("drop"); });
+      b.addEventListener("dragleave", () => b.classList.remove("drop"));
+      b.addEventListener("drop", (e) => { e.preventDefault(); e.stopPropagation(); b.classList.remove("drop"); document.body.classList.remove("dragging"); assign(e.dataTransfer.files, i); });
+      padEls[i] = b;
+      padsEl.appendChild(b);
+    });
+  }
+  function drawPad(i) {
+    const p = pads[i], el = padEls[i];
+    el.classList.toggle("empty", !p.buffer);
+    el.querySelector(".name").textContent = p.buffer ? p.name : "vazio";
+    el.setAttribute("aria-label", `Pad ${i + 1}, tecla ${KEY_LABEL[i]}: ${p.buffer ? p.name : "vazio"}`);
+    waveform(el.querySelector("canvas"), p.buffer, css("--pad-dim"));
+    if (i === selected) drawLcd();
+  }
+  function drawLcd() {
+    if (mode === "keys") { Keys.lcd(); return; }
+    if (mode === "drums") { Drums.lcd(); return; }
+    const i = selected, p = pads[i];
+    $("lcdPad").textContent = "PAD " + String(i + 1).padStart(2, "0");
+    $("lcdKey").textContent = KEY_LABEL[i];
+    $("lcdName").textContent = p.buffer ? p.name.toUpperCase() : "— VAZIO —";
+    $("lcdFile").textContent = p.buffer ? p.fileName : "solte um arquivo neste pad";
+    $("lcdLen").textContent = p.buffer ? p.buffer.duration.toFixed(2) + "s" : "";
+    waveform($("lcdWave"), p.buffer, css("--lcd-ink"));
+    const name = $("padName");
+    if (document.activeElement !== name) name.value = p.name;
+    name.disabled = !p.buffer;
+    $("padVol").value = Math.round(p.volume * 100);
+    $("padVolVal").textContent = Math.round(p.volume * 100);
+    $("clearBtn").disabled = !p.buffer;
+  }
+  function select(i) {
+    if (selected !== i) { padEls[selected].classList.remove("selected"); selected = i; }
+    padEls[i].classList.add("selected");
+    drawLcd();
+  }
+  const NEON = ["#ff3df0", "#3dfcff", "#7dff3d", "#ffe83d", "#ff8a3d", "#9d6bff"];
+  let neonK = 0;
+  function neon(el) {
+    for (let j = 0; j < 4; j++) el.style.setProperty("--neon-" + (j + 1), NEON[(neonK + j) % NEON.length]);
+    neonK++;
+  }
+  function flash(i) {
+    const el = padEls[i];
+    neon(el);
+    el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit");
+  }
+  function status(msg, err) {
+    const s = $("lcdStatus"); s.textContent = msg; s.classList.toggle("err", !!err);
+  }
+
+  // ---------- background ----------
+  // Animated "late night drive": side view from the car window — sky, moon, two skyline layers
+  // at different depths, streetlights and road dashes rushing past, soft bokeh on top.
+  const Drive = (() => {
+    const cv = document.createElement("canvas");
+    cv.className = "scene"; cv.hidden = true;
+    const g = cv.getContext("2d");
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+    let w = 0, h = 0, dpr = 1, raf = 0, last = 0, t = 0, on = false;
+    let sky, layers = [], stars = [], bokeh = [];
+    // lights swell with whatever is playing
+    let react = true, energy = 0;
+    try { react = localStorage.getItem("pads12-react") !== "0"; } catch (e) {}
+    const abuf = new Uint8Array(analyser.fftSize);
+    const rnd = (a, b) => a + Math.random() * (b - a);
+
+    function skyline(speed, minH, maxH, body, win, winRate, baseY) {
+      const span = Math.ceil(Math.max(w * 1.5, 900));
+      const oc = document.createElement("canvas");
+      oc.width = span * dpr; oc.height = Math.ceil(baseY * dpr);
+      const c = oc.getContext("2d"); c.scale(dpr, dpr);
+      let x = 0;
+      while (x < span) {
+        const bw = rnd(28, 86), bh = rnd(minH, maxH) * h, top = baseY - bh;
+        c.fillStyle = body; c.fillRect(x, top, bw, bh + 1);
+        if (Math.random() < 0.18) c.fillRect(x + bw / 2 - 1, top - rnd(8, 26), 2, 26);
+        for (let wy = top + 7; wy < baseY - 8; wy += 9)
+          for (let wx = x + 5; wx < x + bw - 6; wx += 8)
+            if (Math.random() < winRate) { c.globalAlpha = rnd(0.35, 0.95); c.fillStyle = win; c.fillRect(wx, wy, 3, 4); }
+        c.globalAlpha = 1;
+        x += bw + rnd(0, 10);
+      }
+      return { img: oc, span, speed };
+    }
+    function setup() {
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      w = innerWidth; h = innerHeight;
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      const hor = h * 0.74;
+      sky = g.createLinearGradient(0, 0, 0, hor);
+      sky.addColorStop(0, "#090b22"); sky.addColorStop(0.45, "#251747");
+      sky.addColorStop(0.75, "#6a2b5f"); sky.addColorStop(1, "#ee8a5f");
+      layers = [
+        skyline(10, 0.12, 0.34, "#2a1d4a", "#f6c27a", 0.16, hor),
+        skyline(28, 0.08, 0.26, "#160f2b", "#ffd28c", 0.24, hor + 2),
+      ];
+      stars = Array.from({ length: Math.round(w * h / 9000) }, () => ({ x: rnd(0, w), y: rnd(0, hor * 0.7), r: rnd(0.4, 1.3), p: rnd(0, 6.28), s: rnd(0.5, 2) }));
+      const cols = ["255,140,170", "255,190,120", "120,220,230", "255,230,180"];
+      bokeh = Array.from({ length: 16 }, () => ({ x: rnd(0, w), y: rnd(h * 0.15, h * 0.95), r: rnd(12, 46), c: cols[(Math.random() * cols.length) | 0], a: rnd(0.05, 0.16), v: rnd(6, 22) }));
+    }
+    function frame(dt) {
+      if (react && dt > 0) {
+        analyser.getByteTimeDomainData(abuf);
+        let sum = 0;
+        for (let i = 0; i < abuf.length; i += 4) { const v = (abuf[i] - 128) / 128; sum += v * v; }
+        const lvl = Math.min(1, Math.sqrt(sum / (abuf.length / 4)) * 4.5);
+        energy = Math.max(lvl, energy * Math.exp(-dt * 5));
+      } else energy = 0;
+      const e = energy;
+      t += dt * (1 + e * 0.5);
+      const hor = h * 0.74, roadTop = hor + 6;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.fillStyle = sky; g.fillRect(0, 0, w, hor + 4);
+
+      for (const s of stars) {
+        g.globalAlpha = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
+        g.fillStyle = "#fff"; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.283); g.fill();
+      }
+      g.globalAlpha = 1;
+      const mx = w * 0.8, my = h * 0.17, mr = Math.max(18, Math.min(w, h) * 0.045);
+      const mg = g.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 4);
+      mg.addColorStop(0, `rgba(255,226,200,${0.35 + e * 0.35})`); mg.addColorStop(1, "rgba(255,226,200,0)");
+      g.fillStyle = mg; g.fillRect(mx - mr * 4, my - mr * 4, mr * 8, mr * 8);
+      g.fillStyle = "#ffe9d2"; g.beginPath(); g.arc(mx, my, mr, 0, 6.283); g.fill();
+
+      const haze = g.createLinearGradient(0, hor - h * 0.12, 0, hor);
+      haze.addColorStop(0, "rgba(238,138,95,0)"); haze.addColorStop(1, `rgba(238,138,95,${0.35 + e * 0.4})`);
+      g.fillStyle = haze; g.fillRect(0, hor - h * 0.12, w, h * 0.12);
+
+      for (const L of layers) {
+        const off = (t * L.speed) % L.span;
+        for (let x = -off; x < w; x += L.span) g.drawImage(L.img, x, 0, L.span, L.img.height / dpr);
+      }
+
+      const road = g.createLinearGradient(0, roadTop, 0, h);
+      road.addColorStop(0, "#1b1426"); road.addColorStop(1, "#07060c");
+      g.fillStyle = "#3a2440"; g.fillRect(0, hor, w, roadTop - hor);
+      g.fillStyle = road; g.fillRect(0, roadTop, w, h - roadTop);
+
+      const dashY = roadTop + (h - roadTop) * 0.55, dashGap = 120, dOff = (t * 520) % dashGap;
+      g.fillStyle = "rgba(255,214,150,.55)";
+      for (let x = -dOff; x < w; x += dashGap) g.fillRect(x, dashY, 56, 3);
+
+      const poleGap = Math.max(240, w * 0.32), pOff = (t * 300) % poleGap, poleTop = h * 0.36;
+      for (let x = -pOff + poleGap * 0.5; x < w + poleGap; x += poleGap) {
+        const pool = g.createRadialGradient(x, roadTop + 10, 4, x, roadTop + 10, 140);
+        pool.addColorStop(0, `rgba(255,178,102,${Math.min(0.75, 0.28 * (1 + e * 1.6))})`); pool.addColorStop(1, "rgba(255,178,102,0)");
+        g.fillStyle = pool; g.fillRect(x - 140, roadTop - 20, 280, 170);
+        g.fillStyle = "#0c0a14";
+        g.fillRect(x - 2, poleTop, 4, roadTop - poleTop + 4);
+        g.fillRect(x - 2, poleTop, 34, 4);
+        const lx = x + 30, ly = poleTop + 6;
+        const R = 70 * (1 + e * 0.9);
+        const glow = g.createRadialGradient(lx, ly, 1, lx, ly, R);
+        glow.addColorStop(0, "rgba(255,200,130,.9)"); glow.addColorStop(0.15, `rgba(255,170,100,${0.45 + e * 0.4})`); glow.addColorStop(1, "rgba(255,150,90,0)");
+        g.fillStyle = glow; g.fillRect(lx - R, ly - R, R * 2, R * 2);
+      }
+
+      g.globalCompositeOperation = "lighter";
+      for (const b of bokeh) {
+        b.x -= b.v * dt; if (b.x < -b.r) { b.x = w + b.r; b.y = rnd(h * 0.15, h * 0.95); }
+        const br = b.r * (1 + e * 0.25), ba = Math.min(0.6, b.a * (1 + e * 2.5));
+        const bg = g.createRadialGradient(b.x, b.y, br * 0.2, b.x, b.y, br);
+        bg.addColorStop(0, `rgba(${b.c},${ba})`); bg.addColorStop(0.8, `rgba(${b.c},${ba * 0.7})`); bg.addColorStop(1, `rgba(${b.c},0)`);
+        g.fillStyle = bg; g.beginPath(); g.arc(b.x, b.y, br, 0, 6.283); g.fill();
+      }
+      if (e > 0.02) {
+        const fl = g.createRadialGradient(w / 2, hor, 0, w / 2, hor, Math.max(w, h) * 0.7);
+        fl.addColorStop(0, `rgba(255,120,160,${e * 0.14})`); fl.addColorStop(1, "rgba(255,120,160,0)");
+        g.fillStyle = fl; g.fillRect(0, 0, w, h);
+      }
+      g.globalCompositeOperation = "source-over";
+    }
+    function loop(now) {
+      const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
+      frame(dt);
+      raf = requestAnimationFrame(loop);
+    }
+    function run() {
+      cancelAnimationFrame(raf);
+      if (!on) return;
+      if (reduce.matches) { frame(0); return; }
+      last = performance.now(); raf = requestAnimationFrame(loop);
+    }
+    addEventListener("resize", () => { if (on) { setup(); run(); } });
+    if (reduce.addEventListener) reduce.addEventListener("change", run);
+    return {
+      el: cv,
+      start() { if (on) return; on = true; cv.hidden = false; setup(); run(); },
+      stop() { on = false; cv.hidden = true; cancelAnimationFrame(raf); },
+      get react() { return react; },
+      setReact(v) { react = v; try { localStorage.setItem("pads12-react", v ? "1" : "0"); } catch (e) {} },
+    };
+  })();
+
+  const BG_PRESETS = [
+    ["drive", "Late night drive (animado)", "linear-gradient(180deg, #090b22, #3a1d55 55%, #ee8a5f 80%, #140f22 82%)"],
+    ["mesa", "Mesa", "#dcd8cf"],
+    ["concreto", "Concreto", "radial-gradient(circle at 30% 20%, #a9a69f, #7b7872 70%, #5f5c57)"],
+    ["madeira", "Madeira", "repeating-linear-gradient(92deg, #7a4a2a 0 14px, #8a5733 14px 22px, #6e4224 22px 31px, #845230 31px 44px)"],
+    ["noite", "Noite", "radial-gradient(circle at 50% 0%, #2c3344, #12141b 70%)"],
+    ["por-do-sol", "Pôr do sol", "linear-gradient(165deg, #f4a259, #d9536f 50%, #3d2352)"],
+    ["oceano", "Oceano", "linear-gradient(180deg, #4fb3bf, #1d6f86 55%, #0d3a4f)"],
+    ["grade", "Papel quadriculado", "linear-gradient(#b9c7d6 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #b9c7d6 1px, transparent 1px) 0 0 / 24px 24px, #eef2f6"],
+    ["vermelho", "Vermelho", "radial-gradient(circle at 50% 30%, #c8372d, #7d1712 75%)"],
+  ];
+  const backdrop = $("backdrop");
+  backdrop.appendChild(Drive.el);
+  let bgUrl = null;
+  function setBg(css, which) {
+    if (which === "drive") Drive.start(); else Drive.stop();
+    if (bgUrl && which !== "image") { URL.revokeObjectURL(bgUrl); bgUrl = null; }
+    backdrop.style.background = css;
+    backdrop.style.backgroundSize = which === "image" ? "cover" : "";
+    backdrop.style.backgroundPosition = which === "image" ? "center" : "";
+    document.querySelectorAll(".swatch").forEach((s) => s.setAttribute("aria-pressed", String(s.dataset.id === which)));
+  }
+  function applyBg(rec) {
+    if (!rec) return;
+    if (rec.type === "preset") {
+      const p = BG_PRESETS.find((x) => x[0] === rec.id);
+      if (p) setBg(p[2], p[0]);
+    } else if (rec.type === "color") {
+      setBg(rec.value, "color"); $("bgColor").value = rec.value;
+    } else if (rec.type === "image" && rec.blob) {
+      if (bgUrl) URL.revokeObjectURL(bgUrl);
+      bgUrl = URL.createObjectURL(rec.blob);
+      setBg(`url("${bgUrl}")`, "image");
+    }
+  }
+  BG_PRESETS.forEach(([id, label, css]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "swatch"; b.dataset.id = id; b.id = "bg-" + id;
+    b.title = label; b.setAttribute("aria-label", label); b.setAttribute("aria-pressed", "false");
+    b.style.background = css;
+    b.onclick = () => { const rec = { type: "preset", id }; applyBg(rec); saveBg(rec); };
+    $("swatches").appendChild(b);
+  });
+  $("bgColor").oninput = (e) => { const rec = { type: "color", value: e.target.value }; applyBg(rec); saveBg(rec); };
+  $("bgImgBtn").onclick = () => $("bgFile").click();
+  $("bgFile").onchange = (e) => {
+    const f = e.target.files[0]; e.target.value = "";
+    if (!f || !f.type.startsWith("image/")) { if (f) status("Esse arquivo não é uma imagem.", true); return; }
+    const rec = { type: "image", blob: f };
+    applyBg(rec); saveBg(rec); status("Fundo trocado pela sua imagem.");
+  };
+  loadBg().then((rec) => applyBg(rec || { type: "preset", id: "drive" }));
+  $("reactBtn").setAttribute("aria-pressed", String(Drive.react));
+  $("reactBtn").onclick = () => {
+    Drive.setReact(!Drive.react);
+    $("reactBtn").setAttribute("aria-pressed", String(Drive.react));
+    status(Drive.react ? "O fundo late night drive agora pulsa com o som." : "Fundo sem reação ao som.");
+  };
+
+  // ---------- events ----------
+  $("loadBtn").onclick = () => $("fileMulti").click();
+  $("fileMulti").onchange = (e) => { assign(e.target.files, 0); e.target.value = ""; };
+  $("replaceBtn").onclick = () => $("fileOne").click();
+  $("fileOne").onchange = (e) => { assign(e.target.files, selected); e.target.value = ""; };
+  $("clearBtn").onclick = () => {
+    Object.assign(pads[selected], { kind: "empty", name: "", fileName: "", buffer: null, bytes: null });
+    savePad(selected); drawPad(selected); status(`Pad ${selected + 1} limpo.`);
+  };
+  $("stopBtn").onclick = () => { Looper.stop(); stopAll(); Keys.allOff(); Drums.stop(); status("Tudo parado."); };
+  $("resetBtn").onclick = async () => {
+    stopAll(); await clearStore(); await loadExamples();
+    for (let i = 0; i < N; i++) drawPad(i);
+    status("Kit de exemplo de volta. Seus sons salvos foram apagados.");
+  };
+  $("padName").oninput = (e) => {
+    const p = pads[selected]; if (!p.buffer) return;
+    p.name = e.target.value.trim() || cleanName(p.fileName);
+    padEls[selected].querySelector(".name").textContent = p.name;
+    $("lcdName").textContent = p.name.toUpperCase();
+    savePad(selected);
+  };
+  $("padVol").oninput = (e) => {
+    pads[selected].volume = e.target.value / 100;
+    $("padVolVal").textContent = e.target.value;
+    savePad(selected);
+  };
+  $("masterVol").oninput = (e) => { master.gain.value = e.target.value / 100; };
+
+  // ---------- keyboard mode ----------
+  const Keys = (() => {
+    const NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const noteName = (m) => NAMES[m % 12] + (Math.floor(m / 12) - 1);
+    const CHORDS = [
+      ["nota", "Nota", "", [0]],
+      ["maj", "Maior", "", [0, 4, 7]],
+      ["min", "Menor", "m", [0, 3, 7]],
+      ["7", "7", "7", [0, 4, 7, 10]],
+      ["maj7", "maj7", "maj7", [0, 4, 7, 11]],
+      ["m7", "m7", "m7", [0, 3, 7, 10]],
+      ["9", "9", "9", [0, 4, 7, 10, 14]],
+      ["maj9", "maj9", "maj9", [0, 4, 7, 11, 14]],
+      ["m9", "m9", "m9", [0, 3, 7, 10, 14]],
+      ["add9", "add9", "add9", [0, 4, 7, 14]],
+      ["sus2", "sus2", "sus2", [0, 2, 7]],
+      ["sus4", "sus4", "sus4", [0, 5, 7]],
+      ["dim", "dim", "dim", [0, 3, 6]],
+      ["aug", "aug", "aug", [0, 4, 8]],
+      ["m7b5", "m7♭5", "m7♭5", [0, 3, 6, 10]],
+    ];
+    // Tracker-style layout: bottom row = lower octave, top row = upper octave.
+    const KEYMAP = {
+      KeyZ:0, KeyS:1, KeyX:2, KeyD:3, KeyC:4, KeyV:5, KeyG:6, KeyB:7, KeyH:8, KeyN:9, KeyJ:10, KeyM:11, Comma:12,
+      KeyQ:12, Digit2:13, KeyW:14, Digit3:15, KeyE:16, KeyR:17, Digit5:18, KeyT:19, Digit6:20, KeyY:21, Digit7:22, KeyU:23, KeyI:24,
+    };
+    const HINT = {};
+    for (const [code, off] of Object.entries(KEYMAP)) if (HINT[off] === undefined || off === 12 && code === "KeyQ")
+      HINT[off] = code === "Comma" ? "," : code.replace(/^Key|^Digit/, "");
+    const INST_LABEL = { ep: "PIANO EL.", pad: "PAD", pluck: "PLUCK", organ: "ÓRGÃO", bass: "BAIXO", sample: "SAMPLE", custom: "SEU SOM" };
+
+    let inst = "ep", chord = "maj", inversion = 0, octave = 3, sustain = false, lastName = "", lastNotes = [];
+    const notes = new Map();     // midi -> { voice, count }
+    const triggers = new Map();  // key/pointer/midi id -> [midi]
+    const piano = $("piano");
+    const keyEls = new Map();
+    const base = () => 12 * (octave + 1);
+
+    function synth(m, vel) {
+      const f = 440 * 2 ** ((m - 69) / 12), now = ctx.currentTime;
+      const out = ctx.createGain(); out.gain.value = 0; out.connect(master);
+      const oscs = [];
+      const osc = (type, freq, gain, detune = 0) => {
+        const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; o.detune.value = detune;
+        const g = ctx.createGain(); g.gain.value = gain; o.connect(g); oscs.push(o); return g;
+      };
+      const lp = (freq, q = 0.7) => { const b = ctx.createBiquadFilter(); b.type = "lowpass"; b.frequency.value = freq; b.Q.value = q; b.connect(out); return b; };
+      let a, d, s, r;
+      if (inst === "pad") {
+        const fl = lp(Math.min(5000, f * 4 + 600));
+        osc("sawtooth", f, 0.3, -9).connect(fl); osc("sawtooth", f, 0.3, 9).connect(fl); osc("sine", f / 2, 0.35).connect(fl);
+        a = 0.35; d = 0.8; s = 0.75; r = 1.4;
+      } else if (inst === "pluck") {
+        const fl = lp(f * 8 + 800, 2);
+        fl.frequency.setValueAtTime(f * 8 + 800, now); fl.frequency.exponentialRampToValueAtTime(f * 1.5 + 200, now + 0.35);
+        osc("square", f, 0.35).connect(fl); osc("sawtooth", f, 0.3, 7).connect(fl);
+        a = 0.002; d = 0.45; s = 0.0001; r = 0.25;
+      } else if (inst === "organ") {
+        [[1, 0.5], [2, 0.35], [3, 0.2], [4, 0.12], [8, 0.06]].forEach(([h, gn]) => osc("sine", f * h, gn).connect(out));
+        a = 0.01; d = 0.05; s = 1; r = 0.08;
+      } else if (inst === "bass") {
+        const fl = lp(500 + f * 2, 4);
+        osc("sawtooth", f, 0.5).connect(fl); osc("square", f / 2, 0.35).connect(fl);
+        a = 0.005; d = 0.3; s = 0.6; r = 0.15;
+      } else {
+        osc("sine", f, 1).connect(out); osc("sine", f * 2, 0.22).connect(out); osc("triangle", f * 3, 0.04).connect(out);
+        a = 0.005; d = 1.6; s = 0.2; r = 0.5;
+      }
+      const peak = 0.2 * vel, gg = out.gain;
+      gg.setValueAtTime(0, now); gg.linearRampToValueAtTime(peak, now + a); gg.setTargetAtTime(peak * s, now + a, d / 3);
+      oscs.forEach((o) => o.start(now));
+      return {
+        release() {
+          const t = ctx.currentTime;
+          gg.cancelScheduledValues(t); gg.setValueAtTime(gg.value, t); gg.setTargetAtTime(0, t, r / 4);
+          oscs.forEach((o) => { try { o.stop(t + r * 1.5); } catch (e) {} });
+          setTimeout(() => out.disconnect(), (r * 1.5 + 0.3) * 1000);
+        },
+      };
+    }
+    function sampleVoice(m, vel) {
+      const own = inst === "custom";
+      const buf = own ? customSnd && customSnd.buffer : pads[selected].buffer;
+      if (!buf) return null;
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      src.playbackRate.value = 2 ** ((m - (own ? customSnd.root : 60)) / 12);
+      const g = ctx.createGain(); g.gain.value = (own ? 0.9 : pads[selected].volume) * vel;
+      src.connect(g).connect(master); src.start();
+      return {
+        release() {
+          const t = ctx.currentTime;
+          g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.setTargetAtTime(0, t, 0.03);
+          try { src.stop(t + 0.2); } catch (e) {}
+        },
+      };
+    }
+    function noteOn(m, vel) {
+      if (m < 0 || m > 127) return;
+      const n = notes.get(m);
+      if (n && n.count > 0) { n.count++; return; }
+      if (n) n.voice.release();
+      const voice = inst === "sample" || inst === "custom" ? sampleVoice(m, vel) : synth(m, vel);
+      if (!voice) { notes.delete(m); status(inst === "custom" ? "Importe um som primeiro." : `O pad ${selected + 1} está vazio. Escolha um pad com som no modo Sampler.`, true); return; }
+      notes.set(m, { voice, count: 1 });
+      paint(m);
+    }
+    function noteOff(m) {
+      const n = notes.get(m);
+      if (!n || n.count === 0) return;
+      if (--n.count > 0) return;
+      if (!sustain) { n.voice.release(); notes.delete(m); }
+      paint(m);
+    }
+    function releaseSustained() {
+      for (const [m, n] of notes) if (n.count === 0) { n.voice.release(); notes.delete(m); }
+    }
+    function chordNotes(root) {
+      const c = CHORDS.find((x) => x[0] === chord);
+      let ms = c[3].map((i) => root + i);
+      for (let k = 0; k < Math.min(inversion, ms.length - 1); k++) { ms.sort((x, y) => x - y); ms[0] += 12; }
+      return ms.sort((x, y) => x - y);
+    }
+    function press(id, root, vel = 0.8) {
+      if (triggers.has(id)) return;
+      if (ctx.state !== "running") ctx.resume();
+      const ms = chordNotes(root);
+      triggers.set(id, ms);
+      ms.forEach((m) => noteOn(m, vel));
+      Looper.rec({ type: "on", id, ms, vel });
+      lcd();
+    }
+    function release(id) {
+      const ms = triggers.get(id);
+      if (!ms) return;
+      triggers.delete(id);
+      Looper.rec({ type: "off", id, ms });
+      ms.forEach(noteOff);
+      lcd();
+    }
+    function allOff() {
+      triggers.clear();
+      for (const n of notes.values()) n.voice.release();
+      const ms = [...notes.keys()]; notes.clear(); ms.forEach(paint);
+    }
+    function setSustain(v) {
+      sustain = v;
+      $("sustainBtn").setAttribute("aria-pressed", String(v));
+      if (!v) releaseSustained();
+    }
+    function nameOf(ms) {
+      const sorted = [...ms].sort((x, y) => x - y);
+      if (sorted.length === 1) return noteName(sorted[0]);
+      const pcs = [...new Set(sorted.map((m) => m % 12))], bass = sorted[0] % 12;
+      if (pcs.length === 1) return NAMES[bass];
+      for (const root of [bass, ...pcs.filter((p) => p !== bass)])
+        for (const c of CHORDS) {
+          if (c[3].length < 3) continue;
+          const set = new Set(c[3].map((i) => (root + i) % 12));
+          if (set.size === pcs.length && pcs.every((p) => set.has(p)))
+            return NAMES[root] + c[2] + (root !== bass ? "/" + NAMES[bass] : "");
+        }
+      return sorted.map((m) => NAMES[m % 12]).join(" ");
+    }
+    function lcd() {
+      if (mode !== "keys") return;
+      const held = [...notes].filter(([, n]) => n.count > 0).map(([m]) => m).sort((x, y) => x - y);
+      if (held.length) { lastName = nameOf(held); lastNotes = held; }
+      $("lcdPad").textContent = "TECLADO";
+      $("lcdKey").textContent = "OIT " + octave;
+      $("lcdName").textContent = lastName || "TOQUE UMA TECLA";
+      $("lcdFile").textContent = lastNotes.length ? lastNotes.map(noteName).join(" ") : "acorde: " + CHORDS.find((x) => x[0] === chord)[1];
+      $("lcdLen").textContent = inst === "sample" ? `PAD ${selected + 1}` : INST_LABEL[inst];
+    }
+    function paint(m) {
+      const el = keyEls.get(m);
+      if (!el) return;
+      const n = notes.get(m);
+      el.classList.toggle("on", !!n && n.count > 0);
+    }
+    function buildPiano() {
+      piano.textContent = ""; keyEls.clear();
+      const WHITE = 15, b0 = base();
+      let wi = 0;
+      for (let off = 0; off <= 24; off++) {
+        const m = b0 + off, black = [1, 3, 6, 8, 10].includes(off % 12);
+        const k = document.createElement("div");
+        k.dataset.midi = m;
+        k.className = black ? "b" : "w";
+        k.innerHTML = `<span class="hint">${HINT[off] ?? ""}</span>${!black && off % 12 === 0 ? `<span class="n">${noteName(m)}</span>` : ""}`;
+        if (black) {
+          const kw = 100 / WHITE;
+          k.style.width = `calc(${kw * 0.62}% - 4px)`;
+          k.style.left = `calc(8px + (100% - 16px) * ${(wi - 0.31) * kw / 100})`;
+        } else wi++;
+        piano.appendChild(k); keyEls.set(m, k); paint(m);
+      }
+      $("octVal").textContent = octave;
+    }
+    function shiftOct(d) {
+      const o = Math.max(1, Math.min(6, octave + d));
+      if (o === octave) return;
+      octave = o; buildPiano(); lcd(); savePrefs();
+    }
+
+    // scope on the LCD while the keyboard is up
+    let scopeRaf = 0;
+    const sbuf = new Float32Array(analyser.fftSize);
+    function scope() {
+      const cv = $("lcdWave"), c = cv.getContext("2d"), w = cv.width, h = cv.height;
+      analyser.getFloatTimeDomainData(sbuf);
+      let start = 0;
+      for (let i = 1; i < sbuf.length / 2; i++) if (sbuf[i - 1] < 0 && sbuf[i] >= 0) { start = i; break; }
+      c.clearRect(0, 0, w, h);
+      c.strokeStyle = scopeColor; c.lineWidth = 2; c.beginPath();
+      const span = 900;
+      for (let x = 0; x < w; x++) {
+        const v = sbuf[start + Math.floor(x / w * span)] || 0;
+        const y = h / 2 - v * h * 0.9;
+        x ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+      scopeRaf = requestAnimationFrame(scope);
+    }
+    let scopeColor = "#1f2a1c";
+
+    // pointer: press, slide across keys, multi-touch
+    const ptr = new Map();
+    piano.addEventListener("pointerdown", (e) => {
+      const k = e.target.closest("[data-midi]");
+      if (!k) return;
+      e.preventDefault();
+      const m = +k.dataset.midi;
+      ptr.set(e.pointerId, m); press("p" + e.pointerId, m);
+    });
+    piano.addEventListener("pointermove", (e) => {
+      if (!ptr.has(e.pointerId)) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const k = el && el.closest && el.closest("#piano [data-midi]");
+      if (!k) return;
+      const m = +k.dataset.midi;
+      if (m === ptr.get(e.pointerId)) return;
+      release("p" + e.pointerId); ptr.set(e.pointerId, m); press("p" + e.pointerId, m);
+    });
+    const up = (e) => { if (!ptr.has(e.pointerId)) return; ptr.delete(e.pointerId); release("p" + e.pointerId); };
+    document.addEventListener("pointerup", up);
+    document.addEventListener("pointercancel", up);
+
+    CHORDS.forEach(([id, label]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.id = "chord-" + id; b.textContent = label;
+      b.onclick = () => { chord = id; syncChips(); lcd(); savePrefs(); };
+      $("chordChips").appendChild(b);
+    });
+    function syncChips() { document.querySelectorAll(".chip").forEach((b) => b.setAttribute("aria-pressed", String(b.id === "chord-" + chord))); }
+
+    $("instSel").onchange = (e) => { allOff(); inst = e.target.value; syncRoot(); lcd(); savePrefs(); };
+    // ---- your own sound on the keys ----
+    let customSnd = null; // { name, bytes, buffer, root }
+    function detectRoot(buf) {
+      const d = buf.getChannelData(0), sr = buf.sampleRate, N2 = 4096;
+      let peakI = 0, pv = 0;
+      for (let i = 0; i < Math.min(d.length, sr); i += 64) { const v = Math.abs(d[i]); if (v > pv) { pv = v; peakI = i; } }
+      const start = Math.min(d.length - N2, peakI + Math.floor(sr * 0.03));
+      if (start < 0) return null;
+      const seg = d.subarray(start, start + N2);
+      let e0 = 0;
+      for (let i = 0; i < N2; i++) e0 += seg[i] * seg[i];
+      if (e0 < 1e-4) return null;
+      let best = -1, bestLag = 0;
+      for (let lag = Math.floor(sr / 1500); lag <= Math.floor(sr / 30) && lag < N2 / 2; lag++) {
+        let s = 0;
+        for (let i = 0; i < N2 - lag; i++) s += seg[i] * seg[i + lag];
+        s /= e0;
+        if (s > best) { best = s; bestLag = lag; }
+      }
+      if (best < 0.5) return null;
+      const m = Math.round(69 + 12 * Math.log2(sr / bestLag / 440));
+      return m >= 24 && m <= 96 ? m : null;
+    }
+    for (let m = 24; m <= 96; m++) { const o = document.createElement("option"); o.value = m; o.textContent = noteName(m); $("rootSel").appendChild(o); }
+    $("rootSel").value = 60;
+    function ensureOpt() {
+      let o = $("instCustom");
+      if (!o) { o = document.createElement("option"); o.value = "custom"; o.id = "instCustom"; $("instSel").appendChild(o); }
+      o.textContent = `Seu som: ${customSnd.name}`;
+    }
+    function syncRoot() { $("rootSel").disabled = inst !== "custom" || !customSnd; }
+    async function saveCustom() {
+      try { const d = await db(); d.transaction("pads", "readwrite").objectStore("pads").put({ name: customSnd.name, bytes: customSnd.bytes, root: customSnd.root }, "keysSample"); } catch (e) {}
+    }
+    (async () => {
+      try {
+        const d = await db();
+        const rec = await new Promise((res) => { const r = d.transaction("pads").objectStore("pads").get("keysSample"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); });
+        if (rec && rec.bytes) {
+          customSnd = { name: rec.name, bytes: rec.bytes, root: rec.root || 60, buffer: await decode(rec.bytes) };
+          ensureOpt(); $("rootSel").value = customSnd.root;
+          if (inst === "custom") $("instSel").value = "custom";
+          syncRoot();
+        }
+      } catch (e) {}
+    })();
+    $("keysImport").onclick = () => $("keysFile").click();
+    $("keysFile").onchange = async (e) => {
+      const f = e.target.files[0]; e.target.value = "";
+      if (!f) return;
+      try {
+        const bytes = await f.arrayBuffer();
+        const buffer = await decode(bytes);
+        const det = detectRoot(buffer);
+        customSnd = { name: cleanName(f.name), bytes, buffer, root: det ?? 60 };
+        ensureOpt(); allOff();
+        inst = "custom"; $("instSel").value = "custom"; $("rootSel").value = customSnd.root;
+        syncRoot(); saveCustom(); savePrefs(); lcd();
+        status(det != null ? `${customSnd.name} no teclado. Nota base detectada: ${noteName(det)}.` : `${customSnd.name} no teclado. Nota base: C4. Ajuste se soar desafinado.`);
+      } catch (err) { status("Não deu pra abrir esse som.", true); }
+    };
+    $("rootSel").onchange = (e) => { if (!customSnd) return; customSnd.root = +e.target.value; saveCustom(); status(`Nota base: ${noteName(customSnd.root)}.`); };
+
+    $("invSel").onchange = (e) => { inversion = +e.target.value; savePrefs(); };
+    $("octDown").onclick = () => shiftOct(-1);
+    $("octUp").onclick = () => shiftOct(1);
+    $("sustainBtn").onclick = () => setSustain(!sustain);
+
+    $("midiBtn").onclick = async () => {
+      try {
+        if (!navigator.requestMIDIAccess) throw new Error("no midi");
+        const access = await navigator.requestMIDIAccess();
+        const hook = () => {
+          let count = 0;
+          access.inputs.forEach((input) => {
+            count++;
+            input.onmidimessage = (ev) => {
+              const [st, d1, d2] = ev.data, cmd = st & 0xf0;
+              if (cmd === 0x90 && d2 > 0) press("m" + d1, d1, d2 / 127);
+              else if (cmd === 0x80 || (cmd === 0x90 && d2 === 0)) release("m" + d1);
+              else if (cmd === 0xb0 && d1 === 64) setSustain(d2 >= 64);
+            };
+          });
+          status(count ? `MIDI conectado: ${count} entrada${count > 1 ? "s" : ""}. Pode tocar.` : "MIDI liberado, mas nenhum teclado foi encontrado. Ligue o cabo e clique de novo.", !count);
+        };
+        hook();
+        access.onstatechange = hook;
+      } catch (e) {
+        status("Este navegador ou esta página não liberou MIDI. Use o teclado do computador ou toque nas teclas.", true);
+      }
+    };
+
+    function prefs() { return { inst, chord, inversion, octave }; }
+    function load(p) {
+      if (!p) return;
+      if (INST_LABEL[p.inst]) inst = p.inst;
+      if (CHORDS.some((c) => c[0] === p.chord)) chord = p.chord;
+      inversion = Math.max(0, Math.min(3, p.inversion | 0));
+      octave = Math.max(1, Math.min(6, p.octave || 3));
+    }
+    function startScope() { scopeColor = css("--lcd-ink"); cancelAnimationFrame(scopeRaf); scopeRaf = requestAnimationFrame(scope); }
+    function stopScope() { cancelAnimationFrame(scopeRaf); }
+    function show() {
+      $("instSel").value = inst; $("invSel").value = String(inversion);
+      syncChips(); buildPiano(); startScope();
+      lcd();
+    }
+    function hide() { allOff(); setSustain(false); stopScope(); }
+    function onKey(e, down) {
+      if (e.code === "Space") { e.preventDefault(); if (!e.repeat) setSustain(down); return true; }
+      if (down && (e.code === "ArrowUp" || e.code === "ArrowDown")) { e.preventDefault(); shiftOct(e.code === "ArrowUp" ? 1 : -1); return true; }
+      const off = KEYMAP[e.code];
+      if (off === undefined) return false;
+      e.preventDefault();
+      if (down) { if (!e.repeat) press("k" + e.code, base() + off); } else release("k" + e.code);
+      return true;
+    }
+    addEventListener("blur", () => { for (const id of [...triggers.keys()]) if (id[0] === "k") release(id); });
+    function loopOn(ms, vel) { if (ctx.state !== "running") ctx.resume(); ms.forEach((m) => noteOn(m, vel)); lcd(); }
+    function loopOff(ms) { ms.forEach(noteOff); lcd(); }
+    return { show, hide, lcd, allOff, onKey, prefs, load, startScope, stopScope, loopOn, loopOff };
+  })();
+
+  // ---------- organic drums ----------
+  // Dead, towel-damped kit run through tape-ish saturation, heavy bus compression,
+  // a slow 4-stage phaser and a small room. Sequencer keeps running across modes.
+  const Drums = (() => {
+    function metal(oc, out, decay, hp, peak) {
+      const hpF = filt(oc, "highpass", hp), bp = filt(oc, "bandpass", 10000, 0.5), g = env(oc, peak, decay);
+      [205.3, 304.4, 369.6, 522.7, 540, 800].forEach((fr) => {
+        const o = oc.createOscillator(); o.type = "square"; o.frequency.value = fr * 1.7;
+        o.connect(hpF); o.start(0); o.stop(decay + 0.1);
+      });
+      hpF.connect(bp).connect(g).connect(out);
+    }
+    function burst(oc, out, type, f, q, peak, decay, t = 0) {
+      const n = noise(oc, decay + 0.1);
+      n.connect(filt(oc, type, f, q)).connect(env(oc, peak, decay, t)).connect(out); n.start(t);
+    }
+    const KIT = [
+      ["Bumbo", 0.5, (oc, out) => { tone(oc, out, "sine", 115, 46, 0.09, 1, 0.32); burst(oc, out, "bandpass", 2500, 0.8, 0.45, 0.012); }],
+      ["Caixa", 0.35, (oc, out) => {
+        tone(oc, out, "triangle", 190, 165, 0.05, 0.7, 0.14);
+        tone(oc, out, "sine", 330, 300, 0.04, 0.3, 0.08);
+        burst(oc, out, "bandpass", 2200, 0.7, 0.6, 0.17);
+        burst(oc, out, "highpass", 5000, 0.7, 0.2, 0.08);
+      }],
+      ["Chimbal", 0.1, (oc, out) => { metal(oc, out, 0.045, 7000, 0.12); burst(oc, out, "highpass", 8000, 0.7, 0.25, 0.03); }],
+      ["Chimbal ab.", 0.5, (oc, out) => { metal(oc, out, 0.4, 7000, 0.1); burst(oc, out, "highpass", 8000, 0.7, 0.2, 0.35); }],
+      ["Tom", 0.5, (oc, out) => { tone(oc, out, "sine", 190, 130, 0.2, 0.9, 0.38); burst(oc, out, "bandpass", 1200, 0.8, 0.15, 0.06); }],
+      ["Surdo", 0.8, (oc, out) => { tone(oc, out, "sine", 105, 72, 0.3, 1, 0.6); burst(oc, out, "bandpass", 600, 0.8, 0.15, 0.08); }],
+      ["Pandeiro", 0.3, (oc, out) => {
+        [0, 0.012, 0.025, 0.04].forEach((t, k) => burst(oc, out, "bandpass", 7500, 3, 0.5 * (1 - k * 0.2), 0.05, t));
+        burst(oc, out, "bandpass", 9000, 1, 0.25, 0.18, 0.01);
+      }],
+      ["Prato", 1.8, (oc, out) => { metal(oc, out, 1.5, 5000, 0.07); burst(oc, out, "highpass", 6000, 0.7, 0.25, 1.4); }],
+    ];
+    const KEYS = ["A", "S", "D", "F", "Q", "W", "E", "R"];
+    const CODE = { KeyA: 0, KeyS: 1, KeyD: 2, KeyF: 3, KeyQ: 4, KeyW: 5, KeyE: 6, KeyR: 7 };
+    const PRESETS = {
+      groove: ["Groove psicodélico", 104, 12, [
+        "x.....x.x.....x.", "....x..g....x.g.", "x.x.x.x.x.x.x...", "..............x.",
+        "................", "................", "....x.......x...", "x...............",
+      ]],
+      disco: ["Disco lento", 117, 0, [
+        "x...x...x...x...", "....x.......x...", "xg..xg..xg..xg..", "..x...x...x...x.",
+        "................", "................", "x.x.x.x.x.x.x.x.", "x...............",
+      ]],
+      lenta: ["Lenta e pesada", 82, 20, [
+        "x.......x.x.....", "....x......gx...", "x...x...x...x...", "................",
+        ".............x..", "..............xx", "....x.......x...", "x...............",
+      ]],
+      vazio: ["Vazio", 100, 0, Array(8).fill("................")],
+    };
+    const parse = (rows) => rows.map((r) => [...r].map((ch) => (ch === "x" ? 1 : ch === "g" ? 2 : 0)));
+
+    let bufs = [], grid = parse(PRESETS.groove[3]), bpm = 104, swing = 12, preset = "groove";
+    let humanize = true, phaser = true, mix = { comp: 70, sat: 45, room: 25, tone: 55 };
+    let lastHit = -1, cur = -1, playing = false, step = 0, nextTime = 0, timer = 0, raf = 0;
+    const queue = [];
+    let openHat = null;
+
+    // bus
+    const input = ctx.createGain();
+    const shaper = ctx.createWaveShaper(); shaper.oversample = "4x";
+    const dcomp = ctx.createDynamicsCompressor(); dcomp.attack.value = 0.004; dcomp.release.value = 0.12; dcomp.knee.value = 6;
+    const makeup = ctx.createGain();
+    const toneF = ctx.createBiquadFilter(); toneF.type = "lowpass"; toneF.Q.value = 0.5;
+    const dry = ctx.createGain(), phIn = ctx.createGain(), phWet = ctx.createGain(), out = ctx.createGain();
+    const lfo = ctx.createOscillator(), depth = ctx.createGain();
+    lfo.frequency.value = 0.22; depth.gain.value = 700; lfo.connect(depth); lfo.start();
+    let node = phIn;
+    for (let k = 0; k < 4; k++) {
+      const ap = ctx.createBiquadFilter(); ap.type = "allpass"; ap.frequency.value = 1000; ap.Q.value = 0.6;
+      depth.connect(ap.frequency); node.connect(ap); node = ap;
+    }
+    node.connect(phWet);
+    input.connect(shaper).connect(dcomp).connect(makeup).connect(toneF);
+    toneF.connect(dry).connect(out); toneF.connect(phIn); phWet.connect(out);
+    const send = ctx.createGain(), conv = ctx.createConvolver();
+    conv.buffer = (() => {
+      const sr = ctx.sampleRate, len = Math.floor(sr * 0.9), b = ctx.createBuffer(2, len, sr);
+      for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3.2; }
+      return b;
+    })();
+    out.connect(master); out.connect(send).connect(filt(ctx, "lowpass", 4500)).connect(conv).connect(master);
+
+    function applyMix() {
+      const c = mix.comp / 100, thr = -4 - c * 36, ratio = 1.5 + c * 10.5;
+      dcomp.threshold.value = thr; dcomp.ratio.value = ratio;
+      makeup.gain.value = 10 ** ((-thr * (1 - 1 / ratio) * 0.3) / 20);
+      const k = 1 + (mix.sat / 100) * 8, curve = new Float32Array(1024);
+      for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; curve[i] = Math.tanh(k * x) / Math.tanh(k); }
+      shaper.curve = curve;
+      toneF.frequency.value = 1500 * 2 ** ((mix.tone / 100) * 3.4);
+      send.gain.value = (mix.room / 100) * 0.9;
+      phWet.gain.value = phaser ? 0.6 : 0; dry.gain.value = phaser ? 0.6 : 1;
+    }
+
+    function hit(i, vel, when) {
+      const b = bufs[i];
+      if (!b) return;
+      if (ctx.state !== "running") ctx.resume();
+      const t = Math.max(when || 0, ctx.currentTime);
+      const s = ctx.createBufferSource(); s.buffer = b;
+      const g = ctx.createGain(); g.gain.value = vel;
+      s.connect(g).connect(input); s.start(t);
+      // a closed hat chokes a ringing open hat, like a real foot on the pedal
+      if (i === 2 && openHat) { openHat.gain.setTargetAtTime(0, t, 0.012); openHat = null; }
+      if (i === 3) openHat = g;
+    }
+
+    // pads
+    const padsBox = $("drumPads"), drumEls = [];
+    [4, 5, 6, 7, 0, 1, 2, 3].forEach((i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "pad"; b.id = "drum" + (i + 1);
+      b.setAttribute("aria-label", `${KIT[i][0]}, tecla ${KEYS[i]}`);
+      b.innerHTML = `<span class="meta"><span>${String(i + 1).padStart(2, "0")}</span><span class="key">${KEYS[i]}</span></span><span class="name">${KIT[i][0]}</span><span></span>`;
+      b.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault(); b.focus({ preventScroll: true });
+        if (Repeat.on) Repeat.hold("p" + e.pointerId, "drum", i); else live(i);
+      });
+      b.addEventListener("click", (e) => { if (e.detail === 0) live(i); });
+      drumEls[i] = b; padsBox.appendChild(b);
+    });
+    function flashDrum(i) { const el = drumEls[i]; neon(el); el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); }
+    function live(i) { hit(i, 0.9); flashDrum(i); lastHit = i; lcd(); Looper.rec({ type: "drum", i, vel: 0.9 }); }
+    function hitAt(i, vel, when) {
+      hit(i, vel, when);
+      setTimeout(() => flashDrum(i), Math.max(0, (when - ctx.currentTime) * 1000));
+    }
+
+    // sequencer grid
+    const seq = $("seq"), cells = [];
+    function paintCell(r, s) {
+      const c = cells[r][s], v = grid[r][s];
+      c.dataset.v = v;
+      c.setAttribute("aria-label", `${KIT[r][0]}, passo ${s + 1}: ${["desligado", "ligado", "fantasma"][v]}`);
+    }
+    function buildSeq() {
+      seq.textContent = "";
+      const blank = document.createElement("span"); blank.className = "rl"; seq.appendChild(blank);
+      for (let s = 0; s < 16; s++) { const n = document.createElement("span"); n.className = "sn"; n.textContent = s % 4 ? "·" : s / 4 + 1; seq.appendChild(n); }
+      KIT.forEach(([name], r) => {
+        const l = document.createElement("span"); l.className = "rl"; l.textContent = name; seq.appendChild(l);
+        cells[r] = [];
+        for (let s = 0; s < 16; s++) {
+          const c = document.createElement("button");
+          c.type = "button"; c.className = "cell" + (s % 4 ? "" : " beat"); c.id = `step-${r}-${s}`;
+          c.onclick = () => { grid[r][s] = (grid[r][s] + 1) % 3; paintCell(r, s); if (grid[r][s] && !playing) hit(r, grid[r][s] === 2 ? 0.38 : 0.9); save(); };
+          cells[r][s] = c; seq.appendChild(c); paintCell(r, s);
+        }
+      });
+    }
+    function setNow(s) {
+      if (cur >= 0) cells.forEach((row) => row[cur].classList.remove("now"));
+      cur = s;
+      if (s >= 0) cells.forEach((row) => row[s].classList.add("now"));
+      lcd();
+    }
+    function schedule() {
+      const sd = 60 / bpm / 4;
+      while (nextTime < ctx.currentTime + 0.12) {
+        const at = nextTime + (step % 2 ? (swing / 100) * sd * 0.66 : 0);
+        for (let r = 0; r < KIT.length; r++) {
+          const v = grid[r][step];
+          if (!v) continue;
+          let vel = v === 2 ? 0.38 : 0.9, t = at;
+          if (humanize) { vel *= 0.9 + Math.random() * 0.18; t += (Math.random() - 0.5) * 0.012; }
+          hit(r, vel, t);
+        }
+        queue.push({ step, time: at });
+        nextTime += sd; step = (step + 1) % 16;
+      }
+    }
+    function tick() {
+      while (queue.length && queue[0].time <= ctx.currentTime) {
+        const q = queue.shift();
+        setNow(q.step);
+        for (let r = 0; r < KIT.length; r++) if (grid[r][q.step]) flashDrum(r);
+      }
+      if (playing) raf = requestAnimationFrame(tick);
+    }
+    function play() {
+      if (playing) return;
+      if (ctx.state !== "running") ctx.resume();
+      playing = true; step = 0; queue.length = 0; nextTime = ctx.currentTime + 0.06;
+      schedule(); timer = setInterval(schedule, 25); raf = requestAnimationFrame(tick);
+      $("seqPlay").textContent = "Parar"; $("seqPlay").setAttribute("aria-pressed", "true");
+    }
+    function stop() {
+      if (!playing) return;
+      playing = false; clearInterval(timer); cancelAnimationFrame(raf); queue.length = 0; setNow(-1);
+      $("seqPlay").textContent = "Tocar"; $("seqPlay").setAttribute("aria-pressed", "false");
+    }
+
+    function lcd() {
+      if (mode !== "drums") return;
+      $("lcdPad").textContent = "BATERIA";
+      $("lcdKey").textContent = bpm + " BPM";
+      $("lcdName").textContent = (lastHit >= 0 ? KIT[lastHit][0] : PRESETS[preset][0]).toUpperCase();
+      $("lcdFile").textContent = playing && cur >= 0 ? `passo ${String(cur + 1).padStart(2, "0")}/16 · tempo ${Math.floor(cur / 4) + 1}` : "parado · Espaço toca";
+      $("lcdLen").textContent = `SWING ${swing}%`;
+    }
+    function save() { savePrefs(); }
+    function prefs() { return { grid, bpm, swing, preset, humanize, phaser, mix }; }
+    function load(p) {
+      if (!p) return;
+      if (Array.isArray(p.grid) && p.grid.length === 8) grid = p.grid.map((r) => Array.from({ length: 16 }, (_, s) => [0, 1, 2].includes(r[s]) ? r[s] : 0));
+      bpm = Math.max(60, Math.min(180, p.bpm || bpm));
+      swing = Math.max(0, Math.min(60, p.swing ?? swing));
+      if (PRESETS[p.preset]) preset = p.preset;
+      humanize = p.humanize ?? humanize; phaser = p.phaser ?? phaser;
+      if (p.mix) for (const k of Object.keys(mix)) if (typeof p.mix[k] === "number") mix[k] = p.mix[k];
+    }
+    function syncUi() {
+      $("bpm").value = bpm; $("swing").value = swing; $("swingVal").textContent = swing; $("presetSel").value = preset;
+      $("humanBtn").setAttribute("aria-pressed", String(humanize)); $("phaserBtn").setAttribute("aria-pressed", String(phaser));
+      [["dComp", "comp"], ["dSat", "sat"], ["dRoom", "room"], ["dTone", "tone"]].forEach(([id, k]) => { $(id).value = mix[k]; $(id + "Val").textContent = mix[k]; });
+      for (let r = 0; r < 8; r++) for (let s = 0; s < 16; s++) paintCell(r, s);
+    }
+
+    [["dComp", "comp"], ["dSat", "sat"], ["dRoom", "room"], ["dTone", "tone"]].forEach(([id, k]) => {
+      $(id).oninput = (e) => { mix[k] = +e.target.value; $(id + "Val").textContent = mix[k]; applyMix(); save(); };
+    });
+    $("phaserBtn").onclick = () => { phaser = !phaser; $("phaserBtn").setAttribute("aria-pressed", String(phaser)); applyMix(); save(); };
+    $("humanBtn").onclick = () => { humanize = !humanize; $("humanBtn").setAttribute("aria-pressed", String(humanize)); save(); };
+    $("seqPlay").onclick = () => (playing ? stop() : play());
+    $("bpm").onchange = (e) => { bpm = Math.max(60, Math.min(180, Math.round(+e.target.value) || 100)); e.target.value = bpm; lcd(); save(); };
+    $("swing").oninput = (e) => { swing = +e.target.value; $("swingVal").textContent = swing; lcd(); save(); };
+    $("presetSel").onchange = (e) => {
+      preset = e.target.value; const [label, b, sw, rows] = PRESETS[preset];
+      grid = parse(rows); bpm = b; swing = sw; lastHit = -1; syncUi(); lcd(); save();
+      status(`Groove: ${label}, ${b} BPM.`);
+    };
+    $("seqClear").onclick = () => { grid = parse(PRESETS.vazio[3]); syncUi(); save(); status("Sequenciador limpo."); };
+
+    buildSeq(); applyMix();
+    Promise.all(KIT.map(([, sec, b]) => render(sec, b))).then((b) => { bufs = b; }).catch(() => {});
+
+    function onKey(e) {
+      if (e.code === "Space") { e.preventDefault(); if (!e.repeat) (playing ? stop() : play()); return; }
+      const i = CODE[e.code];
+      if (i === undefined || e.repeat) return;
+      e.preventDefault();
+      if (Repeat.on) Repeat.hold("k" + e.code, "drum", i); else live(i);
+    }
+    return {
+      show() { syncUi(); Keys.startScope(); lcd(); },
+      hide() { Keys.stopScope(); },
+      lcd, stop, onKey, prefs, load: (p) => { load(p); syncUi(); applyMix(); },
+      hitAt, isPlaying: () => playing, barSeconds: () => (60 / bpm) * 4, bpm: () => bpm,
+    };
+  })();
+
+  // ---------- looper ----------
+  // Records what you play live (pads, keys, drum pads) as events, then repeats them.
+  // While the drum sequencer runs, the loop length snaps to whole bars so it stays on the beat.
+  const Looper = (() => {
+    let state = "idle", t0 = 0, len = 0, origin = 0, events = [], overdub = false;
+    let cycle = 0, idx = 0, timer = 0, raf = 0, bars = 0;
+    const open = new Map();
+    const btn = $("loopBtn"), odBtn = $("overdubBtn"), info = $("loopInfo"), fill = $("loopFill");
+
+    function rec(ev, at = ctx.currentTime) {
+      if (state === "rec") {
+        events.push({ ...ev, t: at - t0 });
+      } else if (state === "play" && overdub) {
+        const t = (((at - origin) % len) + len) % len;
+        const e = { ...ev, t };
+        let p = events.findIndex((x) => x.t > t);
+        if (p < 0) p = events.length;
+        events.splice(p, 0, e);
+        if (p <= idx) idx++;
+      } else return;
+      if (ev.type === "on") open.set(ev.id, ev);
+      if (ev.type === "off") open.delete(ev.id);
+    }
+    function fire(ev, when) {
+      const delay = Math.max(0, (when - ctx.currentTime) * 1000);
+      if (ev.type === "pad") play(ev.i, when);
+      else if (ev.type === "drum") Drums.hitAt(ev.i, ev.vel, when);
+      else if (ev.type === "on") setTimeout(() => state === "play" && Keys.loopOn(ev.ms, ev.vel), delay);
+      else if (ev.type === "off") setTimeout(() => Keys.loopOff(ev.ms), delay);
+    }
+    function schedule() {
+      if (!events.length) return;
+      const ahead = ctx.currentTime + 0.12;
+      for (let guard = 0; guard < 512; guard++) {
+        const ev = events[idx], at = origin + cycle * len + ev.t;
+        if (at >= ahead) break;
+        if (at >= ctx.currentTime - 0.05) fire(ev, at);
+        if (++idx >= events.length) { idx = 0; cycle++; }
+      }
+    }
+    function start() {
+      if (ctx.state !== "running") ctx.resume();
+      state = "rec"; t0 = ctx.currentTime; events = []; open.clear();
+      status("Gravando loop. Toque e aperte Fechar loop (ou L) quando terminar.");
+      ui(); draw();
+    }
+    function close() {
+      let l = ctx.currentTime - t0;
+      bars = 0;
+      if (Drums.isPlaying()) {
+        const bar = Drums.barSeconds();
+        bars = Math.max(1, Math.round(l / bar));
+        l = bars * bar;
+      }
+      if (!events.length || l < 0.25) { stop(); status("Nada foi gravado. Aperte Gravar loop e toque alguma coisa."); return; }
+      len = l;
+      events = events.filter((e) => e.t < len);
+      for (const ev of open.values()) events.push({ type: "off", id: ev.id, ms: ev.ms, t: len - 0.01 });
+      open.clear();
+      events.sort((a, b) => a.t - b.t);
+      // the first pass already played live, so playback starts at the next cycle
+      origin = t0; cycle = 1; idx = 0; state = "play";
+      schedule(); timer = setInterval(schedule, 20);
+      status(`Loop de ${len.toFixed(1)}s${bars ? ` (${bars} compasso${bars > 1 ? "s" : ""})` : ""} rodando. Overdub grava mais camadas por cima.`);
+      ui();
+    }
+    function stop() {
+      const was = state;
+      state = "idle"; overdub = false; clearInterval(timer); cancelAnimationFrame(raf);
+      events = []; open.clear();
+      if (was === "play") Keys.allOff();
+      ui();
+    }
+    function toggle() {
+      if (state === "idle") start();
+      else if (state === "rec") close();
+      else { stop(); status("Loop parado e apagado."); }
+    }
+    function ui() {
+      btn.textContent = state === "idle" ? "Gravar loop" : state === "rec" ? "Fechar loop" : "Parar loop";
+      btn.classList.toggle("rec", state === "rec");
+      btn.classList.toggle("looping", state === "play");
+      odBtn.hidden = state !== "play";
+      odBtn.setAttribute("aria-pressed", String(overdub));
+      $("loopMeter").hidden = state === "idle";
+      if (state === "idle") { info.textContent = ""; fill.style.width = "0%"; }
+    }
+    function draw() {
+      const now = ctx.currentTime;
+      if (state === "rec") { info.textContent = `REC ${(now - t0).toFixed(1)}s`; fill.style.width = "100%"; }
+      else if (state === "play") {
+        const pos = (((now - origin) % len) + len) % len;
+        fill.style.width = (pos / len) * 100 + "%";
+        info.textContent = `${overdub ? "OVERDUB" : "LOOP"} ${pos.toFixed(1)}/${len.toFixed(1)}s`;
+      }
+      if (state !== "idle") raf = requestAnimationFrame(draw);
+    }
+    btn.onclick = toggle;
+    odBtn.onclick = () => {
+      overdub = !overdub; ui();
+      status(overdub ? "Overdub ligado: o que você tocar entra no loop." : "Overdub desligado.");
+    };
+    return { rec, toggle, stop, start: draw };
+  })();
+
+  // ---------- note repeat ----------
+  // Hold a pad and it retriggers at the chosen division of the drum BPM (Shift = momentary).
+  const Repeat = (() => {
+    const RATES = { "1/4": 1, "1/8": 1 / 2, "1/8T": 1 / 3, "1/16": 1 / 4, "1/16T": 1 / 6, "1/32": 1 / 8 };
+    let latched = false, shiftHeld = false, rate = "1/16", timer = 0;
+    const held = new Map();
+    const interval = () => (60 / Drums.bpm()) * RATES[rate];
+    function fireAt(h, when) {
+      if (h.kind === "pad") { play(h.i, when); Looper.rec({ type: "pad", i: h.i }, when); }
+      else { const vel = 0.8; Drums.hitAt(h.i, vel, when); Looper.rec({ type: "drum", i: h.i, vel }, when); }
+    }
+    function tick() {
+      const ahead = ctx.currentTime + 0.08;
+      for (const h of held.values()) while (h.next < ahead) { fireAt(h, h.next); h.next += interval(); }
+      if (!held.size) { clearInterval(timer); timer = 0; }
+    }
+    function hold(id, kind, i) {
+      if (held.has(id)) return;
+      if (ctx.state !== "running") ctx.resume();
+      held.set(id, { kind, i, next: ctx.currentTime });
+      if (kind === "pad") select(i);
+      tick();
+      if (!timer) timer = setInterval(tick, 15);
+    }
+    function ui() { $("repeatBtn").setAttribute("aria-pressed", String(latched || shiftHeld)); }
+    $("repeatBtn").onclick = () => {
+      latched = !latched; ui();
+      status(latched ? `Note repeat ligado em ${rate}. Segure um pad.` : "Note repeat desligado.");
+    };
+    $("repeatRate").onchange = (e) => { rate = e.target.value; status(`Note repeat em ${rate}.`); };
+    const up = (e) => held.delete("p" + e.pointerId);
+    document.addEventListener("pointerup", up);
+    document.addEventListener("pointercancel", up);
+    addEventListener("blur", () => { held.clear(); shiftHeld = false; ui(); });
+    return {
+      get on() { return latched || shiftHeld; },
+      hold,
+      release: (id) => held.delete(id),
+      releaseAll: () => held.clear(),
+      shift(v) { shiftHeld = v; ui(); },
+    };
+  })();
+
+  // ---------- audio recorder ----------
+  // Records the final mix (everything after the master compressor) and offers it as a file.
+  const Recorder = (() => {
+    const dest = ctx.createMediaStreamDestination();
+    comp.connect(dest);
+    const btn = $("recAudioBtn");
+    let mr = null, chunks = [], t0 = 0, secs = 0, blob = null, ext = "webm", url = null, ticker = 0;
+    const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+    function pickType() {
+      for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"])
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+      return "";
+    }
+    function start() {
+      if (!window.MediaRecorder) { status("Este navegador não consegue gravar áudio.", true); return; }
+      if (ctx.state !== "running") ctx.resume();
+      const type = pickType();
+      try { mr = new MediaRecorder(dest.stream, type ? { mimeType: type } : undefined); }
+      catch (e) { mr = null; status("Não deu pra começar a gravar o áudio.", true); return; }
+      ext = (mr.mimeType || type).includes("mp4") ? "mp4" : "webm";
+      chunks = [];
+      mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+      mr.onstop = done;
+      mr.start(250);
+      t0 = performance.now();
+      btn.classList.add("recording");
+      const show = () => { btn.textContent = `Parar gravação ${fmt((performance.now() - t0) / 1000)}`; };
+      show(); ticker = setInterval(show, 250);
+      status("Gravando o áudio de tudo que sai do site. Toque à vontade.");
+    }
+    function stop() {
+      if (!mr) return;
+      secs = (performance.now() - t0) / 1000;
+      clearInterval(ticker);
+      const r = mr; mr = null; r.stop();
+      btn.textContent = "Gravar áudio"; btn.classList.remove("recording");
+    }
+    function done() {
+      if (!chunks.length) { status("A gravação ficou vazia.", true); return; }
+      blob = new Blob(chunks, { type: chunks[0].type || (ext === "mp4" ? "audio/mp4" : "audio/webm") });
+      if (url) URL.revokeObjectURL(url);
+      url = URL.createObjectURL(blob);
+      $("takeAudio").src = url;
+      $("takeInfo").textContent = `${fmt(secs)} · ${Math.max(1, Math.round(blob.size / 1024))} KB · .${ext}`;
+      $("takeBox").hidden = false;
+      $("takeSave").hidden = false;
+      status("Gravação pronta. Ouça ali embaixo e clique em Baixar áudio.");
+    }
+    btn.onclick = () => (mr ? stop() : start());
+    $("takeSave").onclick = async () => {
+      if (!blob) return;
+      let dl = null;
+      try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) {}
+      if (!dl) { $("takeSave").hidden = true; status("Baixar não está disponível nesta visualização. Dá pra ouvir a gravação no player.", true); return; }
+      const d = new Date(), pad2 = (n) => String(n).padStart(2, "0");
+      const name = `jam-pads12-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.${ext}`;
+      try {
+        await dl.save({ filename: name, data: blob });
+        status(`Salvo: ${name}`);
+      } catch (e) {
+        const code = e && e.code;
+        if (code === "declined") status("Download cancelado.");
+        else if (code === "rate_limited") status("Já tem um download esperando confirmação. Tente de novo em instantes.", true);
+        else status("Não deu pra baixar o áudio aqui. Dá pra ouvir a gravação no player.", true);
+      }
+    };
+    return { stop };
+  })();
+
+  function savePrefs() {
+    try { localStorage.setItem("pads12-prefs", JSON.stringify({ mode, keys: Keys.prefs(), drums: Drums.prefs() })); } catch (e) {}
+  }
+  const MODE_IDS = {
+    pads: ["padControls", "pads", "helpPads", "loadBtn", "resetBtn", "kitBox"],
+    keys: ["keyControls", "chordBar", "pianoWrap", "helpKeys"],
+    drums: ["drumControls", "drumPads", "seqWrap", "helpDrums"],
+  };
+  function setMode(m) {
+    const prev = mode;
+    mode = m;
+    [["modePads", "pads"], ["modeKeys", "keys"], ["modeDrums", "drums"]].forEach(([id, k]) => $(id).setAttribute("aria-pressed", String(k === m)));
+    for (const [k, ids] of Object.entries(MODE_IDS)) ids.forEach((id) => { $(id).hidden = k !== m; });
+    if (prev === "keys" && m !== "keys") Keys.hide();
+    if (prev === "drums" && m !== "drums") Drums.hide();
+    Repeat.releaseAll();
+    $("repeatBox").hidden = m === "keys";
+    stopAll();
+    if (m === "keys") Keys.show(); else if (m === "drums") Drums.show(); else drawLcd();
+    savePrefs();
+  }
+  $("modePads").onclick = () => { setMode("pads"); status("Modo sampler."); };
+  $("modeKeys").onclick = () => { setMode("keys"); status("Modo teclado. Escolha um acorde e toque."); };
+  $("modeDrums").onclick = () => { setMode("drums"); status("Bateria orgânica. Espaço toca o groove."); };
+
+  document.addEventListener("keyup", (e) => {
+    if (e.target.matches("input, select, textarea")) return;
+    if (e.key === "Shift") Repeat.shift(false);
+    if (mode === "drums" && e.code === "Space") { e.preventDefault(); return; }
+    if (mode !== "keys") { Repeat.release("k" + e.code); return; }
+    Keys.onKey(e, false);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, select, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "Escape") { Looper.stop(); stopAll(); Keys.allOff(); Drums.stop(); status("Tudo parado."); return; }
+    if (e.code === "KeyL") { if (!e.repeat) Looper.toggle(); return; }
+    if (e.key === "Shift") { if (mode !== "keys") Repeat.shift(true); return; }
+    if (mode === "keys") { Keys.onKey(e, true); return; }
+    if (mode === "drums") { Drums.onKey(e); return; }
+    const i = CODE_TO_PAD[e.code];
+    if (i === undefined || e.repeat) return;
+    e.preventDefault();
+    if (Repeat.on) Repeat.hold("k" + e.code, "pad", i); else play(i);
+  });
+  let dragDepth = 0;
+  document.addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; document.body.classList.add("dragging"); });
+  document.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dragging"); } });
+  document.addEventListener("dragover", (e) => e.preventDefault());
+  document.addEventListener("drop", (e) => { e.preventDefault(); dragDepth = 0; document.body.classList.remove("dragging"); const fl = e.dataTransfer.files; if (Array.from(fl).some((f) => /\.(zip|rar|7z)$/i.test(f.name))) Kit.importFiles(fl); else assign(fl, 0); });
+
+  // ---------- kit import ----------
+  // Takes a downloaded kit (.zip, a folder, or loose files), sorts every sound into a pad by its
+  // file and folder names (kick, snare, hat, 808…), and fills the 12 pads. "Shuffle" re-picks
+  // from the same kit.
+  const Kit = (() => {
+    const AUDIO = /\.(wav|mp3|ogg|m4a|aac|flac|aiff?|opus)$/i;
+    let files = [], kitName = "";
+    const base = (path) => path.split(/[\\/]/).pop();
+
+    function category(path) {
+      const p = " " + path.toLowerCase().replace(/[_\-.\/\\()\[\]]+/g, " ") + " ";
+      const hat = /hat|\bhh\b|hihat|\bch\b|\bchh\b/.test(p);
+      if ((/open/.test(p) && hat) || /\bohh?\b/.test(p)) return 5;
+      if ((/\b808s?\b/.test(p) && !/kick|kik/.test(p)) || (/\bbass\b|\bsub\b/.test(p) && !/drum/.test(p))) return 10;
+      if (/kick|\bkik|\bbd\b|bass ?drum/.test(p)) return 0;
+      if (/snare|\bsnr|\bsd\b/.test(p)) return 1;
+      if (/clap|\bclp|snap/.test(p)) return 2;
+      if (/\brim|stick|click/.test(p)) return 3;
+      if (hat || /closed/.test(p)) return 4;
+      if (/\btom/.test(p)) return /low|floor|\blo\b|\bl\b/.test(p) ? 8 : 9;
+      if (/shak|tamb|perc|conga|bongo|cabasa|guiro/.test(p)) return 6;
+      if (/bell|cow|triangle|clave|block/.test(p)) return 7;
+      if (/fx|vox|vocal|chant|riser|sweep|impact|crash|cymbal|ride|zap|laser|noise/.test(p)) return 11;
+      return -1;
+    }
+    const pick = (arr, random) => (random ? arr[(Math.random() * arr.length) | 0] : arr[0]);
+
+    async function fill(random) {
+      const buckets = Array.from({ length: N }, () => []), rest = [];
+      for (const f of files) { const c = category(f.path); (c >= 0 ? buckets[c] : rest).push(f); }
+      const used = new Set(), choice = [];
+      for (let i = 0; i < N; i++) {
+        const b = buckets[i];
+        if (b.length) { const f = pick(b, random); used.add(f); choice[i] = f; }
+      }
+      const pool = [...rest, ...buckets.flat()].filter((f) => !used.has(f));
+      if (random) pool.sort(() => Math.random() - 0.5);
+      for (let i = 0; i < N; i++) if (!choice[i] && pool.length) choice[i] = pool.shift();
+
+      stopAll();
+      let ok = 0;
+      for (let i = 0; i < N; i++) {
+        const f = choice[i], p = pads[i];
+        if (!f) { Object.assign(p, { kind: "empty", name: "", fileName: "", buffer: null, bytes: null }); }
+        else {
+          try {
+            const bytes = await f.get();
+            const buffer = await decode(bytes);
+            Object.assign(p, { kind: "file", name: cleanName(base(f.path)), fileName: base(f.path), buffer, bytes });
+            ok++;
+          } catch (e) { Object.assign(p, { kind: "empty", name: "", fileName: "", buffer: null, bytes: null }); }
+        }
+        savePad(i); drawPad(i);
+      }
+      select(0);
+      $("kitShuffle").hidden = files.length <= ok;
+      return ok;
+    }
+
+    async function load(list, name) {
+      files = list.sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }));
+      kitName = name;
+      if (!files.length) { status("Nenhum som encontrado nesse kit.", true); return; }
+      const ok = await fill(false);
+      status(`Kit ${kitName}: ${ok} pads preenchidos com ${files.length} sons encontrados.`);
+    }
+    async function fromZip(file) {
+      if (!window.JSZip) { status("Não deu pra abrir esse .zip.", true); return; }
+      status(`Abrindo kit ${file.name}…`);
+      try {
+        const zip = await JSZip.loadAsync(file);
+        const list = [];
+        zip.forEach((rel, entry) => {
+          if (!entry.dir && AUDIO.test(rel) && !/__macosx|(^|\/)\._/i.test(rel)) list.push({ path: rel, get: () => entry.async("arraybuffer") });
+        });
+        await load(list, file.name.replace(/\.zip$/i, ""));
+      } catch (e) { status("Não deu pra abrir esse .zip.", true); }
+    }
+    async function importFiles(fileList) {
+      const all = Array.from(fileList);
+      if (!all.length) return;
+      if (all.some((f) => /\.rar$|\.7z$/i.test(f.name))) { status("Arquivos .rar não são suportados. Extraia e importe o .zip ou os arquivos.", true); return; }
+      const zip = all.find((f) => /\.zip$/i.test(f.name));
+      if (zip) { await fromZip(zip); return; }
+      const list = all.filter((f) => AUDIO.test(f.name)).map((f) => ({ path: f.webkitRelativePath || f.name, get: () => f.arrayBuffer() }));
+      const rel = all[0].webkitRelativePath;
+      await load(list, rel ? rel.split("/")[0] : "importado");
+    }
+
+    $("kitBtn").onclick = () => $("kitFile").click();
+    $("kitFile").onchange = (e) => { importFiles(e.target.files); e.target.value = ""; };
+    $("kitFolderBtn").onclick = () => $("kitFolder").click();
+    $("kitFolder").onchange = (e) => { importFiles(e.target.files); e.target.value = ""; };
+    $("kitShuffle").onclick = async () => {
+      if (!files.length) return;
+      await fill(true);
+      status(`Nova combinação do kit ${kitName}.`);
+    };
+    return { importFiles };
+  })();
+
+  // ---------- languages ----------
+  // The page is written in Portuguese; this layer swaps every visible string (and aria-label/title)
+  // for English or Spanish as it appears, using exact phrases and "{}" templates.
+  const I18N = (() => {
+    const T = [
+      ["16-bit · 44.1 kHz · 12 vozes", "16-bit · 44.1 kHz · 12 voices", "16-bit · 44.1 kHz · 12 voces"],
+      ["versão leve para celular", "light version for phones", "versión ligera para móvil"],
+      ["Teclado MIDI", "MIDI Keys", "Teclado MIDI"],
+      ["Bateria orgânica", "Organic Drums", "Batería orgánica"],
+      ["kit de exemplo", "example kit", "kit de ejemplo"],
+      ["Kit de exemplo carregado.", "Example kit loaded.", "Kit de ejemplo cargado."],
+      ["Toque num pad ou carregue seus sons.", "Tap a pad or load your sounds.", "Toca un pad o carga tus sonidos."],
+      ["Som", "Sound", "Sonido"],
+      ["Piano elétrico", "Electric piano", "Piano eléctrico"],
+      ["Órgão", "Organ", "Órgano"],
+      ["Baixo synth", "Synth bass", "Bajo synth"],
+      ["Sample do pad selecionado", "Selected pad's sample", "Sample del pad seleccionado"],
+      ["Inversão", "Inversion", "Inversión"],
+      ["Fundamental", "Root position", "Fundamental"],
+      ["1ª inversão", "1st inversion", "1.ª inversión"],
+      ["2ª inversão", "2nd inversion", "2.ª inversión"],
+      ["3ª inversão", "3rd inversion", "3.ª inversión"],
+      ["Oitava", "Octave", "Octava"],
+      ["Conectar MIDI", "Connect MIDI", "Conectar MIDI"],
+      ["Compressão", "Compression", "Compresión"],
+      ["Saturação", "Saturation", "Saturación"],
+      ["Sala", "Room", "Sala"],
+      ["Brilho", "Brightness", "Brillo"],
+      ["Humanizar", "Humanize", "Humanizar"],
+      ["Nome do pad", "Pad name", "Nombre del pad"],
+      ["Volume do pad", "Pad volume", "Volumen del pad"],
+      ["Trocar som", "Replace sound", "Cambiar sonido"],
+      ["Limpar pad", "Clear pad", "Borrar pad"],
+      ["Tom grave", "Low tom", "Tom grave"],
+      ["Tom agudo", "High tom", "Tom agudo"],
+      ["Hat fechado", "Closed hat", "Hi-hat cerrado"],
+      ["Hat aberto", "Open hat", "Hi-hat abierto"],
+      ["vazio", "empty", "vacío"],
+      ["— VAZIO —", "— EMPTY —", "— VACÍO —"],
+      ["solte um arquivo neste pad", "drop a file on this pad", "suelta un archivo en este pad"],
+      ["Acorde por tecla", "Chord per key", "Acorde por tecla"],
+      ["Nota", "Note", "Nota"],
+      ["Maior", "Major", "Mayor"],
+      ["Menor", "Minor", "Menor"],
+      ["Surdo", "Floor tom", "Tom de piso"],
+      ["Pandeiro", "Tambourine", "Pandereta"],
+      ["Prato", "Crash", "Platillo"],
+      ["Bumbo", "Kick", "Bombo"],
+      ["Caixa", "Snare", "Caja"],
+      ["Chimbal", "Hi-hat", "Charles"],
+      ["Chimbal ab.", "Open hat", "Charles ab."],
+      ["Tocar", "Play", "Tocar"],
+      ["Parar", "Stop", "Parar"],
+      ["Groove psicodélico", "Psychedelic groove", "Groove psicodélico"],
+      ["Disco lento", "Slow disco", "Disco lento"],
+      ["Lenta e pesada", "Slow and heavy", "Lenta y pesada"],
+      ["Vazio", "Empty", "Vacío"],
+      ["Limpar", "Clear", "Borrar"],
+      ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Importar som", "Import sound", "Importar sonido"],
+      ["Nota base", "Root note", "Nota base"],
+      ["Seu som: {}", "Your sound: {}", "Tu sonido: {}"],
+      ["SEU SOM", "YOUR SOUND", "TU SONIDO"],
+      ["Importe um som primeiro.", "Import a sound first.", "Importa un sonido primero."],
+      ["{} no teclado.", "{} on the keys.", "{} en el teclado."],
+      ["Nota base detectada: {}.", "Detected root note: {}.", "Nota base detectada: {}."],
+      ["Nota base: {}.", "Root note: {}.", "Nota base: {}."],
+      ["Ajuste se soar desafinado.", "Adjust it if it sounds out of tune.", "Ajústala si suena desafinado."],
+      ["Não deu pra abrir esse som.", "Couldn't open that sound.", "No se pudo abrir ese sonido."],
+      ["Importar kit", "Import kit", "Importar kit"],
+      ["Importar pasta", "Import folder", "Importar carpeta"],
+      ["Outra combinação", "Shuffle kit", "Otra combinación"],
+      ["Abrindo kit {}…", "Opening kit {}…", "Abriendo kit {}…"],
+      ["Kit {}: {} pads preenchidos com {} sons encontrados.", "Kit {}: {} pads filled from {} sounds found.", "Kit {}: {} pads llenados con {} sonidos encontrados."],
+      ["Nenhum som encontrado nesse kit.", "No sounds found in that kit.", "No se encontraron sonidos en ese kit."],
+      ["Arquivos .rar não são suportados.", "RAR files aren't supported.", "Los archivos .rar no son compatibles."],
+      ["Extraia e importe o .zip ou os arquivos.", "Extract it and import a .zip or the files.", "Extráelo e importa un .zip o los archivos."],
+      ["Não deu pra abrir esse .zip.", "Couldn't open that .zip.", "No se pudo abrir ese .zip."],
+      ["Nova combinação do kit {}.", "New combination from kit {}.", "Nueva combinación del kit {}."],
+      ["Gravar loop", "Record loop", "Grabar loop"],
+      ["Fechar loop", "Close loop", "Cerrar loop"],
+      ["Parar loop", "Stop loop", "Parar loop"],
+      ["Parar tudo", "Stop all", "Parar todo"],
+      ["Kit de exemplo", "Example kit", "Kit de ejemplo"],
+      ["Gravar áudio", "Record audio", "Grabar audio"],
+      ["Parar gravação {}", "Stop recording {}", "Parar grabación {}"],
+      ["Sua gravação", "Your recording", "Tu grabación"],
+      ["Baixar áudio", "Download audio", "Descargar audio"],
+      ["Fundo", "Background", "Fondo"],
+      ["Cor", "Color", "Color"],
+      ["Usar imagem", "Use image", "Usar imagen"],
+      ["Reage ao som", "Reacts to sound", "Reacciona al sonido"],
+      ["TECLADO", "KEYS", "TECLADO"],
+      ["BATERIA", "DRUMS", "BATERÍA"],
+      ["TOQUE UMA TECLA", "PLAY A KEY", "TOCA UNA TECLA"],
+      ["acorde: {}", "chord: {}", "acorde: {}"],
+      ["OIT {}", "OCT {}", "OCT {}"],
+      ["PIANO EL.", "E. PIANO", "PIANO EL."],
+      ["ÓRGÃO", "ORGAN", "ÓRGANO"],
+      ["BAIXO", "BASS", "BAJO"],
+      ["parado · Espaço toca", "stopped · Space plays", "parado · Espacio toca"],
+      ["passo {}/16 · tempo {}", "step {}/16 · beat {}", "paso {}/16 · tiempo {}"],
+      ["Modo", "Mode", "Modo"],
+      ["Idioma", "Language", "Idioma"],
+      ["Oitava abaixo", "Octave down", "Octava abajo"],
+      ["Oitava acima", "Octave up", "Octava arriba"],
+      ["Pad {}, tecla {}: {}", "Pad {}, key {}: {}", "Pad {}, tecla {}: {}"],
+      ["Tipo de acorde", "Chord type", "Tipo de acorde"],
+      ["Teclado", "Keyboard", "Teclado"],
+      ["Bateria", "Drums", "Batería"],
+      ["{}, tecla {}", "{}, key {}", "{}, tecla {}"],
+      ["Groove pronto", "Preset groove", "Groove predefinido"],
+      ["{}, passo {}: {}", "{}, step {}: {}", "{}, paso {}: {}"],
+      ["ligado", "on", "activado"],
+      ["desligado", "off", "desactivado"],
+      ["fantasma", "ghost", "fantasma"],
+      ["Divisão do note repeat", "Note repeat division", "División del note repeat"],
+      ["Fundo da página", "Page background", "Fondo de la página"],
+      ["Late night drive (animado)", "Late night drive (animated)", "Late night drive (animado)"],
+      ["Mesa", "Desk", "Mesa"],
+      ["Concreto", "Concrete", "Concreto"],
+      ["Madeira", "Wood", "Madera"],
+      ["Noite", "Night", "Noche"],
+      ["Pôr do sol", "Sunset", "Atardecer"],
+      ["Oceano", "Ocean", "Océano"],
+      ["Papel quadriculado", "Graph paper", "Papel cuadriculado"],
+      ["Vermelho", "Red", "Rojo"],
+      // status messages (matched sentence by sentence)
+      ["Nenhum arquivo de áudio encontrado.", "No audio files found.", "No se encontraron archivos de audio."],
+      ["Use WAV, MP3, OGG ou M4A.", "Use WAV, MP3, OGG or M4A.", "Usa WAV, MP3, OGG o M4A."],
+      ["{} no pad {}.", "{} on pad {}.", "{} en el pad {}."],
+      ["{} sons nos pads {}–{}.", "{} sounds on pads {}–{}.", "{} sonidos en los pads {}–{}."],
+      ["{} ficaram de fora (só cabem 12).", "{} left out (only 12 fit).", "{} quedaron fuera (solo caben 12)."],
+      ["Não deu pra abrir: {}.", "Couldn't open: {}.", "No se pudo abrir: {}."],
+      ["Esse arquivo não é uma imagem.", "That file isn't an image.", "Ese archivo no es una imagen."],
+      ["Fundo trocado pela sua imagem.", "Background set to your image.", "Fondo cambiado por tu imagen."],
+      ["O fundo late night drive agora pulsa com o som.", "The late night drive background now pulses with the sound.", "El fondo late night drive ahora late con el sonido."],
+      ["Fundo sem reação ao som.", "The background no longer reacts to sound.", "El fondo ya no reacciona al sonido."],
+      ["Pad {} limpo.", "Pad {} cleared.", "Pad {} borrado."],
+      ["Tudo parado.", "Everything stopped.", "Todo parado."],
+      ["Kit de exemplo de volta.", "The example kit is back.", "El kit de ejemplo está de vuelta."],
+      ["Seus sons salvos foram apagados.", "Your saved sounds were deleted.", "Tus sonidos guardados se borraron."],
+      ["O pad {} está vazio.", "Pad {} is empty.", "El pad {} está vacío."],
+      ["Escolha um pad com som no modo Sampler.", "Pick a pad with a sound in Sampler mode.", "Elige un pad con sonido en el modo Sampler."],
+      ["MIDI conectado: {} entrada.", "MIDI connected: {} input.", "MIDI conectado: {} entrada."],
+      ["MIDI conectado: {} entradas.", "MIDI connected: {} inputs.", "MIDI conectado: {} entradas."],
+      ["Pode tocar.", "Go ahead and play.", "Ya puedes tocar."],
+      ["MIDI liberado, mas nenhum teclado foi encontrado.", "MIDI is allowed, but no keyboard was found.", "MIDI permitido, pero no se encontró ningún teclado."],
+      ["Ligue o cabo e clique de novo.", "Plug in the cable and click again.", "Conecta el cable y haz clic de nuevo."],
+      ["Este navegador ou esta página não liberou MIDI.", "This browser or page didn't allow MIDI.", "Este navegador o esta página no permitió MIDI."],
+      ["Use o teclado do computador ou toque nas teclas.", "Use the computer keyboard or tap the keys.", "Usa el teclado del ordenador o toca las teclas."],
+      ["Groove: {}, {} BPM.", "Groove: {}, {} BPM.", "Groove: {}, {} BPM."],
+      ["Sequenciador limpo.", "Sequencer cleared.", "Secuenciador borrado."],
+      ["Gravando loop.", "Recording loop.", "Grabando loop."],
+      ["Toque e aperte Fechar loop (ou L) quando terminar.", "Play, then press Close loop (or L) when you're done.", "Toca y pulsa Cerrar loop (o L) cuando termines."],
+      ["Nada foi gravado.", "Nothing was recorded.", "No se grabó nada."],
+      ["Aperte Gravar loop e toque alguma coisa.", "Press Record loop and play something.", "Pulsa Grabar loop y toca algo."],
+      ["Loop de {}s rodando.", "{}s loop playing.", "Loop de {}s sonando."],
+      ["Loop de {}s ({} compasso) rodando.", "{}s loop ({} bar) playing.", "Loop de {}s ({} compás) sonando."],
+      ["Loop de {}s ({} compassos) rodando.", "{}s loop ({} bars) playing.", "Loop de {}s ({} compases) sonando."],
+      ["Overdub grava mais camadas por cima.", "Overdub records more layers on top.", "Overdub graba más capas encima."],
+      ["Loop parado e apagado.", "Loop stopped and erased.", "Loop parado y borrado."],
+      ["Overdub ligado: o que você tocar entra no loop.", "Overdub on: whatever you play goes into the loop.", "Overdub activado: lo que toques entra en el loop."],
+      ["Overdub desligado.", "Overdub off.", "Overdub desactivado."],
+      ["Note repeat ligado em {}.", "Note repeat on at {}.", "Note repeat activado en {}."],
+      ["Segure um pad.", "Hold a pad.", "Mantén pulsado un pad."],
+      ["Note repeat desligado.", "Note repeat off.", "Note repeat desactivado."],
+      ["Note repeat em {}.", "Note repeat at {}.", "Note repeat en {}."],
+      ["Este navegador não consegue gravar áudio.", "This browser can't record audio.", "Este navegador no puede grabar audio."],
+      ["Não deu pra começar a gravar o áudio.", "Couldn't start recording audio.", "No se pudo empezar a grabar el audio."],
+      ["Gravando o áudio de tudo que sai do site.", "Recording everything the site plays.", "Grabando todo lo que suena en el sitio."],
+      ["Toque à vontade.", "Play away.", "Toca lo que quieras."],
+      ["A gravação ficou vazia.", "The recording came out empty.", "La grabación quedó vacía."],
+      ["Gravação pronta.", "Recording ready.", "Grabación lista."],
+      ["Ouça ali embaixo e clique em Baixar áudio.", "Listen below and click Download audio.", "Escúchala abajo y haz clic en Descargar audio."],
+      ["Baixar não está disponível nesta visualização.", "Downloading isn't available in this view.", "La descarga no está disponible en esta vista."],
+      ["Dá pra ouvir a gravação no player.", "You can still listen to it in the player.", "Puedes escuchar la grabación en el reproductor."],
+      ["Salvo: {}", "Saved: {}", "Guardado: {}"],
+      ["Download cancelado.", "Download canceled.", "Descarga cancelada."],
+      ["Já tem um download esperando confirmação.", "A download is already waiting for confirmation.", "Ya hay una descarga esperando confirmación."],
+      ["Tente de novo em instantes.", "Try again in a moment.", "Inténtalo de nuevo en un momento."],
+      ["Não deu pra baixar o áudio aqui.", "Couldn't download the audio here.", "No se pudo descargar el audio aquí."],
+      ["Modo sampler.", "Sampler mode.", "Modo sampler."],
+      ["Modo teclado.", "Keys mode.", "Modo teclado."],
+      ["Escolha um acorde e toque.", "Pick a chord and play.", "Elige un acorde y toca."],
+      ["Bateria orgânica.", "Organic drums.", "Batería orgánica."],
+      ["Espaço toca o groove.", "Space plays the groove.", "Espacio toca el groove."],
+      ["{} sons seus restaurados deste navegador.", "{} of your sounds restored from this browser.", "{} de tus sonidos restaurados de este navegador."],
+    ];
+    const HTML = {
+      en: {
+        helpPads: `Downloaded a kit? Use <em>Import kit</em> (.zip, folder or several files) and each sound lands on the right pad by its name: kick, snare, hat, 808…
+    Or pick several audio files (WAV, MP3, OGG, M4A) and they go onto the pads in order, from pad 1 up:
+    <em>1 Kick</em>, <em>2 Snare</em> and so on. Drag files onto a pad to start from there.
+    Keyboard: <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> pads 1–4, <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> pads 5–8,
+    <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> pads 9–12, <kbd>Esc</kbd> stops everything. Your sounds are saved only in this browser.`,
+        helpKeys: `Pick a chord type and every key becomes a whole chord built on that note. In <em>Note</em> you play one note at a time
+    and the display names the chord you built. Computer keyboard: <kbd>Z</kbd>–<kbd>M</kbd> lower octave
+    (<kbd>S</kbd><kbd>D</kbd><kbd>G</kbd><kbd>H</kbd><kbd>J</kbd> are the black keys), <kbd>Q</kbd>–<kbd>U</kbd> upper octave
+    (<kbd>2</kbd><kbd>3</kbd><kbd>5</kbd><kbd>6</kbd><kbd>7</kbd> black), <kbd>↑</kbd><kbd>↓</kbd> change octave, hold <kbd>Space</kbd> for sustain.
+    With <em>Import sound</em> any audio becomes an instrument tuned across the keys. Got a real MIDI keyboard? Plug it into the computer and click Connect MIDI.`,
+        helpDrums: `A dead, squashed kit inspired by Tame Impala's psychedelic sound: every hit goes through tape saturation,
+    heavy compression, a swirling phaser and a small room. Tap the pads or <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
+    <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. In the sequencer, click a step: 1 click turns it on, 2 clicks make it a ghost note
+    (softer), 3 turn it off. <kbd>Space</kbd> plays and stops. Leave the beat running and switch to MIDI Keys to play chords over it.`,
+        mhelp: `Tap the pads with as many fingers as you like. Hold a pad with Note repeat on to repeat it.
+    On iPhone, turn off silent mode to hear sound. This version keeps its sounds separate from the full version.`,
+      },
+      es: {
+        helpPads: `¿Descargaste un kit? Usa <em>Importar kit</em> (.zip, carpeta o varios archivos) y cada sonido va al pad correcto por su nombre: kick, snare, hat, 808…
+    O elige varios archivos de audio (WAV, MP3, OGG, M4A) y van a los pads en orden, del pad 1 en adelante:
+    <em>1 Kick</em>, <em>2 Snare</em> y así. Arrastra archivos sobre un pad para empezar desde ahí.
+    Teclado: <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd> pads 1–4, <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> pads 5–8,
+    <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> pads 9–12, <kbd>Esc</kbd> para todo. Tus sonidos se guardan solo en este navegador.`,
+        helpKeys: `Elige un tipo de acorde y cada tecla se vuelve un acorde entero con esa nota como base. En <em>Nota</em> tocas nota por nota
+    y la pantalla muestra el nombre del acorde que armaste. Teclado del ordenador: <kbd>Z</kbd>–<kbd>M</kbd> octava de abajo
+    (<kbd>S</kbd><kbd>D</kbd><kbd>G</kbd><kbd>H</kbd><kbd>J</kbd> son las negras), <kbd>Q</kbd>–<kbd>U</kbd> octava de arriba
+    (<kbd>2</kbd><kbd>3</kbd><kbd>5</kbd><kbd>6</kbd><kbd>7</kbd> negras), <kbd>↑</kbd><kbd>↓</kbd> cambian la octava, mantén <kbd>Espacio</kbd> para sustain.
+    Con <em>Importar sonido</em> cualquier audio se vuelve un instrumento afinado en las teclas. ¿Tienes un teclado MIDI de verdad? Conéctalo al ordenador y haz clic en Conectar MIDI.`,
+        helpDrums: `Batería apagada y aplastada, inspirada en el sonido psicodélico de Tame Impala: cada golpe pasa por saturación de cinta,
+    compresión fuerte, un phaser girando y una sala pequeña. Toca los pads o <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd>
+    <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd>. En el secuenciador, haz clic en un paso: 1 clic lo activa, 2 clics lo vuelven nota fantasma
+    (más suave), 3 lo apagan. <kbd>Espacio</kbd> toca y para. Deja el ritmo sonando y cambia a Teclado MIDI para tocar acordes encima.`,
+        mhelp: `Toca los pads con todos los dedos que quieras. Mantén un pad con Note repeat activado para repetirlo.
+    En iPhone, quita el modo silencio para oír. Esta versión guarda sus sonidos aparte de la versión completa.`,
+      },
+    };
+
+    const LANGS = { en: 1, es: 2 };
+    const tables = {};
+    for (const [l, col] of Object.entries(LANGS)) {
+      const exact = new Map(), lower = new Map(), tpl = [];
+      for (const row of T) {
+        const pt = row[0], out = row[col];
+        if (pt.includes("{}")) {
+          const re = new RegExp("^" + pt.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{\}/g, "(.+?)") + "$");
+          tpl.push([re, out, pt.length]);
+        } else { exact.set(pt, out); lower.set(pt.toLowerCase(), out); }
+      }
+      tpl.sort((a, b) => b[2] - a[2]);
+      tables[l] = { exact, lower, tpl };
+    }
+
+    let lang = "pt";
+    function one(str) {
+      const t = tables[lang];
+      if (t.exact.has(str)) return t.exact.get(str);
+      if (str === str.toUpperCase() && t.lower.has(str.toLowerCase())) return t.lower.get(str.toLowerCase()).toUpperCase();
+      for (const [re, out] of t.tpl) {
+        const m = str.match(re);
+        if (m) { let k = 1; return out.replace(/\{\}/g, () => { const g = m[k++]; return one(g) ?? g; }); }
+      }
+      return null;
+    }
+    function tr(s) {
+      if (lang === "pt") return s;
+      const core = s.trim();
+      if (!core || !/[A-Za-zÀ-ú]/.test(core)) return s;
+      let r = one(core);
+      if (r == null) {
+        const parts = core.split(/(?<=[.!?])\s+/);
+        if (parts.length > 1) {
+          const rs = parts.map(one);
+          if (rs.some((x) => x != null)) r = parts.map((p, i) => rs[i] ?? p).join(" ");
+        }
+      }
+      if (r == null) return s;
+      return s.slice(0, s.indexOf(core[0])) + r + s.slice(s.lastIndexOf(core[core.length - 1]) + 1);
+    }
+
+    const textRec = new WeakMap(), attrRec = new WeakMap(), ATTRS = ["aria-label", "title"];
+    const skip = (el) => !el || el.nodeName === "SCRIPT" || el.nodeName === "STYLE" || (el.closest && el.closest("[data-i18n-html]"));
+    function doText(n) {
+      if (skip(n.parentNode)) return;
+      const cur = n.nodeValue, r = textRec.get(n);
+      const pt = r && r.out === cur ? r.pt : cur, out = tr(pt);
+      textRec.set(n, { pt, out });
+      if (out !== cur) n.nodeValue = out;
+    }
+    function doAttr(el, a) {
+      const cur = el.getAttribute(a);
+      if (cur == null) return;
+      let recs = attrRec.get(el);
+      if (!recs) { recs = {}; attrRec.set(el, recs); }
+      const r = recs[a], pt = r && r.out === cur ? r.pt : cur, out = tr(pt);
+      recs[a] = { pt, out };
+      if (out !== cur) el.setAttribute(a, out);
+    }
+    function doTree(root) {
+      if (root.nodeType === 3) { doText(root); return; }
+      if (root.nodeType !== 1 || skip(root)) return;
+      ATTRS.forEach((a) => root.hasAttribute(a) && doAttr(root, a));
+      const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+      let n;
+      while ((n = w.nextNode())) {
+        if (n.nodeType === 3) doText(n);
+        else ATTRS.forEach((a) => n.hasAttribute(a) && doAttr(n, a));
+      }
+    }
+    const origHtml = new Map();
+    function applyHtml() {
+      document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+        const k = el.dataset.i18nHtml;
+        if (!origHtml.has(k)) origHtml.set(k, el.innerHTML);
+        el.innerHTML = lang === "pt" ? origHtml.get(k) : (HTML[lang][k] || origHtml.get(k));
+      });
+    }
+    function set(l) {
+      lang = LANGS[l] ? l : "pt";
+      document.documentElement.lang = lang === "pt" ? "pt-BR" : lang;
+      $("langSel").value = lang;
+      try { localStorage.setItem("pads12-lang", lang); } catch (e) {}
+      applyHtml();
+      doTree(document.body);
+    }
+    new MutationObserver((list) => {
+      if (lang === "pt") return;
+      for (const m of list) {
+        if (m.type === "characterData") doText(m.target);
+        else if (m.type === "attributes") doAttr(m.target, m.attributeName);
+        else m.addedNodes.forEach(doTree);
+      }
+    }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+
+    let start = "pt";
+    try { start = localStorage.getItem("pads12-lang") || ""; } catch (e) {}
+    if (!start) {
+      const nav = (navigator.language || "pt").toLowerCase();
+      start = nav.startsWith("pt") ? "pt" : nav.startsWith("es") ? "es" : "en";
+    }
+    $("langSel").onchange = (e) => set(e.target.value);
+    set(start);
+    return { set };
+  })();
+
+  // ---------- boot ----------
+  build();
+  for (let i = 0; i < N; i++) drawPad(i);
+  select(0);
+  try {
+    const p = JSON.parse(localStorage.getItem("pads12-prefs") || "null");
+    if (p) { Keys.load(p.keys); Drums.load(p.drums); if (p.mode === "keys" || p.mode === "drums") setMode(p.mode); }
+  } catch (e) {}
+  (async () => {
+    try { await loadExamples(); } catch (e) {}
+    const restored = await loadStore();
+    for (let i = 0; i < N; i++) drawPad(i);
+    if (restored) status(`${restored} sons seus restaurados deste navegador.`);
+  })();
+})();
+</script>

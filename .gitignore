@@ -9,3 +9,5 @@ assets/**/*.jpg
 assets/**/*.jpeg
 assets/**/*.png
 __pycache__/
+trailer/build/
+trailer/node_modules/

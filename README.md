@@ -44,3 +44,33 @@ BEST FEATURE, BEST ALBUM, in that order) takes `song`, optional `streams`,
 and the same `clip`/`audio`/`cover` fields as above. `segment_seconds`
 (default 7.5 -> 60 s total) and `rating_delay` (seconds into the last item
 when the rating pops in) control timing.
+
+## PADS·12 sampler site
+
+`site/sampler.html` (full) and `site/sampler-lite.html` (phone) are the sources of the
+PADS·12 web sampler published as claude.ai Artifacts. They are Artifact bodies, so
+they have no `<!doctype html>`/`<head>`. To host one elsewhere, wrap it:
+
+```html
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>[hidden]{display:none!important}</style></head><body>
+  <!-- contents of site/sampler.html -->
+</body></html>
+```
+
+## PADS·12 trailers (Steam + TikTok)
+
+Scripted capture of the real site (screen + its own audio), then captions and cards:
+
+```bash
+npm i playwright                      # or point trailer/node_modules at a global install
+python3 trailer/make_demo_kit.py      # synth demo kit used in the kit-import scene
+node trailer/capture.mjs steam        # -> trailer/build/steam/{screen,audio}.webm
+node trailer/capture.mjs tiktok
+python3 trailer/compose.py steam      # -> output/pads12_steam_trailer.mp4 (1920x1080)
+python3 trailer/compose.py tiktok     # -> output/pads12_tiktok.mp4 (1080x1920)
+```
+
+`CHROMIUM=/path/to/chromium` picks the browser; `JSZIP=/path/to/jszip.min.js` serves
+JSZip locally when the CDN is unreachable. Fonts (Silkscreen, Barlow) are in `fonts/` (OFL).
