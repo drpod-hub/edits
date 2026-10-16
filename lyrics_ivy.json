@@ -1,0 +1,24 @@
+{
+  "video": "assets/lyrics/ivy_fireworks.mp4",
+  "output": "output/ivy_lyrics.mp4",
+  "font": "fonts/RobotoCondensed-VF.ttf",
+  "weight": 400,
+  "font_size": 84,
+  "squeeze": 0.88,
+  "tracking": -2,
+  "line_height": 0.92,
+  "x": 330,
+  "y": 300,
+  "fade_frames": 2,
+  "end": 9.2,
+  "blocks": [
+    {"lines": ["In the halls", "of your hotel"],
+     "times": [0.05, 0.30, 0.45, 1.20, 1.40, 1.60]},
+    {"lines": ["Arm around", "my shoulder", "so I could tell"],
+     "times": [2.15, 2.45, 3.05, 3.65, 4.55, 4.75, 4.95, 5.15]},
+    {"lines": ["How much I", "meant to you"],
+     "times": [5.45, 5.75, 6.05, 6.30, 6.55, 6.75]},
+    {"lines": ["Meant it", "sincere", "back then"],
+     "times": [7.05, 7.35, 7.55, 8.35, 8.60]}
+  ]
+}
