@@ -44,3 +44,30 @@ BEST FEATURE, BEST ALBUM, in that order) takes `song`, optional `streams`,
 and the same `clip`/`audio`/`cover` fields as above. `segment_seconds`
 (default 7.5 -> 60 s total) and `rating_delay` (seconds into the last item
 when the rating pops in) control timing.
+
+## "What if" story format
+
+`make_story.py` renders a narrated-style science short ("WHAT IF EARTH
+SUDDENLY STOPPED SPINNING?"): title card, a procedurally drawn scene (city
+park or a 3D globe), a HUD across the top with animated numbers, captions
+with `*highlighted*` words, and an end card. No footage needed; sound is
+synthesised.
+
+```bash
+python3 make_story.py story_earth_stops.json             # -> output/earth_stops.mp4
+python3 make_story.py story_earth_stops.json --still 30  # one PNG at 30 s
+python3 make_story.py story_earth_stops.json --draft     # fast encode
+```
+
+It also writes `output/earth_stops_script.txt`, the captions with timestamps,
+so you can record a voiceover to it. Save the recording as
+`assets/audio/earth_stops_vo.mp3` (the `voiceover` path) and re-render: it is
+mixed on top and the sound bed is ducked. `music` adds a track the same way.
+
+Each beat in `beats` takes `scene` (`city`, `globe`, `end`), `dur`, `caption`,
+`hud` (`tag`, `label`, `value`, `unit`, `sub`), `right` (`label`, `value`,
+`unit`), and `fx`. A `value` can count: `{"from": 0, "to": 1270, "dur": 2}`.
+`fx` values are constants or `[start, end]` ramps across the beat:
+
+- city: `shake`, `wind`, `debris`, `dust`, `scorch`, `lean`, `flash`, `launch` (+`launch_at`)
+- globe: `yaw`, `tilt`, `radius`, `cy`, `drain` (oceans to the poles), `sun_az`, `sun_el`, `dim`

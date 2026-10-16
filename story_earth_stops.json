@@ -1,0 +1,89 @@
+{
+  "output": "output/earth_stops.mp4",
+  "fps": 30,
+  "handle": "@yourhandle",
+  "title": ["WHAT IF EARTH", "SUDDENLY *STOPPED*", "SPINNING?"],
+  "disclaimer": "A thought experiment · Earth isn't stopping",
+  "voiceover": "assets/audio/earth_stops_vo.mp3",
+  "music": "",
+  "music_gain": 0.35,
+
+  "beats": [
+    {"scene": "city", "dur": 3.5, "title": true},
+
+    {"scene": "city", "dur": 5.0,
+     "caption": "It's a quiet afternoon in *New York*.",
+     "hud": {"tag": "A normal day", "label": "Location", "value": "NEW YORK", "sub": "40.7° North"},
+     "right": {"label": "Local time", "value": "3:12", "unit": "PM"}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "You can't feel it, but you're moving at *1,270 km/h*.",
+     "hud": {"tag": "Always moving", "label": "Your speed",
+             "value": {"from": 0, "to": 1270, "dur": 2.2, "delay": 0.3}, "unit": "km/h",
+             "sub": "Eastward, with the ground"},
+     "right": {"label": "Speed of sound", "value": "1,235", "unit": "km/h"}},
+
+    {"scene": "city", "dur": 3.0,
+     "caption": "Now imagine the planet *stops*.",
+     "hud": {"tag": "The stop", "label": "Earth's spin here", "value": "1,270", "unit": "km/h",
+             "sub": "Then, in one second..."},
+     "right": {"label": "Elapsed", "value": "0.00", "unit": "s"}},
+
+    {"scene": "city", "dur": 2.0,
+     "caption": "*Instantly.*",
+     "hud": {"tag": "The stop", "label": "Earth's spin here",
+             "value": {"from": 1270, "to": 0, "dur": 0.35}, "unit": "km/h", "sub": "The ground halts"},
+     "right": {"label": "Elapsed", "value": {"from": 0, "to": 0.4, "decimals": 2, "dur": 2.0}, "unit": "s"},
+     "fx": {"flash": true, "shake": [42, 16], "dust": [0, 0.08]}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "The ground stops. *You don't.*",
+     "hud": {"tag": "Everything launches", "label": "Your speed", "value": "1,270", "unit": "km/h",
+             "sub": "Faster than sound"},
+     "right": {"label": "Elapsed", "value": {"from": 0.4, "to": 6, "decimals": 1, "dur": 5.5}, "unit": "s"},
+     "fx": {"launch": true, "launch_at": 0.4, "shake": [16, 9], "debris": [0.15, 0.6],
+            "wind": [0.2, 0.5], "dust": [0.08, 0.3], "scorch": [0.1, 0.5], "lean": [0, 0.05]}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "The air keeps moving too. *Supersonic winds* scour the surface.",
+     "hud": {"tag": "The atmosphere", "label": "Wind speed", "value": "1,270", "unit": "km/h",
+             "sub": "Category 5 hurricane: 252+ km/h"},
+     "right": {"label": "Elapsed", "value": {"from": 6, "to": 60, "decimals": 0, "dur": 5.5}, "unit": "s"},
+     "fx": {"shake": [9, 11], "debris": [0.6, 1.0], "wind": [0.5, 1.0], "dust": [0.3, 0.6],
+            "scorch": [0.5, 0.85], "lean": [0.05, 0.2]}},
+
+    {"scene": "city", "dur": 5.0,
+     "caption": "Anything not anchored to *bedrock* is swept east.",
+     "hud": {"tag": "The aftermath", "label": "Surface", "value": "SCOURED",
+             "sub": "Buildings, trees, topsoil"},
+     "right": {"label": "Elapsed", "value": {"from": 1, "to": 60, "decimals": 0, "dur": 5.0}, "unit": "min"},
+     "fx": {"shake": [11, 5], "debris": 1.0, "wind": 1.0, "dust": [0.6, 0.85],
+            "scorch": [0.85, 1.0], "lean": [0.2, 0.4]}},
+
+    {"scene": "globe", "dur": 5.5,
+     "caption": "From space, the planet has gone *completely still*.",
+     "hud": {"tag": "Seen from space", "label": "Equatorial bulge", "value": "21", "unit": "km",
+             "sub": "Held up only by the spin"},
+     "right": {"label": "Rotation", "value": "0", "unit": "km/h"},
+     "fx": {"yaw": [-40, -22], "tilt": 16, "radius": [600, 520], "drain": 0}},
+
+    {"scene": "globe", "dur": 6.5,
+     "caption": "Without the spin, the oceans drain toward the *poles*.",
+     "hud": {"tag": "The oceans move", "label": "New map", "value": "2", "unit": "polar oceans",
+             "sub": "+ one giant equatorial continent"},
+     "right": {"label": "Sea level at poles", "value": "RISING"},
+     "fx": {"yaw": [-22, 10], "tilt": [16, 30], "radius": 520, "drain": [0, 1]}},
+
+    {"scene": "globe", "dur": 6.0,
+     "caption": "And a single day now lasts a *whole year*.",
+     "hud": {"tag": "A new day", "label": "One day lasts", "value": "365", "unit": "days",
+             "sub": "6 months light · 6 months dark"},
+     "fx": {"yaw": [10, 24], "tilt": 30, "radius": [520, 480], "drain": 1,
+            "sun_az": [-80, 75], "sun_el": 10}},
+
+    {"scene": "end", "dur": 5.0,
+     "caption": "Follow for the next *what if*.",
+     "fx": {"yaw": 24, "tilt": 30, "radius": 480, "cy": 1500, "drain": 1, "sun_az": 75, "sun_el": 10,
+            "dim": 0.55}}
+  ]
+}
