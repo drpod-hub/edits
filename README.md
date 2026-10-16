@@ -79,3 +79,21 @@ Each beat in `beats` takes `scene` (`city`, `globe`, `end`), `dur`, `caption`,
 - city giant: `giant` (height px), `gx`, `gfeet`, `gwalk` (0–1 stride), `gfall` (0–1 topple); `stomp` shakes on each footfall
 
 Stories: `story_earth_stops.json` (Earth stops spinning), `story_mind_reading.json` (mind reading), `story_80ft.json` (80 feet tall).
+
+### Voiceover
+
+`make_voiceover.py` narrates a story with Kokoro TTS (offline, runs on CPU):
+
+```bash
+pip install kokoro-onnx soundfile
+# download kokoro-v1.0.onnx + voices-v1.0.bin into models/ from
+# https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0
+python3 make_voiceover.py story_earth_stops.json          # -> the config's "voiceover" path
+python3 make_story.py story_earth_stops.json --remux      # swap the new sound into the render
+```
+
+Each beat speaks its caption, or `vo` when the caption doesn't read well aloud
+(numbers, units). Lines that would overrun their beat are spoken faster.
+`vo_voice` / `vo_speed` in the config (or `--voice` / `--speed`) pick the voice:
+`am_michael`, `am_onyx`, `am_adam` (US male), `bm_george` (UK male),
+`af_heart`, `af_bella` (US female), `bf_emma` (UK female), and more.

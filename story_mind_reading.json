@@ -7,6 +7,8 @@
   "voiceover": "assets/audio/mind_reading_vo.mp3",
   "music": "",
   "music_gain": 0.35,
+  "vo_voice": "am_michael",
+  "vo_speed": 1.1,
 
   "beats": [
     {"scene": "city", "dur": 3.5, "title": true},
@@ -26,6 +28,7 @@
 
     {"scene": "neurons", "dur": 5.5,
      "caption": "Each one is a storm of signals across *86 billion* neurons.",
+     "vo": "Each one is a storm of signals, across eighty-six billion neurons.",
      "hud": {"tag": "How it works", "label": "Neurons per brain", "value": "86", "unit": "billion",
              "sub": "Linked by trillions of synapses"},
      "right": {"label": "Signal speed", "value": "120", "unit": "m/s", "sub": "at the fastest"},
@@ -33,6 +36,7 @@
 
     {"scene": "city", "dur": 5.5,
      "caption": "In a crowd of 1,000 people, that's over *100 thoughts every second*.",
+     "vo": "In a crowd of a thousand people, that's over a hundred thoughts, every second.",
      "hud": {"tag": "Overload", "label": "Thoughts per second", "value": {"from": 0, "to": 108, "dur": 4.0},
              "sub": "From 1,000 people"},
      "right": {"label": "Minds in range", "value": {"from": 40, "to": 1000, "dur": 4.0}},

@@ -14,6 +14,7 @@ script is written next to the video so the VO can be recorded to it.
 Usage:  python3 make_story.py story_earth_stops.json
         python3 make_story.py story_earth_stops.json --still 21.5   # one PNG
         python3 make_story.py story_earth_stops.json --draft        # fast encode
+        python3 make_story.py story_earth_stops.json --remux        # new sound, same picture
 """
 import json
 import math
@@ -1030,13 +1031,24 @@ def main():
     print(f"Synthesising audio ({story.total:.1f} s)…")
     build_audio(cfg, story.beats, story.starts[:-1], story.total, wav)
 
+    if "--remux" in args:  # keep the rendered picture, replace only the sound
+        tmp_out = out + ".tmp.mp4"
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", out, "-i", wav, "-map", "0:v", "-map", "1:a",
+                        "-c:v", "copy", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+                        "-shortest", tmp_out], check=True)
+        os.replace(tmp_out, out)
+        os.remove(wav)
+        os.rmdir(tmp)
+        print("Remuxed ->", out)
+        return
+
     print("Rendering frames…")
     enc = subprocess.Popen(
         ["ffmpeg", "-y", "-v", "error",
          "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(fps), "-i", "-",
          "-i", wav, "-map", "0:v", "-map", "1:a",
          "-c:v", "libx264", "-preset", "ultrafast" if "--draft" in args else "medium", "-crf", "18",
-         "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest", out],
+         "-pix_fmt", "yuv420p", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest", out],
         stdin=subprocess.PIPE)
     n = int(round(story.total * fps))
     for idx in range(n):
