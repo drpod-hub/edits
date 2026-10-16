@@ -333,6 +333,10 @@ class City:
         frame.paste(ground.crop((0, 0, W, 40)), (0, hz), None)
         frame.alpha_composite(self._layer(self.trees, cam * 0.8, lean * 0.4).crop((0, hz, W, hz + 60)), (0, hz))
 
+        if fx.get("giant"):
+            draw_giant(frame, gt, param(fx, "giant", u), param(fx, "gx", u, W / 2),
+                       param(fx, "gfeet", u, 1185), param(fx, "gwalk", u), param(fx, "gfall", u))
+
         ov = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         d = ImageDraw.Draw(ov)
         p = self.people
@@ -443,6 +447,65 @@ class Bubbles:
             if a < 1:
                 im.putalpha(im.getchannel("A").point(lambda v: int(v * a)))
             frame.alpha_composite(im, (int(x + img.width * (1 - sc) / 2), int(y + img.height * (1 - sc))))
+
+
+# ---------------------------------------------------------------- giant
+
+STEP_HZ = 0.5  # giant's gait cycles per second (two footfalls each)
+
+
+def footfalls(gt):
+    """0..1 pulse peaking at each footfall (legs fully spread)."""
+    return abs(math.sin(2 * math.pi * STEP_HZ * gt)) ** 12
+
+
+def draw_giant(frame, gt, height, gx, feet, walk, fall):
+    """A flat-shaded person `height` px tall, feet centred at (gx, feet).
+    walk 0..1 swings arms/legs; fall 0..1 topples them to the right."""
+    th = math.radians(88) * fall ** 2
+    ct, st = math.cos(th), math.sin(th)
+    sw = math.radians(24) * walk * math.sin(2 * math.pi * STEP_HZ * gt)
+
+    def P(pts, pivot=None, ang=0.0):
+        out = []
+        for x, y in pts:
+            if pivot:
+                px, py = pivot
+                dx, dy = x - px, y - py
+                x, y = px + dx * math.cos(ang) + dy * math.sin(ang), py - dx * math.sin(ang) + dy * math.cos(ang)
+            out.append((gx + height * (x * ct + y * st), feet - height * (-x * st + y * ct)))
+        return out
+
+    def box(x0, x1, y0, y1):
+        return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+    lay = Image.new("RGBA", frame.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay)
+    sx = height * (0.12 + 0.9 * math.sin(th))
+    d.ellipse([gx - sx, feet - 12, gx + sx * (1 + 1.2 * fall), feet + 14], fill=(0, 0, 0, 70))
+    skin, shirt, shirt_d = (232, 188, 148, 255), (236, 112, 36, 255), (196, 86, 24, 255)
+    pants, pants_d, shoe, hair = (44, 62, 104, 255), (34, 48, 84, 255), (30, 30, 34, 255), (52, 36, 28, 255)
+    hip, shoulder = (0, 0.47), (0, 0.78)
+    for side, ang, col in ((-1, -sw, pants_d), (1, sw, pants)):  # far leg first
+        x = 0.045 * side
+        d.polygon(P(box(x - 0.042, x + 0.042, 0.03, 0.48), hip, ang), fill=col)
+        d.polygon(P(box(x - 0.045, x + 0.075, 0.0, 0.035), hip, ang), fill=shoe)
+    d.polygon(P(box(-0.135, 0.135, 0.79, 0.82), shoulder, -sw), fill=shirt_d)  # far arm
+    d.polygon(P(box(-0.165, -0.105, 0.44, 0.79), shoulder, sw), fill=shirt_d)
+    d.polygon(P(box(-0.13, 0.13, 0.46, 0.80)), fill=shirt)
+    d.polygon(P(box(0.105, 0.165, 0.44, 0.79), shoulder, -sw), fill=shirt)
+    d.polygon(P(box(0.11, 0.16, 0.39, 0.45), shoulder, -sw), fill=skin)
+    d.polygon(P(box(-0.16, -0.11, 0.39, 0.45), shoulder, sw), fill=skin)
+    d.polygon(P(box(-0.03, 0.03, 0.79, 0.83)), fill=skin)
+    head = [(0.065 * math.cos(a), 0.885 + 0.072 * math.sin(a)) for a in np.linspace(0, 2 * math.pi, 28)]
+    d.polygon(P(head), fill=skin)
+    cap = [(0.068 * math.cos(a), 0.89 + 0.075 * math.sin(a)) for a in np.linspace(-0.25, math.pi + 0.25, 20)]
+    d.polygon(P(cap), fill=hair)
+    for ex in (0.022, -0.012):  # eyes, turned slightly right
+        e = P([(ex + 0.012, 0.885)])[0]
+        r = max(1.5, height * 0.008)
+        d.ellipse([e[0] - r, e[1] - r, e[0] + r, e[1] + r], fill=(30, 24, 20, 255))
+    frame.alpha_composite(lay)
 
 
 # ---------------------------------------------------------------- neuron scene
@@ -766,7 +829,7 @@ def build_audio(cfg, beats, starts, total, path):
         b, u = beats[i], (tt - starts[i]) / beats[i]["dur"]
         fx = b.get("fx", {})
         env["wind"][j] = param(fx, "wind", u)
-        env["shake"][j] = min(1, param(fx, "shake", u) / 30)
+        env["shake"][j] = min(1, (param(fx, "shake", u) + param(fx, "stomp", u) * footfalls(tt)) / 30)
         env["amb"][j] = 1.0 if b["scene"] == "city" and not (set(fx) - {"thoughts", "mood", "warm"}) else 0
         env["buzz"][j] = param(fx, "thoughts", u) if b["scene"] == "city" else param(fx, "heat", u)
         env["space"][j] = 1.0 if b["scene"] != "city" else 0
@@ -865,18 +928,18 @@ class Story:
             img = self.city.render(gt, fx, u, t, self.launch_t, idx)
         elif scene == "neurons":
             img = self.neurons.render(gt, fx, u, t, idx)
-            dim = param(fx, "dim", u)
-            if dim > 0:
-                img.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, int(255 * dim))))
         else:
             img = self.globe.render(gt, fx, u)
+        dim = param(fx, "dim", u)
+        if dim > 0 and scene != "globe":  # globe dims itself
+            img.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, int(255 * dim))))
 
         if fx.get("flash"):
             a = math.exp(-t / 0.18)
             if a > 0.01:
                 img.alpha_composite(Image.new("RGBA", (W, H), (255, 250, 235, int(255 * a))))
-        shake = param(fx, "shake", u)
-        if shake > 0:
+        shake = param(fx, "shake", u) + param(fx, "stomp", u) * footfalls(gt)
+        if shake > 0.3:
             rng = np.random.default_rng(idx)
             ox, oy = rng.uniform(-shake, shake, 2)
             sc = 1 + 2.4 * shake / W

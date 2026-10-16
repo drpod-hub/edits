@@ -76,4 +76,6 @@ Each beat in `beats` takes `scene` (`city`, `globe`, `end`), `dur`, `caption`,
 - end: `bg` picks the scene behind the end card (`globe` or `neurons`) plus that scene's fx
 - any scene: `flash`, `shake`
 
-Stories: `story_earth_stops.json` (Earth stops spinning), `story_mind_reading.json` (mind reading).
+- city giant: `giant` (height px), `gx`, `gfeet`, `gwalk` (0–1 stride), `gfall` (0–1 topple); `stomp` shakes on each footfall
+
+Stories: `story_earth_stops.json` (Earth stops spinning), `story_mind_reading.json` (mind reading), `story_80ft.json` (80 feet tall).

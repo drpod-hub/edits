@@ -1,0 +1,86 @@
+{
+  "output": "output/80ft_tall.mp4",
+  "fps": 30,
+  "handle": "@yourhandle",
+  "title": ["WHAT IF YOU WERE", "*80 FEET* TALL?"],
+  "disclaimer": "A thought experiment · the square-cube law is real",
+  "voiceover": "assets/audio/80ft_tall_vo.mp3",
+  "music": "",
+  "music_gain": 0.35,
+
+  "beats": [
+    {"scene": "city", "dur": 3.5, "title": true,
+     "fx": {"giant": 500, "gx": 720}},
+
+    {"scene": "city", "dur": 5.0,
+     "caption": "You wake up *14 times* taller than everyone else.",
+     "hud": {"tag": "Day one", "label": "Your height", "value": {"from": 1.75, "to": 24.4, "decimals": 1, "dur": 2.5},
+             "unit": "m", "sub": "80 feet · about 8 stories"},
+     "right": {"label": "Scale", "value": "14", "unit": "x"},
+     "fx": {"giant": [36, 500], "gx": 640}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "But you're not just taller. You're *2,744 times* heavier.",
+     "hud": {"tag": "The square-cube law", "label": "Your weight",
+             "value": {"from": 0, "to": 192, "dur": 3.0, "delay": 0.4}, "unit": "tonnes",
+             "sub": "14 × 14 × 14 = 2,744x"},
+     "right": {"label": "As heavy as", "value": "1", "unit": "blue whale"},
+     "fx": {"giant": 500, "gx": 640, "shake": [0, 2]}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "Your bones only got *196 times* thicker. Each one carries *14x* the stress.",
+     "hud": {"tag": "The square-cube law", "label": "Bone strength", "value": "196", "unit": "x",
+             "sub": "14 × 14 · area, not volume"},
+     "right": {"label": "Stress on bones", "value": "14", "unit": "x"},
+     "fx": {"giant": 500, "gx": 640, "shake": 2}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "Every step covers *10 metres*, and the ground shakes.",
+     "hud": {"tag": "Walking", "label": "Stride", "value": "10.5", "unit": "m",
+             "sub": "Every footfall: 192 tonnes"},
+     "right": {"label": "Easy walk", "value": "19", "unit": "km/h"},
+     "fx": {"giant": 500, "gx": [380, 860], "gwalk": [0.4, 1], "stomp": 22, "dust": [0, 0.08]}},
+
+    {"scene": "neurons", "dur": 5.5,
+     "caption": "Your heart has to pump blood *5 metres* uphill, just to reach your brain.",
+     "hud": {"tag": "Your heart", "label": "Blood pressure needed", "value": "400+", "unit": "mmHg",
+             "sub": "A giraffe's heart already strains at ~2x ours"},
+     "right": {"label": "Normal human", "value": "120", "unit": "mmHg"},
+     "fx": {"heat": 0.85, "activity": [0.5, 0.9], "zoom": [1.0, 1.25], "stomp": 6}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "And you'd *overheat*: 2,744x the body, only 196x the skin.",
+     "hud": {"tag": "Heat", "label": "Heat per m² of skin", "value": "14", "unit": "x",
+             "sub": "Volume grows faster than surface"},
+     "right": {"label": "Skin area", "value": "196", "unit": "x"},
+     "fx": {"giant": 500, "gx": 860, "warm": [0.3, 1.0], "dust": [0.05, 0.2]}},
+
+    {"scene": "city", "dur": 5.5,
+     "caption": "Keeping that body alive? About *760,000 calories* a day.",
+     "hud": {"tag": "Food", "label": "Daily energy", "value": {"from": 2000, "to": 760000, "dur": 3.5},
+             "unit": "kcal", "sub": "≈ 1,300 burgers"},
+     "right": {"label": "Normal human", "value": "2,000", "unit": "kcal"},
+     "fx": {"giant": 500, "gx": 860, "warm": 0.5}},
+
+    {"scene": "city", "dur": 2.6,
+     "caption": "And if you trip...",
+     "hud": {"tag": "The fall", "label": "Head height", "value": "24", "unit": "m", "sub": "About 8 stories"},
+     "fx": {"giant": 500, "gx": 300, "gfall": [0, 1], "warm": 0.3}},
+
+    {"scene": "city", "dur": 4.5,
+     "caption": "...your head hits the ground at *over 80 km/h*.",
+     "hud": {"tag": "The fall", "label": "Impact speed", "value": "80+", "unit": "km/h",
+             "sub": "Like falling off a building"},
+     "fx": {"giant": 500, "gx": 300, "gfall": 1, "flash": true, "shake": [36, 4], "dust": [0.45, 0.15],
+            "warm": 0.3}},
+
+    {"scene": "city", "dur": 5.0,
+     "caption": "Turns out being *human-sized* is a pretty good deal.",
+     "hud": {"tag": "Verdict", "label": "Ideal height", "value": "THIS ONE", "sub": "Built for your gravity"},
+     "fx": {"giant": 500, "gx": 300, "gfall": 1, "dust": [0.15, 0]}},
+
+    {"scene": "end", "dur": 5.0,
+     "caption": "Follow for the next *what if*.",
+     "fx": {"bg": "city", "giant": 500, "gx": 720, "dim": 0.6}}
+  ]
+}
