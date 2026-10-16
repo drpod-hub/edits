@@ -23,6 +23,7 @@ from sr_onnx import Upscaler  # noqa: E402
 SRC, WEIGHTS, FONT, WORK, OUT = sys.argv[1:6]
 SW, SH = 426, 240           # source frame
 CW = 136                    # 9:16 crop width at source res
+EDGE = 8                    # black pillarbox strips at the source's left/right edges
 W, H, FPS = 1080, 1920, 30
 AUTO = "auto"
 
@@ -172,7 +173,8 @@ def make_caption(text):
 # ---------------- render ----------------
 
 def decode(s, e, speed):
-    vf = ["hqdn3d=1.5:1.5:3:3"]
+    # blank the broadcast's own scorebug and channel logo, then light denoise
+    vf = ["delogo=x=29:y=13:w=98:h=15", "delogo=x=372:y=13:w=26:h=15", "hqdn3d=1.5:1.5:3:3"]
     if speed < 1:
         vf.append(f"minterpolate=fps={round(FPS / speed)}:mi_mode=mci:mc_mode=aobmc:vsbmc=1")
     else:
@@ -188,7 +190,7 @@ def decode(s, e, speed):
 def render_shot(model, path, s, e, speed, cx, punch=None, flash_red=False):
     fr = decode(s, e, speed)
     xs = track(fr) if cx == AUTO else np.full(len(fr), cx * SW)
-    x0 = np.clip(np.round(xs - CW / 2), 0, SW - CW).astype(int)
+    x0 = np.clip(np.round(xs - CW / 2), EDGE, SW - EDGE - CW).astype(int)  # skip pillarbox edges
     crops = np.stack([f[:, x:x + CW] for f, x in zip(fr, x0)])
     up = model(np.ascontiguousarray(crops))      # N x 960 x 544 x 3
     z = "1.0"
@@ -277,8 +279,8 @@ def main():
     fc.append(f"{cur}fade=t=in:d=0.25,fade=t=out:st={total - 0.6:.3f}:d=0.6,format=yuv420p[v]")
     fc.append(f"[1:a]loudnorm=I=-13:TP=-1.0:LRA=9,afade=t=out:st={total - 0.7:.3f}:d=0.7[a]")
     sh(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc), "-map", "[v]", "-map", "[a]",
-        "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "slow", "-b:v", "3800k", "-maxrate", "5500k",
-        "-bufsize", "11000k", "-profile:v", "high", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", OUT])
+        "-t", f"{total:.3f}", "-c:v", "libx264", "-preset", "slow", "-b:v", "2700k", "-maxrate", "4000k",
+        "-bufsize", "8000k", "-profile:v", "high", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", OUT])
     print("total", round(total, 2))
 
 
