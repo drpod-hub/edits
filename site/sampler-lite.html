@@ -329,6 +329,51 @@ body { padding-block: 10px 24px; }
 .piecegrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 10px 16px; }
 .pad.muted { opacity: .45; }
 .seq .rl.muted { opacity: .45; text-decoration: line-through; }
+.career { display: grid; gap: 8px; background: var(--pad); color: var(--pad-ink); border-radius: 8px; padding: 10px 12px; }
+.career .label { color: var(--pad-dim); }
+.career-top, .career-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.career-val { font-family: var(--f-lcd); font-size: 24px; color: var(--lit); }
+.career-bar { height: 14px; border-radius: 7px; background: #1f1e1c; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); }
+.career-bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--neon-1), var(--neon-2), var(--neon-3), var(--neon-4)); transition: width 1.2s ease-out; }
+.career-bar span.pulse { animation: careerpulse 1.2s ease-out; }
+@keyframes careerpulse { 0% { filter: brightness(2.2); } 100% { filter: none; } }
+.career-foot { font-size: 14px; }
+.career .btn { background: var(--pad-hi); color: var(--pad-ink); border-color: #252422; padding: 6px 10px; font-size: 12px; }
+.career-goal { margin: 0; font-size: 13px; color: var(--pad-dim); }
+.songname { font: 500 15px var(--f-body); background: var(--case); border: 1px solid var(--case-lo); border-radius: 5px; padding: 7px 9px; color: var(--ink); flex: 1 1 160px; min-width: 0; }
+.cine { position: fixed; inset: 0; z-index: 50; background: #06050c; }
+.cine canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.cine-skip { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); z-index: 2; opacity: .85; }
+.cine-box {
+  position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: min(760px, calc(100% - 32px)); background: rgba(14,12,24,.94); color: #f0e9ff;
+  border: 2px solid #f0e9ff; border-radius: 6px; padding: 14px 18px 18px; box-shadow: 0 0 0 4px #14101f, 0 10px 30px rgba(0,0,0,.6);
+}
+.cine-who { font-family: var(--f-label); font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
+.cine-text { margin: 8px 0 0; font-family: var(--f-lcd); font-size: clamp(20px, 2.6vw, 26px); line-height: 1.25; min-height: 2.5em; }
+.cine-next { position: absolute; right: 14px; bottom: 8px; color: #f0a23b; animation: nextblink 1s steps(2) infinite; }
+@keyframes nextblink { 50% { opacity: 0; } }
+.cine-card { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 16px; text-align: center; padding: 24px; color: #f0e9ff; background: rgba(6,5,12,.72); }
+.cine-card h2 { margin: 0; font-family: var(--f-label); font-weight: 400; font-size: clamp(22px, 4vw, 34px); color: #ff3df0; text-wrap: balance; }
+.cine-card p { margin: 0; max-width: 46ch; font-family: var(--f-lcd); font-size: clamp(20px, 2.4vw, 24px); line-height: 1.3; }
+.cine-mail {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(560px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow: auto;
+  background: #f4f1f8; color: #1d1a22; border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,.6); padding: 18px;
+}
+.cine-mail .label { color: #6b6575; min-width: 70px; display: inline-block; }
+#mailCompose, #mailReply { display: grid; gap: 10px; }
+.mail-row { display: flex; gap: 10px; align-items: baseline; border-bottom: 1px solid #ddd6e6; padding-bottom: 6px; font-size: 15px; min-width: 0; overflow-wrap: anywhere; }
+.mail-body { margin: 6px 0; min-height: 4.5em; font-size: 16px; line-height: 1.45; }
+.mail-file { font-family: var(--f-lcd); font-size: 18px; background: #e4ddef; border-radius: 4px; padding: 0 8px; }
+#replyTitle { margin: 0; font-family: var(--f-label); font-weight: 400; font-size: 24px; }
+#replyTitle[data-tier="top"] { color: #1f8a3a; }
+#replyTitle[data-tier="mid"] { color: #a3712f; }
+#replyTitle[data-tier="low"] { color: #9b2d1f; }
+#replyIntro { margin: 0; }
+#replyList { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 15px; }
+#replyList li::before { content: "+ "; color: #1f8a3a; font-weight: 700; }
+#replyList li[data-good="0"]::before { content: "– "; color: #9b2d1f; }
+.reply-pts { margin: 0; font-family: var(--f-lcd); font-size: 26px; color: #6a2bd9; }
 .kitbox { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .lang { width: auto; padding: 4px 8px; font: 400 12px var(--f-label); letter-spacing: .04em; }
 </style>
@@ -345,12 +390,27 @@ body { padding-block: 10px 24px; }
       </div>
     </div>
     <p>versão leve para celular</p>
+    <button class="btn" id="storyModeBtn" type="button" hidden>Modo história</button>
     <select id="langSel" class="lang" aria-label="Idioma">
       <option value="pt">PT</option>
       <option value="en">EN</option>
       <option value="es">ES</option>
     </select>
   </header>
+
+  <section class="career" id="careerHud" hidden>
+    <div class="career-top"><span class="label">Carreira</span><span class="career-val" id="careerVal">0 / 500</span></div>
+    <div class="career-bar" id="careerBar" role="progressbar" aria-label="Carreira" aria-valuemin="0" aria-valuemax="500" aria-valuenow="0"><span id="careerFill"></span></div>
+    <div class="career-foot">
+      <span id="careerInfo">Músicas enviadas: 0</span>
+      <span class="btns">
+        <button class="btn" id="storyBtn" type="button">História</button>
+        <button class="btn" id="newGameBtn" type="button">Novo jogo</button>
+        <button class="btn" id="freeBtn" type="button">Modo livre</button>
+      </span>
+    </div>
+    <p class="career-goal">Grave uma música com Gravar áudio, dê um nome e clique em Baixar e enviar.</p>
+  </section>
 
   <section class="top">
     <div class="lcd-bezel">
@@ -568,6 +628,7 @@ body { padding-block: 10px 24px; }
     <span class="label">Sua gravação</span>
     <audio id="takeAudio" controls preload="metadata"></audio>
     <span class="takeinfo" id="takeInfo"></span>
+    <input type="text" id="songName" class="songname" maxlength="60" placeholder="Nome da música" aria-label="Nome da música">
     <button class="btn dark" id="takeSave" type="button">Baixar áudio</button>
   </div>
 
@@ -619,6 +680,37 @@ body { padding-block: 10px 24px; }
   <input type="file" id="kitFile" accept=".zip,application/zip,application/x-zip-compressed,audio/*,.wav,.mp3,.ogg,.m4a,.aif,.aiff,.flac" multiple hidden>
   <input type="file" id="kitFolder" webkitdirectory multiple hidden>
 </main>
+<div class="cine" id="cine" hidden>
+  <canvas id="cineCanvas" aria-hidden="true"></canvas>
+  <button class="btn cine-skip" id="cineSkip" type="button">Pular</button>
+  <div class="cine-box" id="cineBox" hidden>
+    <span class="cine-who" id="cineWho"></span>
+    <p class="cine-text" id="cineText" aria-live="polite"></p>
+    <span class="cine-next" id="cineNext" hidden>▼</span>
+  </div>
+  <div class="cine-card" id="cineCard" hidden>
+    <h2 id="cardTitle"></h2>
+    <p id="cardBody"></p>
+    <button class="btn dark" id="cardBtn" type="button">Continuar</button>
+  </div>
+  <div class="cine-mail" id="cineMail" hidden>
+    <div id="mailCompose">
+      <div class="mail-row"><span class="label">Para</span><span id="mailTo"></span></div>
+      <div class="mail-row"><span class="label">Assunto</span><span id="mailSubject"></span></div>
+      <p class="mail-body" id="mailBody"></p>
+      <div class="mail-row"><span class="label">Anexo</span><span class="mail-file" id="mailFile"></span></div>
+      <button class="btn dark" id="mailSend" type="button">Enviar</button>
+    </div>
+    <div id="mailReply" hidden>
+      <span class="label" id="replyHead"></span>
+      <h3 id="replyTitle"></h3>
+      <p id="replyIntro"></p>
+      <ul id="replyList"></ul>
+      <p class="reply-pts" id="replyPts"></p>
+      <button class="btn dark" id="replyOk" type="button">Continuar</button>
+    </div>
+  </div>
+</div>
 <div class="backdrop" id="backdrop" aria-hidden="true"></div>
 
 <script>
@@ -639,6 +731,15 @@ body { padding-block: 10px 24px; }
   analyser.fftSize = 2048;
   master.connect(comp); comp.connect(ctx.destination); comp.connect(analyser);
   let mode = "pads";
+  // what the player does while "Record audio" runs; the label scores the demo from this
+  const Song = (() => {
+    let on = false, t0 = 0, ev = [];
+    return {
+      start() { on = true; t0 = ctx.currentTime; ev = []; },
+      note(kind, data) { if (on && kind !== "off") ev.push({ t: ctx.currentTime - t0, kind, data }); },
+      stop() { on = false; return ev.slice(); },
+    };
+  })();
   const voices = new Set();
 
   const pads = Array.from({ length: N }, () => ({ kind: "empty", name: "", fileName: "", buffer: null, bytes: null, volume: 1 }));
@@ -1537,7 +1638,7 @@ body { padding-block: 10px 24px; }
     addEventListener("blur", () => { for (const id of [...triggers.keys()]) if (id[0] === "k") release(id); });
     function loopOn(ms, vel) { if (ctx.state !== "running") ctx.resume(); ms.forEach((m) => noteOn(m, vel)); lcd(); }
     function loopOff(ms) { ms.forEach(noteOff); lcd(); }
-    return { show, hide, lcd, allOff, onKey, prefs, load, startScope, stopScope, loopOn, loopOff };
+    return { show, hide, lcd, allOff, onKey, prefs, load, startScope, stopScope, loopOn, loopOff, info: () => ({ custom: inst === "custom" }) };
   })();
 
   // ---------- organic drums ----------
@@ -1758,6 +1859,7 @@ body { padding-block: 10px 24px; }
           let vel = v === 2 ? 0.38 : 0.9, t = at;
           if (humanize) { vel *= 0.9 + Math.random() * 0.18; t += (Math.random() - 0.5) * 0.012; }
           hit(r, vel, t);
+          Song.note("seq", { r });
         }
         queue.push({ step, time: at });
         nextTime += sd; step = (step + 1) % 16;
@@ -2041,6 +2143,7 @@ body { padding-block: 10px 24px; }
       show() { syncUi(); Keys.startScope(); lcd(); },
       hide() { Keys.stopScope(); },
       lcd, stop, onKey, prefs, load: (p) => { load(p); syncUi(); applyMix(); for (let i = 0; i < KIT.length; i++) paintMute(i); syncPiece(); if (p && p.drumKit) setKit(p.drumKit, true); },
+      info: () => ({ customGroove: !PRESETS[preset] || JSON.stringify(grid) !== JSON.stringify(parse(PRESETS[preset][3])), customPieces: custom.filter(Boolean).length }),
       hitAt, isPlaying: () => playing, barSeconds: () => (60 / bpm) * 4, bpm: () => bpm,
     };
   })();
@@ -2055,6 +2158,7 @@ body { padding-block: 10px 24px; }
     const btn = $("loopBtn"), odBtn = $("overdubBtn"), info = $("loopInfo"), fill = $("loopFill");
 
     function rec(ev, at = ctx.currentTime) {
+      Song.note(ev.type === "on" ? "keys" : ev.type, ev);
       if (state === "rec") {
         events.push({ ...ev, t: at - t0 });
       } else if (state === "play" && overdub) {
@@ -2069,6 +2173,7 @@ body { padding-block: 10px 24px; }
       if (ev.type === "off") open.delete(ev.id);
     }
     function fire(ev, when) {
+      Song.note("loop", ev);
       const delay = Math.max(0, (when - ctx.currentTime) * 1000);
       if (ev.type === "pad") play(ev.i, when);
       else if (ev.type === "drum") Drums.hitAt(ev.i, ev.vel, when);
@@ -2200,7 +2305,7 @@ body { padding-block: 10px 24px; }
     const dest = ctx.createMediaStreamDestination();
     comp.connect(dest);
     const btn = $("recAudioBtn");
-    let mr = null, chunks = [], t0 = 0, secs = 0, blob = null, ext = "webm", url = null, ticker = 0;
+    let mr = null, chunks = [], t0 = 0, secs = 0, blob = null, ext = "webm", url = null, ticker = 0, lastEvents = [];
     const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
     function pickType() {
       for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"])
@@ -2217,6 +2322,7 @@ body { padding-block: 10px 24px; }
       chunks = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
       mr.onstop = done;
+      Song.start();
       mr.start(250);
       t0 = performance.now();
       btn.classList.add("recording");
@@ -2228,6 +2334,8 @@ body { padding-block: 10px 24px; }
       if (!mr) return;
       secs = (performance.now() - t0) / 1000;
       clearInterval(ticker);
+      lastEvents = Song.stop();
+      if (!$("songName").value.trim()) $("songName").value = Game.nextName();
       const r = mr; mr = null; r.stop();
       btn.textContent = "Gravar áudio"; btn.classList.remove("recording");
     }
@@ -2245,20 +2353,25 @@ body { padding-block: 10px 24px; }
     btn.onclick = () => (mr ? stop() : start());
     $("takeSave").onclick = async () => {
       if (!blob) return;
-      let dl = null;
+      const title = ($("songName").value.trim() || Game.nextName()).slice(0, 60);
+      const file = title.replace(/[\\/:*?"<>|]+/g, "-") + "." + ext;
+      let dl = null, saved = false;
       try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) {}
-      if (!dl) { $("takeSave").hidden = true; status("Baixar não está disponível nesta visualização. Dá pra ouvir a gravação no player.", true); return; }
-      const d = new Date(), pad2 = (n) => String(n).padStart(2, "0");
-      const name = `jam-pads12-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}.${ext}`;
-      try {
-        await dl.save({ filename: name, data: blob });
-        status(`Salvo: ${name}`);
-      } catch (e) {
-        const code = e && e.code;
-        if (code === "declined") status("Download cancelado.");
-        else if (code === "rate_limited") status("Já tem um download esperando confirmação. Tente de novo em instantes.", true);
-        else status("Não deu pra baixar o áudio aqui. Dá pra ouvir a gravação no player.", true);
+      if (dl) {
+        try { await dl.save({ filename: file, data: blob }); saved = true; }
+        catch (e) {
+          const code = e && e.code;
+          if (code === "declined") { status("Download cancelado."); return; }
+          if (code === "rate_limited") { status("Já tem um download esperando confirmação. Tente de novo em instantes.", true); return; }
+        }
       }
+      if (!saved) {
+        // outside claude.ai (desktop build, plain browser) a normal download link does the job
+        try { const a = document.createElement("a"); a.href = url; a.download = file; document.body.appendChild(a); a.click(); a.remove(); saved = true; } catch (e) {}
+      }
+      if (!saved) { status("Não deu pra baixar o áudio aqui. Dá pra ouvir a gravação no player.", true); return; }
+      status(`Salvo: ${file}`);
+      if (Game.story) Game.submit({ blob, name: title, file, secs, events: lastEvents });
     };
     return { stop };
   })();
@@ -2292,6 +2405,7 @@ body { padding-block: 10px 24px; }
   $("modeChop").onclick = () => { setMode("chop"); status("Modo chop. Toque na forma de onda pra marcar um corte."); };
 
   document.addEventListener("keyup", (e) => {
+    if (document.body.classList.contains("cine-on")) return;
     if (e.target.matches("input, select, textarea")) return;
     if (e.key === "Shift") Repeat.shift(false);
     if ((mode === "drums" || mode === "chop") && e.code === "Space") { e.preventDefault(); return; }
@@ -2300,6 +2414,7 @@ body { padding-block: 10px 24px; }
   });
 
   document.addEventListener("keydown", (e) => {
+    if (document.body.classList.contains("cine-on")) return;
     if (e.target.matches("input, select, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === "Escape") { Looper.stop(); stopAll(); Keys.allOff(); Drums.stop(); Chop.stop(); status("Tudo parado."); return; }
     if (e.code === "KeyL") { if (!e.repeat) Looper.toggle(); return; }
@@ -2746,6 +2861,7 @@ body { padding-block: 10px 24px; }
       hide: stop,
       stop, lcd, onKey,
       playAt: (i, when) => playSlice(i, when),
+      info: () => ({ own: !!(snd && !snd.example) }),
     };
   })();
 
@@ -2808,6 +2924,82 @@ body { padding-block: 10px 24px; }
       ["Vazio", "Empty", "Vacío"],
       ["Limpar", "Clear", "Borrar"],
       ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Carreira", "Career", "Carrera"],
+      ["Músicas enviadas: {}", "Songs sent: {}", "Canciones enviadas: {}"],
+      ["História", "Story", "Historia"],
+      ["Novo jogo", "New game", "Nueva partida"],
+      ["Modo livre", "Free mode", "Modo libre"],
+      ["Modo história", "Story mode", "Modo historia"],
+      ["CONTRATADO", "SIGNED", "FICHADO"],
+      ["Confirmar: zerar carreira?", "Confirm: reset career?", "¿Confirmar: reiniciar carrera?"],
+      ["Carreira zerada.", "Career reset.", "Carrera reiniciada."],
+      ["Grave uma música com Gravar áudio, dê um nome e clique em Baixar e enviar.", "Record a song with Record audio, name it and click Download and send.", "Graba una canción con Grabar audio, ponle nombre y haz clic en Descargar y enviar."],
+      ["Nome da música", "Song name", "Nombre de la canción"],
+      ["Baixar e enviar", "Download and send", "Descargar y enviar"],
+      ["Pular", "Skip", "Saltar"],
+      ["Continuar", "Continue", "Continuar"],
+      ["Começar a produzir", "Start producing", "Empezar a producir"],
+      ["Selo Noite Alta", "Noite Alta Records", "Sello Noite Alta"],
+      ["Então é sério? Você quer mesmo ser produtor?", "So you're serious? You really want to be a producer?", "¿Entonces es en serio? ¿De verdad quieres ser productor?"],
+      ["Sério. Um dia minhas músicas vão tocar em todo lugar.", "Dead serious. One day my songs will play everywhere.", "En serio. Un día mis canciones van a sonar en todas partes."],
+      ["Cara, você nem tem equipamento.", "Dude, you don't even have any gear.", "Amigo, ni siquiera tienes equipo."],
+      ["E ninguém entra numa gravadora assim, do nada.", "And nobody just walks into a record label.", "Y nadie entra a una discográfica así, de la nada."],
+      ["Então eu vou ser o primeiro que você conhece.", "Then I'll be the first one you know.", "Entonces seré el primero que conozcas."],
+      ["Tá bom... me avisa quando o telefone tocar.", "Sure... let me know when the phone rings.", "Vale... avísame cuando suene el teléfono."],
+      ["Naquela noite...", "That night...", "Esa noche..."],
+      ["Naquela noite, Léo gastou tudo o que tinha num PADS·12.", "That night, Léo spent every cent he had on a PADS·12.", "Esa noche, Léo gastó todo lo que tenía en un PADS·12."],
+      ["Pronto. Agora é comigo.", "Alright. It's on me now.", "Listo. Ahora depende de mí."],
+      ["Música autoral, do zero. Nada de copiar ninguém.", "Original music, from scratch. No copying anyone.", "Música original, desde cero. Nada de copiar a nadie."],
+      ["Vou mandar cada demo pro Selo Noite Alta até eles me contratarem.", "I'll send every demo to Noite Alta Records until they sign me.", "Voy a mandar cada demo al Sello Noite Alta hasta que me fichen."],
+      ["OBJETIVO", "GOAL", "OBJETIVO"],
+      ["Produza músicas, baixe e envie pro Selo Noite Alta. Ruim vale 0, mediana 25 e muito boa 100 pontos. Chegue a 500 pra ser contratado.", "Produce songs, download them and send them to Noite Alta Records. Bad is worth 0, average 25 and very good 100 points. Reach 500 to get signed.", "Produce canciones, descárgalas y envíalas al Sello Noite Alta. Mala vale 0, mediana 25 y muy buena 100 puntos. Llega a 500 para que te fichen."],
+      ["Lá vai mais uma.", "Here goes another one.", "Ahí va otra."],
+      ["Essa ficou boa... eu acho.", "This one turned out good... I think.", "Esta quedó buena... creo."],
+      ["Vamos ver o que eles acham dessa.", "Let's see what they think of this one.", "A ver qué opinan de esta."],
+      ["Para", "To", "Para"],
+      ["Assunto", "Subject", "Asunto"],
+      ["Anexo", "Attachment", "Adjunto"],
+      ["Enviar", "Send", "Enviar"],
+      ["Enviado!", "Sent!", "¡Enviado!"],
+      ["Demo: {}", "Demo: {}", "Demo: {}"],
+      ["Oi, pessoal do Selo Noite Alta! Segue minha nova música autoral, “{}”. Espero que curtam. — Léo", "Hi, Noite Alta Records team! Here's my new original track, “{}”. Hope you like it. — Léo", "¡Hola, equipo del Sello Noite Alta! Aquí va mi nueva canción original, “{}”. Espero que les guste. — Léo"],
+      ["Nova mensagem do Selo Noite Alta", "New message from Noite Alta Records", "Nuevo mensaje del Sello Noite Alta"],
+      ["Muito boa!", "Very good!", "¡Muy buena!"],
+      ["Mediana.", "Average.", "Mediana."],
+      ["Não foi dessa vez.", "Not this time.", "Esta vez no."],
+      ["Ouvimos “{}”.", "We listened to “{}”.", "Escuchamos “{}”."],
+      ["+{} pontos de carreira", "+{} career points", "+{} puntos de carrera"],
+      ["Boa duração.", "Good length.", "Buena duración."],
+      ["A bateria segura a faixa.", "The drums carry the track.", "La batería sostiene la canción."],
+      ["Tem harmonia de verdade.", "Real harmony in there.", "Tiene armonía de verdad."],
+      ["Bons samples e cortes.", "Nice samples and chops.", "Buenos samples y cortes."],
+      ["Mistura bem os elementos.", "Mixes the elements well.", "Mezcla bien los elementos."],
+      ["O groove é seu, não um preset.", "The groove is yours, not a preset.", "El groove es tuyo, no un preset."],
+      ["Sons próprios dão identidade.", "Your own sounds give it identity.", "Los sonidos propios le dan identidad."],
+      ["As camadas do loop deixam a faixa cheia.", "The loop layers fill out the track.", "Las capas del loop llenan la canción."],
+      ["A música evolui com o tempo.", "The song develops over time.", "La canción evoluciona con el tiempo."],
+      ["Volume no ponto.", "Level is spot on.", "Volumen en su punto."],
+      ["Curta demais pra uma demo.", "Too short for a demo.", "Demasiado corta para una demo."],
+      ["Falta bateria.", "Needs drums.", "Falta batería."],
+      ["Falta harmonia: tente acordes no teclado.", "Needs harmony: try chords on the keys.", "Falta armonía: prueba acordes en el teclado."],
+      ["Tá parecendo um preset pronto.", "Sounds like a stock preset.", "Suena a un preset de fábrica."],
+      ["Tá estourando: baixe o volume.", "It's clipping: turn it down.", "Está saturando: baja el volumen."],
+      ["Quase não dá pra ouvir nada.", "We can barely hear anything.", "Casi no se oye nada."],
+      ["Fica parada do começo ao fim.", "It stays the same from start to finish.", "Se queda igual de principio a fin."],
+      ["A gravadora já recebeu essa música.", "The label already got this song.", "La discográfica ya recibió esta canción."],
+      ["ISSO! Eles curtiram de verdade!", "YES! They actually loved it!", "¡SÍ! ¡Les encantó de verdad!"],
+      ["Dá pra melhorar. Bora pra próxima.", "Room to improve. On to the next one.", "Se puede mejorar. A por la siguiente."],
+      ["Ai... volta pro estúdio, Léo.", "Ouch... back to the studio, Léo.", "Ay... de vuelta al estudio, Léo."],
+      ["Ouvi tua última demo. Até que tá boa, hein.", "Heard your latest demo. Not bad, huh.", "Escuché tu última demo. No está nada mal, eh."],
+      ["Falei que ia dar certo.", "Told you it would work.", "Te dije que iba a funcionar."],
+      ["O telefone toca...", "The phone rings...", "Suena el teléfono..."],
+      ["Léo? Aqui é do Selo Noite Alta. Queremos te contratar.", "Léo? This is Noite Alta Records. We want to sign you.", "¿Léo? Te habla el Sello Noite Alta. Queremos ficharte."],
+      ["...Sério?! SIM! Claro que sim!", "...Seriously?! YES! Of course!", "...¡¿En serio?! ¡SÍ! ¡Claro que sí!"],
+      ["Fiquei sabendo. Tá, eu tava errado.", "I heard. Okay, I was wrong.", "Me enteré. Vale, me equivoqué."],
+      ["Você conseguiu, produtor.", "You made it, producer.", "Lo lograste, productor."],
+      ["Eu te avisei.", "Told you.", "Te lo dije."],
+      ["FIM — Léo foi contratado!", "THE END — Léo got signed!", "FIN — ¡Léo fue fichado!"],
+      ["Continue produzindo à vontade.", "Keep producing as much as you like.", "Sigue produciendo todo lo que quieras."],
       ["Peça selecionada", "Selected piece", "Pieza seleccionada"],
       ["Volume", "Volume", "Volumen"],
       ["Afinação", "Tuning", "Afinación"],
@@ -3079,7 +3271,7 @@ body { padding-block: 10px 24px; }
       return s.slice(0, s.indexOf(core[0])) + r + s.slice(s.lastIndexOf(core[core.length - 1]) + 1);
     }
 
-    const textRec = new WeakMap(), attrRec = new WeakMap(), ATTRS = ["aria-label", "title"];
+    const textRec = new WeakMap(), attrRec = new WeakMap(), ATTRS = ["aria-label", "title", "placeholder"];
     const skip = (el) => !el || el.nodeName === "SCRIPT" || el.nodeName === "STYLE" || (el.closest && el.closest("[data-i18n-html]"));
     function doText(n) {
       if (skip(n.parentNode)) return;
@@ -3141,7 +3333,403 @@ body { padding-block: 10px 24px; }
     }
     $("langSel").onchange = (e) => set(e.target.value);
     set(start);
-    return { set };
+    return { set, t: tr };
+  })();
+
+  // ---------- story mode: cutscenes ----------
+  // A tiny top-down pixel stage (320 px wide world, scaled up) with walking actors, a typewriter
+  // dialogue box, title cards and an email client. Scripts are arrays of steps run in order.
+  const Cine = (() => {
+    const root = $("cine"), cv = $("cineCanvas"), g = cv.getContext("2d");
+    const box = $("cineBox"), who = $("cineWho"), text = $("cineText"), card = $("cineCard"), mail = $("cineMail");
+    const WW = 320, WH = 180;
+    const cam = { x: WW / 2, y: WH / 2, scene: null };
+    let H = WH, scene = "rua", actors = {}, raf = 0, last = 0, clock = 0, fade = 1, fadeTo = 1, active = false;
+    let advance = null, typing = null, skipped = false;
+    const SPEAK = { "Léo": { color: "#f0a23b", f: 560 }, "Caio": { color: "#3dd6d0", f: 340 }, "Selo Noite Alta": { color: "#ff3df0", f: 440 } };
+
+    function resize() {
+      H = Math.max(150, Math.round(WW * innerHeight / Math.max(1, innerWidth)));
+      cv.width = WW; cv.height = H;
+    }
+    // deterministic noise so building windows don't flicker between frames
+    const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+
+    function drawStreet() {
+      g.fillStyle = "#0e0c18"; g.fillRect(0, 0, WW, WH);
+      // buildings along the top, the music shop on the right
+      for (let x = 0; x < 214; x += 34) {
+        g.fillStyle = x % 68 ? "#231a3a" : "#1c1530"; g.fillRect(x, 0, 32, 44);
+        for (let wy = 6; wy < 40; wy += 8) for (let wx = x + 4; wx < x + 28; wx += 7)
+          if (hash(wx, wy) > 0.45) { g.fillStyle = hash(wy, wx) > 0.5 ? "#ffd28c" : "#f6c27a"; g.globalAlpha = 0.5 + hash(wx + 1, wy) * 0.5; g.fillRect(wx, wy, 3, 4); }
+        g.globalAlpha = 1;
+      }
+      g.fillStyle = "#2e1f45"; g.fillRect(216, 0, 96, 46);
+      g.fillStyle = "#14101f"; g.fillRect(222, 6, 84, 26);
+      g.fillStyle = "#c4c0b5"; g.fillRect(232, 12, 22, 14); // a PADS·12 in the window
+      g.fillStyle = "#3b3a37"; for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) g.fillRect(234 + c * 5, 14 + r * 4, 4, 3);
+      const neon = 0.75 + Math.sin(clock * 3) * 0.25;
+      g.fillStyle = `rgba(255,61,240,${neon})`; g.font = "8px Silkscreen, monospace"; g.fillText("MUSICA", 262, 24);
+      g.fillStyle = "#4a3a20"; g.fillRect(254, 38, 16, 8); // door
+      // sidewalks and road
+      g.fillStyle = "#2a2638"; g.fillRect(0, 44, WW, 30); g.fillRect(0, 130, WW, 50);
+      g.strokeStyle = "#353046"; g.lineWidth = 1;
+      for (let x = 0; x < WW; x += 16) { g.beginPath(); g.moveTo(x + 0.5, 44); g.lineTo(x + 0.5, 74); g.stroke(); g.beginPath(); g.moveTo(x + 0.5, 130); g.lineTo(x + 0.5, 180); g.stroke(); }
+      g.fillStyle = "#16131f"; g.fillRect(0, 74, WW, 56);
+      g.fillStyle = "rgba(255,214,150,.6)"; for (let x = 4; x < WW; x += 28) g.fillRect(x, 101, 14, 2);
+      // street lamps
+      for (const lx of [40, 150, 200]) {
+        const gl = g.createRadialGradient(lx, 68, 1, lx, 68, 34);
+        gl.addColorStop(0, "rgba(255,178,102,.35)"); gl.addColorStop(1, "rgba(255,178,102,0)");
+        g.fillStyle = gl; g.fillRect(lx - 34, 34, 68, 68);
+        g.fillStyle = "#0c0a14"; g.fillRect(lx - 1, 66, 3, 3);
+        g.fillStyle = "#ffcf8f"; g.fillRect(lx, 67, 1, 1);
+      }
+    }
+    function drawRoom() {
+      g.fillStyle = "#1a1226"; g.fillRect(0, 0, WW, WH);
+      g.fillStyle = "#2b1d3a"; g.fillRect(8, 8, WW - 16, WH - 8);
+      // plank floor
+      for (let y = 20; y < WH - 4; y += 8) for (let x = 20; x < WW - 20; x += 32) {
+        g.fillStyle = (x / 32 + y / 8) % 2 ? "#6b4a33" : "#634430"; g.fillRect(x + ((y / 8) % 2) * 16 - 16, y, 32, 8);
+      }
+      g.fillStyle = "#2b1d3a"; g.fillRect(8, 8, 12, WH); g.fillRect(WW - 20, 8, 12, WH); g.fillRect(8, 8, WW - 16, 12);
+      g.fillStyle = "#6b4a33"; g.fillRect(148, WH - 12, 24, 12); // doorway
+      // window + moonlight
+      g.fillStyle = "#9fb3d9"; g.fillRect(120, 8, 50, 6);
+      g.fillStyle = "rgba(180,200,255,.10)"; g.beginPath(); g.moveTo(120, 20); g.lineTo(170, 20); g.lineTo(190, 90); g.lineTo(110, 90); g.fill();
+      // bed
+      g.fillStyle = "#3a2a20"; g.fillRect(26, 26, 50, 76);
+      g.fillStyle = "#e8e2f0"; g.fillRect(30, 30, 42, 14);
+      g.fillStyle = "#b8352a"; g.fillRect(30, 48, 42, 50);
+      g.fillStyle = "#8a2620"; for (let y = 52; y < 98; y += 8) g.fillRect(30, y, 42, 2);
+      // rug
+      g.fillStyle = "#4a2d5a"; g.beginPath(); g.ellipse(160, 112, 46, 26, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = "#ff3df0"; g.globalAlpha = 0.35; g.lineWidth = 2; g.stroke(); g.globalAlpha = 1;
+      // desk with laptop and the PADS·12
+      g.fillStyle = "#4a3426"; g.fillRect(206, 24, 88, 30);
+      g.fillStyle = "#2f2a33"; g.fillRect(222, 28, 20, 14);
+      const glow = 0.6 + Math.sin(clock * 2) * 0.1;
+      g.fillStyle = `rgba(61,252,255,${glow})`; g.fillRect(224, 30, 16, 9);
+      g.fillStyle = "#c4c0b5"; g.fillRect(252, 28, 26, 18);
+      g.fillStyle = "#3b3a37"; for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) g.fillRect(254 + c * 6, 31 + r * 5, 5, 4);
+      g.fillStyle = "#222"; g.beginPath(); g.arc(232, 64, 7, 0, Math.PI * 2); g.fill();
+      // poster
+      g.fillStyle = "#251747"; g.fillRect(40, 10, 22, 8); g.fillStyle = "#ff3df0"; g.fillRect(44, 12, 14, 2); g.fillStyle = "#3dfcff"; g.fillRect(44, 15, 10, 1);
+    }
+    function drawActor(a) {
+      const moving = a.tx != null;
+      const bob = moving ? Math.sin(clock * 14) * 0.6 : 0;
+      const x = Math.round(a.x), y = Math.round(a.y + bob);
+      g.fillStyle = "rgba(0,0,0,.35)"; g.beginPath(); g.ellipse(x, y + 6, 6, 3, 0, 0, Math.PI * 2); g.fill();
+      if (moving) {
+        const s = Math.sin(clock * 14) > 0 ? 1 : -1;
+        g.fillStyle = "#1d1a22";
+        g.fillRect(x - 3 + a.fx * 2 * s, y + 2 + a.fy * 2 * s, 2, 3);
+        g.fillRect(x + 1 - a.fx * 2 * s, y + 2 - a.fy * 2 * s, 2, 3);
+      }
+      g.fillStyle = a.body; g.beginPath(); g.ellipse(x, y + 1, 6, 4, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = a.skin; g.fillRect(x - 7, y, 2, 2); g.fillRect(x + 5, y, 2, 2);
+      g.fillStyle = a.skin; g.beginPath(); g.arc(x, y - 1, 3.5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = a.hair; g.beginPath(); g.arc(x - a.fx * 0.8, y - 1 - a.fy * 0.8, 3.2, 0, Math.PI * 2); g.fill();
+      if (a.cap) { g.fillStyle = a.cap; g.fillRect(Math.round(x + a.fx * 3 - 2), Math.round(y - 1 + a.fy * 3 - 1), 4, 2); }
+    }
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now; clock += dt;
+      fade += (fadeTo - fade) * Math.min(1, dt * 4);
+      for (const a of Object.values(actors)) {
+        if (a.tx == null) continue;
+        const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy), step = a.speed * dt;
+        if (d <= step) { a.x = a.tx; a.y = a.ty; a.tx = null; const r = a.done; a.done = null; r && r(); }
+        else { a.x += (dx / d) * step; a.y += (dy / d) * step; a.fx = dx / d; a.fy = dy / d; }
+      }
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = "#0e0c18"; g.fillRect(0, 0, WW, H);
+      // camera: zoomed in, easing toward the on-screen actors, clamped to the set
+      const on = Object.values(actors).filter((a) => a.x > 0 && a.x < WW);
+      const tx = on.length ? on.reduce((s, a) => s + a.x, 0) / on.length : WW / 2;
+      const ty = on.length ? on.reduce((s, a) => s + a.y, 0) / on.length : WH / 2;
+      if (cam.scene !== scene) { cam.x = tx; cam.y = ty; cam.scene = scene; }
+      cam.x += (tx - cam.x) * Math.min(1, dt * 3); cam.y += (ty - cam.y) * Math.min(1, dt * 3);
+      const z = (scene === "quarto" ? 1.4 : 1.8) * (H > WH * 1.2 ? 1.5 : 1), hw = WW / (2 * z), hh = H / (2 * z);
+      const cx = Math.max(hw, Math.min(WW - hw, cam.x)), cy = hh * 2 >= WH ? WH / 2 : Math.max(hh, Math.min(WH - hh, cam.y));
+      g.setTransform(z, 0, 0, z, Math.round(WW / 2 - cx * z), Math.round(H / 2 - cy * z));
+      scene === "quarto" ? drawRoom() : drawStreet();
+      Object.values(actors).sort((p, q) => p.y - q.y).forEach(drawActor);
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      if (fade > 0.01) { g.fillStyle = `rgba(6,5,12,${fade})`; g.fillRect(0, 0, WW, H); }
+      if (active) raf = requestAnimationFrame(frame);
+    }
+
+    const LEO = { body: "#f0a23b", skin: "#c68a5a", hair: "#1d1a22", cap: "#f0a23b" };
+    const CAIO = { body: "#2bb3b8", skin: "#8d5a3b", hair: "#2a1d14" };
+    function place(name, x, y, look, face) { actors[name] = { ...look, x, y, tx: null, fx: face[0], fy: face[1], speed: 46 }; }
+    const wait = (s) => new Promise((r) => setTimeout(r, s * 1000));
+    function walk(name, x, y) { return new Promise((r) => { const a = actors[name]; if (!a) return r(); a.tx = x; a.ty = y; a.done = r; }); }
+    function beep(f) {
+      try {
+        if (ctx.state !== "running") return;
+        const o = ctx.createOscillator(), gg = ctx.createGain(), t = ctx.currentTime;
+        o.type = "square"; o.frequency.value = f * (0.95 + Math.random() * 0.1);
+        gg.gain.setValueAtTime(0.025, t); gg.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+        o.connect(gg).connect(master); o.start(t); o.stop(t + 0.05);
+      } catch (e) {}
+    }
+    const T = (s) => I18N.t(s);
+    function waitInput() { return new Promise((r) => { advance = r; }); }
+    async function typeInto(el, str, f) {
+      el.textContent = "";
+      let i = 0, done = false;
+      typing = () => { done = true; };
+      while (i < str.length && !done && !skipped) {
+        i++; el.textContent = str.slice(0, i);
+        if (f && i % 2) beep(f);
+        await wait(0.028);
+      }
+      el.textContent = str; typing = null;
+    }
+    async function say(name, line) {
+      if (skipped) return;
+      const sp = SPEAK[name] || { color: "#fff", f: 400 };
+      box.hidden = false; who.textContent = T(name); who.style.color = sp.color;
+      await typeInto(text, T(line), sp.f);
+      if (skipped) return;
+      $("cineNext").hidden = false;
+      await waitInput();
+      $("cineNext").hidden = true;
+    }
+    async function showCard(title, body, button) {
+      if (skipped) return;
+      box.hidden = true;
+      card.hidden = false;
+      $("cardTitle").textContent = T(title); $("cardBody").textContent = body ? T(body) : "";
+      const b = $("cardBtn"); b.textContent = T(button || "Continuar"); b.hidden = false;
+      await waitInput();
+      card.hidden = true;
+    }
+    function fadeOut() { fadeTo = 1; return wait(0.8); }
+    function fadeIn() { fadeTo = 0; return wait(0.6); }
+
+    function open() {
+      active = true; skipped = false; resize(); actors = {}; fade = 1; fadeTo = 1;
+      root.hidden = false; document.body.classList.add("cine-on");
+      box.hidden = true; card.hidden = true; mail.hidden = true; $("cineNext").hidden = true;
+      if (ctx.state !== "running") ctx.resume();
+      last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+    }
+    function close() {
+      active = false; cancelAnimationFrame(raf);
+      root.hidden = true; document.body.classList.remove("cine-on");
+      advance = null;
+    }
+    function next() {
+      if (typing) { typing(); return; }
+      if (advance) { const r = advance; advance = null; r(); }
+    }
+    root.addEventListener("click", (e) => { if (e.target.closest("button, input, a")) return; next(); });
+    $("cardBtn").onclick = next;
+    $("cineSkip").onclick = () => { skipped = true; if (typing) typing(); if (advance) { const r = advance; advance = null; r(); } };
+    document.addEventListener("keydown", (e) => {
+      if (!active) return;
+      if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); next(); }
+      else if (e.code === "Escape") $("cineSkip").click();
+    });
+    addEventListener("resize", () => { if (active) resize(); });
+
+    // ---- scripts ----
+    async function intro() {
+      open();
+      scene = "rua";
+      place("leo", 136, 60, LEO, [1, 0]); place("caio", 168, 60, CAIO, [-1, 0]);
+      await fadeIn();
+      await say("Caio", "Então é sério? Você quer mesmo ser produtor?");
+      await say("Léo", "Sério. Um dia minhas músicas vão tocar em todo lugar.");
+      await say("Caio", "Cara, você nem tem equipamento.");
+      await say("Caio", "E ninguém entra numa gravadora assim, do nada.");
+      await say("Léo", "Então eu vou ser o primeiro que você conhece.");
+      await say("Caio", "Tá bom... me avisa quando o telefone tocar.");
+      box.hidden = true;
+      if (!skipped) { actors.caio.speed = 60; walk("caio", -20, 60); await wait(0.6); await walk("leo", 262, 50); }
+      await fadeOut();
+      await showCard("Naquela noite...", "Naquela noite, Léo gastou tudo o que tinha num PADS·12.");
+      scene = "quarto"; actors = {};
+      place("leo", 160, 166, LEO, [0, -1]);
+      await fadeIn();
+      if (!skipped) await walk("leo", 232, 66);
+      if (actors.leo) { actors.leo.fx = 0; actors.leo.fy = -1; }
+      await say("Léo", "Pronto. Agora é comigo.");
+      await say("Léo", "Música autoral, do zero. Nada de copiar ninguém.");
+      await say("Léo", "Vou mandar cada demo pro Selo Noite Alta até eles me contratarem.");
+      skipped = false;
+      await showCard("OBJETIVO", "Produza músicas, baixe e envie pro Selo Noite Alta. Ruim vale 0, mediana 25 e muito boa 100 pontos. Chegue a 500 pra ser contratado.", "Começar a produzir");
+      close();
+    }
+
+    async function email(song, result, after) {
+      open();
+      scene = "quarto";
+      place("leo", 232, 66, LEO, [0, -1]);
+      await fadeIn();
+      await say("Léo", ["Lá vai mais uma.", "Essa ficou boa... eu acho.", "Vamos ver o que eles acham dessa."][song.n % 3]);
+      skipped = false;
+      box.hidden = true;
+      // compose
+      mail.hidden = false; $("mailCompose").hidden = false; $("mailReply").hidden = true;
+      $("mailTo").textContent = "demos@noitealta.rec";
+      $("mailSubject").textContent = T(`Demo: ${song.name}`);
+      $("mailFile").textContent = song.file;
+      $("mailSend").disabled = true; $("mailSend").textContent = T("Enviar");
+      await typeInto($("mailBody"), T(`Oi, pessoal do Selo Noite Alta! Segue minha nova música autoral, “${song.name}”. Espero que curtam. — Léo`), 0);
+      $("mailSend").disabled = false;
+      await new Promise((r) => { $("mailSend").onclick = r; });
+      $("mailSend").disabled = true; $("mailSend").textContent = T("Enviado!");
+      beep(880); await wait(1.1);
+      // reply
+      $("mailCompose").hidden = true; $("mailReply").hidden = false;
+      $("replyHead").textContent = T("Nova mensagem do Selo Noite Alta");
+      $("replyTitle").textContent = T(result.title);
+      $("replyTitle").dataset.tier = result.points >= 100 ? "top" : result.points > 0 ? "mid" : "low";
+      $("replyIntro").textContent = T(`Ouvimos “${song.name}”.`);
+      const ul = $("replyList"); ul.textContent = "";
+      result.notes.forEach(([good, line]) => { const li = document.createElement("li"); li.dataset.good = good ? "1" : "0"; li.textContent = T(line); ul.appendChild(li); });
+      $("replyPts").textContent = T(`+${result.points} pontos de carreira`);
+      $("replyOk").textContent = T("Continuar");
+      await new Promise((r) => { $("replyOk").onclick = r; });
+      mail.hidden = true;
+      await say("Léo", result.points >= 100 ? "ISSO! Eles curtiram de verdade!" : result.points > 0 ? "Dá pra melhorar. Bora pra próxima." : "Ai... volta pro estúdio, Léo.");
+      if (after === "half") {
+        await say("Caio", "Ouvi tua última demo. Até que tá boa, hein.");
+        await say("Léo", "Falei que ia dar certo.");
+      }
+      if (after === "end") { await ending(true); return; }
+      close();
+    }
+
+    async function ending(already) {
+      if (!already) open();
+      skipped = false;
+      box.hidden = true;
+      await fadeOut();
+      await showCard("O telefone toca...", "");
+      scene = "quarto"; actors = {}; place("leo", 232, 66, LEO, [0, 1]);
+      await fadeIn();
+      await say("Selo Noite Alta", "Léo? Aqui é do Selo Noite Alta. Queremos te contratar.");
+      await say("Léo", "...Sério?! SIM! Claro que sim!");
+      await fadeOut();
+      scene = "rua"; actors = {};
+      place("leo", 136, 60, LEO, [1, 0]); place("caio", 168, 60, CAIO, [-1, 0]);
+      await fadeIn();
+      await say("Caio", "Fiquei sabendo. Tá, eu tava errado.");
+      await say("Caio", "Você conseguiu, produtor.");
+      await say("Léo", "Eu te avisei.");
+      await fadeOut();
+      await showCard("FIM — Léo foi contratado!", "Continue produzindo à vontade.", "Continuar");
+      close();
+    }
+    return { intro, email, ending, get active() { return active; } };
+  })();
+
+  // ---------- story mode: career, scoring ----------
+  const Game = (() => {
+    const KEY = "pads12-game";
+    const fresh = () => ({ mode: "story", introDone: false, points: 0, sent: [], half: false, signed: false });
+    let st = fresh();
+    try { const s = JSON.parse(localStorage.getItem(KEY) || "null"); if (s) st = { ...fresh(), ...s }; } catch (e) {}
+    const persist = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+    function hud() {
+      const story = st.mode === "story";
+      $("careerHud").hidden = !story;
+      $("storyModeBtn").hidden = story;
+      const pts = Math.min(500, st.points);
+      $("careerFill").style.width = (pts / 500) * 100 + "%";
+      $("careerBar").setAttribute("aria-valuenow", String(pts));
+      $("careerVal").textContent = st.signed ? "CONTRATADO" : `${pts} / 500`;
+      $("careerInfo").textContent = `Músicas enviadas: ${st.sent.length}`;
+      $("takeSave").textContent = story ? "Baixar e enviar" : "Baixar áudio";
+    }
+
+    // Score how the take was made. Returns { points: 0|25|100, title, notes: [[good, line]] }.
+    function evaluate(ev, audio, sig) {
+      const notes = [], good = (l) => notes.push([true, l]), bad = (l) => notes.push([false, l]);
+      if (st.sent.some((s) => s.sig === sig)) return { points: 0, title: "Não foi dessa vez.", notes: [[false, "A gravadora já recebeu essa música."]] };
+      const dur = audio.duration;
+      if (dur < 10) return { points: 0, title: "Não foi dessa vez.", notes: [[false, "Curta demais pra uma demo."]] };
+      if (audio.rms < 0.008) return { points: 0, title: "Não foi dessa vez.", notes: [[false, "Quase não dá pra ouvir nada."]] };
+      let pts = 0;
+      if (dur >= 30) { pts += 2; good("Boa duração."); } else { pts += 1; bad("Curta demais pra uma demo."); }
+      const cat = (k) => (k === "seq" || k === "drum" ? "drums" : k === "keys" ? "keys" : k === "pad" ? "pads" : k === "chop" ? "chop" : null);
+      const count = (c) => ev.filter((e) => cat(e.kind) === c).length;
+      const drums = count("drums"), keys = count("keys"), samples = count("pads") + count("chop");
+      if (drums >= 8) { pts += 1; good("A bateria segura a faixa."); } else bad("Falta bateria.");
+      const pcs = new Set(ev.filter((e) => e.kind === "keys").flatMap((e) => (e.data.ms || []).map((m) => m % 12)));
+      if (keys >= 4 && pcs.size >= 3) { pts += 2; good("Tem harmonia de verdade."); }
+      else if (keys > 0) { pts += 1; bad("Falta harmonia: tente acordes no teclado."); }
+      else bad("Falta harmonia: tente acordes no teclado.");
+      if (samples >= 8) { pts += 1; good("Bons samples e cortes."); }
+      const used = ["drums", "keys", "pads", "chop"].filter((c) => count(c) > 0).length;
+      if (used >= 3) { pts += 1; good("Mistura bem os elementos."); }
+      const di = Drums.info();
+      if (drums >= 8) { if (di.customGroove) { pts += 1; good("O groove é seu, não um preset."); } else bad("Tá parecendo um preset pronto."); }
+      const own = di.customPieces > 0 || pads.some((p) => p.kind === "file") || Keys.info().custom || Chop.info().own;
+      if (own) { pts += 1; good("Sons próprios dão identidade."); }
+      if (ev.filter((e) => e.kind === "loop").length >= 4) { pts += 1; good("As camadas do loop deixam a faixa cheia."); }
+      // does it evolve? compare what plays in the first and last third
+      const third = (a, b) => new Set(ev.filter((e) => e.t >= a && e.t < b).map((e) => cat(e.kind === "loop" ? e.data.type === "on" ? "keys" : e.data.type : e.kind)).filter(Boolean));
+      const first = third(0, dur / 3), lastT = third((dur * 2) / 3, dur + 1);
+      const evolves = [...lastT].some((c) => !first.has(c)) || [...first].some((c) => !lastT.has(c));
+      if (evolves) { pts += 1; good("A música evolui com o tempo."); } else bad("Fica parada do começo ao fim.");
+      if (audio.clip > 0.005) { pts -= 1; bad("Tá estourando: baixe o volume."); }
+      else if (audio.rms > 0.04) { pts += 1; good("Volume no ponto."); }
+      const points = pts >= 8 ? 100 : pts >= 4 ? 25 : 0;
+      return { points, title: points === 100 ? "Muito boa!" : points ? "Mediana." : "Não foi dessa vez.", notes };
+    }
+    async function analyse(blob, secs) {
+      try {
+        const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+        let sum = 0, n = 0, clip = 0;
+        for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+          const d = buf.getChannelData(ch);
+          for (let i = 0; i < d.length; i += 8) { const v = Math.abs(d[i]); sum += v * v; n++; if (v > 0.985) clip++; }
+        }
+        return { duration: buf.duration, rms: Math.sqrt(sum / Math.max(1, n)), clip: clip / Math.max(1, n) };
+      } catch (e) { return { duration: secs, rms: 0.1, clip: 0 }; }
+    }
+
+    async function submit(take) {
+      if (st.mode !== "story") return;
+      const audio = await analyse(take.blob, take.secs);
+      const sig = `${take.blob.size}:${audio.duration.toFixed(2)}`;
+      const result = evaluate(take.events, audio, sig);
+      const before = st.points;
+      st.points = Math.min(500, st.points + result.points);
+      st.sent.push({ name: take.name, points: result.points, sig, date: Date.now() });
+      let after = null;
+      if (!st.signed && st.points >= 500) { st.signed = true; after = "end"; }
+      else if (!st.half && before < 250 && st.points >= 250) { st.half = true; after = "half"; }
+      persist();
+      await Cine.email({ name: take.name, file: take.file, n: st.sent.length }, result, after);
+      hud();
+      $("careerFill").classList.remove("pulse"); void $("careerFill").offsetWidth; $("careerFill").classList.add("pulse");
+    }
+
+    let resetArmed = 0;
+    $("storyBtn").onclick = () => Cine.intro();
+    $("newGameBtn").onclick = () => {
+      if (Date.now() - resetArmed > 4000) { resetArmed = Date.now(); $("newGameBtn").textContent = "Confirmar: zerar carreira?"; setTimeout(() => { $("newGameBtn").textContent = "Novo jogo"; }, 4000); return; }
+      resetArmed = 0; st = fresh(); st.introDone = true; persist(); hud();
+      $("newGameBtn").textContent = "Novo jogo";
+      status("Carreira zerada.");
+      Cine.intro();
+    };
+    $("freeBtn").onclick = () => { st.mode = "free"; persist(); hud(); };
+    $("storyModeBtn").onclick = () => { st.mode = "story"; persist(); hud(); if (!st.introDone) { st.introDone = true; persist(); Cine.intro(); } };
+
+    function boot() {
+      hud();
+      if (st.mode === "story" && !st.introDone) { st.introDone = true; persist(); Cine.intro(); }
+    }
+    return { submit, boot, hud, get story() { return st.mode === "story"; }, nextName: () => `Demo ${st.sent.length + 1}` };
   })();
 
   // ---------- boot ----------
@@ -3152,6 +3740,7 @@ body { padding-block: 10px 24px; }
     const p = JSON.parse(localStorage.getItem("pads12-prefs") || "null");
     if (p) { Keys.load(p.keys); Drums.load(p.drums); if (["keys", "drums", "chop"].includes(p.mode)) setMode(p.mode); }
   } catch (e) {}
+  Game.boot();
   (async () => {
     try { await loadExamples(); } catch (e) {}
     const restored = await loadStore();
