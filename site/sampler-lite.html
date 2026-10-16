@@ -448,6 +448,7 @@ body { padding-block: 10px 24px; }
         <button class="btn" id="storyBtn" type="button">História</button>
         <button class="btn" id="newGameBtn" type="button">Novo jogo</button>
         <button class="btn" id="freeBtn" type="button">Modo livre</button>
+        <button class="btn" id="sfxBtn" type="button" aria-pressed="true">Efeitos</button>
       </span>
     </div>
     <p class="career-goal">Grave uma música com Gravar áudio, dê um nome e clique em Baixar e enviar.</p>
@@ -732,6 +733,7 @@ body { padding-block: 10px 24px; }
   <nav class="vn-menu" id="vnMenu" hidden>
     <button type="button" id="vnLog">Histórico</button>
     <button type="button" id="vnAuto" aria-pressed="false">Auto</button>
+    <button type="button" id="vnSfx" aria-pressed="true">Som</button>
     <button type="button" id="cineSkip">Pular</button>
   </nav>
   <div class="vn-choices" id="vnChoices" hidden></div>
@@ -790,6 +792,85 @@ body { padding-block: 10px 24px; }
       stop() { on = false; return ev.slice(); },
     };
   })();
+  // ---------- sound effects ----------
+  // UI / story sounds, synthesized. They go straight to the speakers (not through the master bus),
+  // so they never end up in a recorded song.
+  const SFX = (() => {
+    const out = ctx.createGain(); out.gain.value = 0.55; out.connect(ctx.destination);
+    let on = true;
+    try { on = localStorage.getItem("pads12-sfx") !== "0"; } catch (e) {}
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    { const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    function tone(f, t, dur, o = {}) {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = o.type || "sine"; osc.frequency.setValueAtTime(f, t);
+      if (o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+      const v = o.vol ?? 0.15;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + (o.attack || 0.005)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g).connect(o.dest || out); osc.start(t); osc.stop(t + dur + 0.02);
+    }
+    function noise(t, dur, o = {}) {
+      const s = ctx.createBufferSource(); s.buffer = nb;
+      const f = ctx.createBiquadFilter(); f.type = o.type || "bandpass"; f.Q.value = o.q ?? 1;
+      f.frequency.setValueAtTime(o.f || 1000, t); if (o.f2) f.frequency.exponentialRampToValueAtTime(o.f2, t + dur);
+      const g = ctx.createGain(), v = o.vol ?? 0.12, a = o.attack || 0.004;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      let node = s.connect(f).connect(g);
+      if (o.pan !== undefined && ctx.createStereoPanner) {
+        const p = ctx.createStereoPanner(); p.pan.setValueAtTime(o.pan, t); if (o.pan2 !== undefined) p.pan.linearRampToValueAtTime(o.pan2, t + dur); node = node.connect(p);
+      }
+      node.connect(o.dest || out); s.start(t, Math.random()); s.stop(t + dur + 0.02);
+    }
+    const play = (fn) => { if (!on) return; if (ctx.state !== "running") ctx.resume(); try { fn(ctx.currentTime + 0.01); } catch (e) {} };
+    const S = {
+      tick: () => play((t) => tone(2200, t, 0.03, { type: "triangle", vol: 0.06 })),
+      pop: () => play((t) => tone(420, t, 0.14, { vol: 0.14, f2: 880 })),
+      whoosh: () => play((t) => noise(t, 0.6, { vol: 0.16, f: 300, f2: 3200, q: 0.8, attack: 0.25 })),
+      chime: () => play((t) => [880, 1320, 1760].forEach((f, i) => tone(f, t + i * 0.08, 0.7, { vol: 0.07 }))),
+      choice: () => play((t) => { tone(660, t, 0.08, { type: "triangle", vol: 0.1 }); tone(990, t + 0.06, 0.14, { type: "triangle", vol: 0.1 }); }),
+      key: () => play((t) => noise(t, 0.03, { vol: 0.1, type: "highpass", f: 2500 + Math.random() * 2500 })),
+      send: () => play((t) => { noise(t, 0.45, { vol: 0.14, f: 700, f2: 6000, q: 0.8, attack: 0.05 }); tone(500, t, 0.35, { vol: 0.06, f2: 1500 }); }),
+      ding: () => play((t) => { tone(1318, t, 0.9, { vol: 0.11 }); tone(1760, t + 0.12, 0.9, { vol: 0.09 }); }),
+      win: () => play((t) => [523, 659, 784, 1046, 1318, 1568].forEach((f, i) => tone(f, t + i * 0.09, 0.55, { type: "triangle", vol: 0.11 }))),
+      meh: () => play((t) => { tone(523, t, 0.25, { type: "triangle", vol: 0.1 }); tone(587, t + 0.2, 0.4, { type: "triangle", vol: 0.1 }); }),
+      fail: () => play((t) => [392, 370, 349, 311].forEach((f, i) => tone(f, t + i * 0.18, 0.32, { type: "sawtooth", vol: 0.045 }))),
+      coin: () => play((t) => { tone(988, t, 0.07, { type: "square", vol: 0.045 }); tone(1319, t + 0.07, 0.18, { type: "square", vol: 0.045 }); }),
+      ring: () => play((t) => { for (let r = 0; r < 2; r++) for (let k = 0; k < 12; k++) { const tt = t + r * 1.3 + k * 0.05; tone(440, tt, 0.045, { vol: 0.05 }); tone(480, tt, 0.045, { vol: 0.05 }); } }),
+      rec: () => play((t) => tone(1046, t, 0.14, { vol: 0.1 })),
+    };
+    // looping room tone for the story scenes
+    let amb = null;
+    function stopAmb() {
+      if (!amb) return;
+      clearInterval(amb.timer); clearInterval(amb.timer2);
+      try { amb.g.gain.setTargetAtTime(0, ctx.currentTime, 0.3); const s = amb.src; setTimeout(() => { try { s.stop(); } catch (e) {} }, 1500); } catch (e) {}
+      amb = null;
+    }
+    function ambience(name) {
+      stopAmb();
+      if (!on || !name || ctx.state !== "running") return;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(1, ctx.currentTime + 1.5); g.connect(out);
+      const src = ctx.createBufferSource(); src.buffer = nb; src.loop = true;
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = name === "rua" ? 260 : 140;
+      const hg = ctx.createGain(); hg.gain.value = name === "rua" ? 0.06 : 0.025;
+      src.connect(lp).connect(hg).connect(g); src.start();
+      amb = { g, src, timer: 0, timer2: 0 };
+      if (name === "rua") {
+        // a car passes now and then, left to right or back
+        const car = () => { const t = ctx.currentTime, dir = Math.random() < 0.5 ? -1 : 1; noise(t, 3.2, { vol: 0.07, f: 900, f2: 350, q: 0.6, attack: 1.4, pan: -dir, pan2: dir, dest: g }); };
+        car(); amb.timer = setInterval(car, 6500);
+      } else {
+        // vinyl crackle
+        amb.timer = setInterval(() => { if (Math.random() < 0.55) noise(ctx.currentTime, 0.012, { vol: 0.03 + Math.random() * 0.03, type: "highpass", f: 2500, dest: g }); }, 90);
+      }
+    }
+    return {
+      ...S, ambience, stopAmb,
+      get on() { return on; },
+      set(v) { on = v; try { localStorage.setItem("pads12-sfx", v ? "1" : "0"); } catch (e) {} if (!v) stopAmb(); },
+    };
+  })();
+
   const voices = new Set();
 
   const pads = Array.from({ length: N }, () => ({ kind: "empty", name: "", fileName: "", buffer: null, bytes: null, volume: 1 }));
@@ -2372,7 +2453,7 @@ body { padding-block: 10px 24px; }
       chunks = [];
       mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
       mr.onstop = done;
-      Song.start();
+      Song.start(); SFX.rec();
       mr.start(250);
       t0 = performance.now();
       btn.classList.add("recording");
@@ -2384,7 +2465,7 @@ body { padding-block: 10px 24px; }
       if (!mr) return;
       secs = (performance.now() - t0) / 1000;
       clearInterval(ticker);
-      lastEvents = Song.stop();
+      lastEvents = Song.stop(); SFX.rec();
       if (!$("songName").value.trim()) $("songName").value = Game.nextName();
       const r = mr; mr = null; r.stop();
       btn.textContent = "Gravar áudio"; btn.classList.remove("recording");
@@ -2449,10 +2530,10 @@ body { padding-block: 10px 24px; }
     if (m === "keys") Keys.show(); else if (m === "drums") Drums.show(); else if (m === "chop") Chop.show(); else drawLcd();
     savePrefs();
   }
-  $("modePads").onclick = () => { setMode("pads"); status("Modo sampler."); };
-  $("modeKeys").onclick = () => { setMode("keys"); status("Modo teclado. Escolha um acorde e toque."); };
-  $("modeDrums").onclick = () => { setMode("drums"); status("Bateria orgânica. Espaço toca o groove."); };
-  $("modeChop").onclick = () => { setMode("chop"); status("Modo chop. Toque na forma de onda pra marcar um corte."); };
+  $("modePads").onclick = () => { SFX.tick(); setMode("pads"); status("Modo sampler."); };
+  $("modeKeys").onclick = () => { SFX.tick(); setMode("keys"); status("Modo teclado. Escolha um acorde e toque."); };
+  $("modeDrums").onclick = () => { SFX.tick(); setMode("drums"); status("Bateria orgânica. Espaço toca o groove."); };
+  $("modeChop").onclick = () => { SFX.tick(); setMode("chop"); status("Modo chop. Toque na forma de onda pra marcar um corte."); };
 
   document.addEventListener("keyup", (e) => {
     if (document.body.classList.contains("cine-on")) return;
@@ -2974,6 +3055,10 @@ body { padding-block: 10px 24px; }
       ["Vazio", "Empty", "Vacío"],
       ["Limpar", "Clear", "Borrar"],
       ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Som", "Sound", "Sonido"],
+      ["Efeitos", "SFX", "Efectos"],
+      ["Efeitos sonoros ligados.", "Sound effects on.", "Efectos de sonido activados."],
+      ["Efeitos sonoros desligados.", "Sound effects off.", "Efectos de sonido desactivados."],
       ["Histórico", "History", "Historial"],
       ["Fechar", "Close", "Cerrar"],
       ["Você vai ver só.", "Just watch me.", "Ya verás."],
@@ -3477,7 +3562,7 @@ body { padding-block: 10px 24px; }
     const POS = { left: "27%", center: "50%", right: "73%" };
     function show(id, pos, e) {
       let el = sprites[id];
-      if (!el) { el = document.createElement("img"); el.className = "vn-sprite enter"; el.alt = ""; stage.appendChild(el); sprites[id] = el; requestAnimationFrame(() => el.classList.remove("enter")); }
+      if (!el) { el = document.createElement("img"); el.className = "vn-sprite enter"; el.alt = ""; stage.appendChild(el); sprites[id] = el; SFX.pop(); requestAnimationFrame(() => el.classList.remove("enter")); }
       el.src = sprite(id, e || "normal"); el.style.left = POS[pos] || pos; el.dataset.e = e || "normal";
     }
     function face(id, e) { const el = sprites[id]; if (el && e && el.dataset.e !== e) { el.src = sprite(id, e); el.dataset.e = e; } }
@@ -3590,7 +3675,7 @@ body { padding-block: 10px 24px; }
     }
     async function scene(name) {
       bg.style.opacity = "0"; await wait(0.45);
-      clearSprites(); paintBg(name);
+      SFX.whoosh(); clearSprites(); paintBg(name); SFX.ambience(name);
       bg.style.opacity = "1"; await wait(0.35);
     }
 
@@ -3617,7 +3702,7 @@ body { padding-block: 10px 24px; }
       typing = () => { done = true; };
       while (i < str.length && !done && !skipped) {
         i++; el.textContent = str.slice(0, i);
-        if (i % 2) beep(f);
+        if (f) { if (i % 2) beep(f); } else if (i % 2) SFX.key();
         await wait(0.026);
       }
       el.textContent = str; typing = null;
@@ -3640,14 +3725,14 @@ body { padding-block: 10px 24px; }
       box.hidden = true;
       const wrap = $("vnChoices"); wrap.textContent = ""; wrap.hidden = false;
       const pick = await new Promise((r) => options.forEach((o, i) => {
-        const b = document.createElement("button"); b.type = "button"; b.textContent = T(o); b.onclick = () => r(i); wrap.appendChild(b);
+        const b = document.createElement("button"); b.type = "button"; b.textContent = T(o); b.onclick = () => { SFX.choice(); r(i); }; wrap.appendChild(b);
       }));
       wrap.hidden = true;
       return pick;
     }
     async function showCard(title, body, button) {
       box.hidden = true; $("vnMenu").hidden = true;
-      card.hidden = false;
+      card.hidden = false; SFX.chime();
       $("cardTitle").textContent = T(title); $("cardBody").textContent = body ? T(body) : "";
       $("cardBtn").textContent = T(button || "Continuar");
       await new Promise((r) => { advance = r; });
@@ -3660,11 +3745,11 @@ body { padding-block: 10px 24px; }
       bg.style.opacity = "0"; clearSprites();
       if (ctx.state !== "running") ctx.resume();
     }
-    function close() { active = false; root.hidden = true; document.body.classList.remove("cine-on"); advance = null; clearSprites(); }
+    function close() { SFX.stopAmb(); active = false; root.hidden = true; document.body.classList.remove("cine-on"); advance = null; clearSprites(); }
     function next() {
       if (!$("vnLogPanel").hidden || !$("vnChoices").hidden) return;
       if (typing) { typing(); return; }
-      if (advance) { const r = advance; advance = null; r(); }
+      if (advance) { const r = advance; advance = null; SFX.tick(); r(); }
     }
     root.addEventListener("click", (e) => { if (e.target.closest("button, input, a, .vn-log, .cine-mail")) return; next(); });
     $("cardBtn").onclick = () => { if (advance) { const r = advance; advance = null; r(); } };
@@ -3724,7 +3809,7 @@ body { padding-block: 10px 24px; }
       $("mailSend").disabled = false;
       await new Promise((r) => { $("mailSend").onclick = r; });
       $("mailSend").disabled = true; $("mailSend").textContent = T("Enviado!");
-      beep(880); await wait(1.1);
+      SFX.send(); await wait(1.1);
       $("mailCompose").hidden = true; $("mailReply").hidden = false;
       $("replyHead").textContent = T("Nova mensagem do Selo Noite Alta");
       $("replyTitle").textContent = T(result.title);
@@ -3733,6 +3818,7 @@ body { padding-block: 10px 24px; }
       const ul = $("replyList"); ul.textContent = "";
       result.notes.forEach(([good, line]) => { const li = document.createElement("li"); li.dataset.good = good ? "1" : "0"; li.textContent = T(line); ul.appendChild(li); });
       $("replyPts").textContent = T(`+${result.points} pontos de carreira`);
+      SFX.ding(); setTimeout(() => (result.points >= 100 ? SFX.win() : result.points > 0 ? SFX.meh() : SFX.fail()), 600);
       $("replyOk").textContent = T("Continuar");
       await new Promise((r) => { $("replyOk").onclick = r; });
       mail.hidden = true;
@@ -3751,6 +3837,7 @@ body { padding-block: 10px 24px; }
       if (!already) open();
       skipped = false;
       clearSprites(); box.hidden = true;
+      SFX.ring();
       await showCard("O telefone toca...", "");
       await scene("quarto");
       show("leo", "center", "surprised");
@@ -3762,6 +3849,7 @@ body { padding-block: 10px 24px; }
       await say("Caio", "Você conseguiu, produtor.", "caio", "happy");
       await say("Léo", "Eu te avisei.", "leo", "grin");
       skipped = false;
+      SFX.win();
       await showCard("FIM — Léo foi contratado!", "Continue produzindo à vontade.", "Continuar");
       close();
     }
@@ -3849,6 +3937,7 @@ body { padding-block: 10px 24px; }
       persist();
       await Cine.email({ name: take.name, file: take.file, n: st.sent.length }, result, after);
       hud();
+      if (result.points) SFX.coin();
       $("careerFill").classList.remove("pulse"); void $("careerFill").offsetWidth; $("careerFill").classList.add("pulse");
     }
 
@@ -3863,6 +3952,10 @@ body { padding-block: 10px 24px; }
     };
     $("freeBtn").onclick = () => { st.mode = "free"; persist(); hud(); };
     $("storyModeBtn").onclick = () => { st.mode = "story"; persist(); hud(); if (!st.introDone) { st.introDone = true; persist(); Cine.intro(); } };
+
+    function syncSfx() { $("sfxBtn").setAttribute("aria-pressed", String(SFX.on)); $("vnSfx").setAttribute("aria-pressed", String(SFX.on)); }
+    const toggleSfx = () => { SFX.set(!SFX.on); syncSfx(); if (SFX.on) SFX.tick(); status(SFX.on ? "Efeitos sonoros ligados." : "Efeitos sonoros desligados."); };
+    $("sfxBtn").onclick = toggleSfx; $("vnSfx").onclick = toggleSfx; syncSfx();
 
     function boot() {
       hud();
