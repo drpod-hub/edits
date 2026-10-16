@@ -10,7 +10,9 @@ import wave
 import zipfile
 
 SR = 22050
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build", "Night Drive Kit.zip")
+BUILD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build")
+OUT = os.path.join(BUILD, "Night Drive Kit.zip")
+LOOP = os.path.join(BUILD, "Night Drive Loop.wav")
 
 
 def wav(samples):
@@ -50,9 +52,31 @@ KIT = {
     "Percs/Conga Slap.wav": tone(260, .3, 14), "Kicks/Kick Punch.wav": kick(),
 }
 
+def melodic_loop():
+    """2 bars at 104 BPM: eight plucked notes (Am then F arpeggio) over a sub, one clear onset per beat."""
+    beat = 60 / 104
+    n = int(SR * beat * 8)
+    out = [0.0] * n
+    notes = [220, 261.63, 329.63, 440, 174.61, 220, 261.63, 349.23]
+    for k, f in enumerate(notes):
+        start = int(k * beat * SR)
+        for i in range(int(beat * SR * 0.95)):
+            if start + i >= n:
+                break
+            t = i / SR
+            v = sum(math.sin(2 * math.pi * f * h * t) / h for h in (1, 2, 3, 4)) * math.exp(-t * 5) * 0.45
+            if k % 4 == 0:
+                v += math.sin(2 * math.pi * (f / 4) * t) * math.exp(-t * 2.5) * 0.5
+            out[start + i] += v
+    return out
+
+
 if __name__ == "__main__":
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with zipfile.ZipFile(OUT, "w") as z:
         for name, s in KIT.items():
             z.writestr("Night Drive Kit/" + name, wav(s))
+    with open(LOOP, "wb") as f:
+        f.write(wav(melodic_loop()))
     print(OUT)
+    print(LOOP)

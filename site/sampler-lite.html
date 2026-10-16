@@ -2736,7 +2736,8 @@ body { padding-block: 10px 24px; }
       if (str === str.toUpperCase() && t.lower.has(str.toLowerCase())) return t.lower.get(str.toLowerCase()).toUpperCase();
       for (const [re, out] of t.tpl) {
         const m = str.match(re);
-        if (m) { let k = 1; return out.replace(/\{\}/g, () => { const g = m[k++]; return one(g) ?? g; }); }
+        // a placeholder never spans a sentence break, or "{} hits found." would swallow a whole status line
+        if (m && !m.slice(1).some((g) => /[.!?]\s/.test(g))) { let k = 1; return out.replace(/\{\}/g, () => { const g = m[k++]; return one(g) ?? g; }); }
       }
       return null;
     }

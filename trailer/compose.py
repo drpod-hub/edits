@@ -29,17 +29,18 @@ BODY = os.path.join(FONTS, "Barlow-Medium.ttf")
 
 INK = (244, 240, 250)
 SOFT = (196, 188, 214)
-NEON = [(255, 61, 240), (61, 252, 255), (125, 255, 61), (255, 232, 61)]
+NEON = [(255, 61, 240), (61, 252, 255), (125, 255, 61), (255, 232, 61), (255, 138, 61)]
 
 LEAD = 0.45                 # skip the sync marker
-DUR = 35.0
-END_AT = 31.3
+DUR = 44.6
+END_AT = 41.3
 CTA = "WISHLIST NOW ON STEAM"
 SCENES = [  # kicker, heading lines, subline, colour, capture-time window
     ("SAMPLER", ["12 PADS.", "YOUR SOUNDS."], "Drop in samples and play them with mouse, keys or touch.", NEON[0], 3.0, 9.4),
     ("KIT IMPORT", ["IMPORT", "ANY KIT."], "Every kick, snare and hat lands on the right pad.", NEON[1], 9.6, 14.4),
     ("DRUM MACHINE", ["ORGANIC", "DRUMS."], "Tape saturation, heavy compression and a swirling phaser.", NEON[2], 14.6, 21.8),
-    ("KEYS", ["BUILD", "CHORDS."], "One key, one chord. Or turn any sound into an instrument.", NEON[3], 22.0, 31.0),
+    ("KEYS", ["BUILD", "CHORDS."], "One key, one chord. Or turn any sound into an instrument.", NEON[3], 22.0, 33.5),
+    ("CHOPPER", ["CHOP", "ANYTHING."], "Slice a song, a loop or a vocal and play it on the keys.", NEON[4], 33.9, 41.4),
 ]
 
 
@@ -167,18 +168,18 @@ def end_card(name):
     d = ImageDraw.Draw(img)
     if FORMAT == "steam":
         brand(img, W // 2, 400, 210, NEON[0])
-        d.text((W // 2, 545), "SAMPLER  ·  KEYS  ·  ORGANIC DRUMS  ·  LOOPER", font=font(PIX, 38), fill=SOFT + (255,), anchor="mm")
-        d.text((W // 2, 610), "Import any kit. Play chords. Record your jam.", font=font(BODY, 40), fill=INK + (255,), anchor="mm")
+        d.text((W // 2, 545), "SAMPLER  ·  KEYS  ·  DRUMS  ·  CHOP  ·  LOOPER", font=font(PIX, 38), fill=SOFT + (255,), anchor="mm")
+        d.text((W // 2, 610), "Import any kit. Chop any sample. Record your jam.", font=font(BODY, 40), fill=INK + (255,), anchor="mm")
         glow_text(img, (W // 2, 760), CTA, font(PIX_B, 64), (255, 255, 255), NEON[1], 16, "mm")
     else:
         size = min(200, brand_size(W - 140))
         brand(img, W // 2, 640, size, NEON[0])
         y = 640 + size * 0.85
-        for l in ["SAMPLER  ·  KEYS", "ORGANIC DRUMS  ·  LOOPER"]:
+        for l in ["SAMPLER  ·  KEYS  ·  CHOP", "ORGANIC DRUMS  ·  LOOPER"]:
             d.text((W // 2, y), l, font=font(PIX, 42), fill=SOFT + (255,), anchor="mm")
             y += 60
         y += 30
-        for l in ["Import any kit. Play chords.", "Record your jam."]:
+        for l in ["Import any kit. Chop any sample.", "Record your jam."]:
             d.text((W // 2, y), l, font=font(BODY, 46), fill=INK + (255,), anchor="mm")
             y += 60
         cs = fit(PIX_B, [CTA], W - 140, 70)

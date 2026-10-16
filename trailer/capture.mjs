@@ -133,6 +133,25 @@ for (const [chip, key] of chords) {
   await at(tc + beat * 4 - 0.12); await p.keyboard.up(key);
   tc += beat * 4;
 }
+
+// Scene 5 — chop a sample over the groove (≈31.8 → 39.5)
+await at(tc); marks.chop = tc;
+await p.click('#modeChop');
+await p.setInputFiles('#chopFile', path.join(HERE, 'build', 'Night Drive Loop.wav'));
+await scrollTo(CFG.top);
+await p.waitForTimeout(900);
+const wave = await p.locator('#chopWave').boundingBox();
+await p.mouse.click(wave.x + wave.width * 0.69, wave.y + wave.height * 0.6);
+await p.waitForTimeout(350);
+await p.mouse.move(wave.x + wave.width * 0.69, wave.y + 30);
+await p.mouse.down(); await p.mouse.move(wave.x + wave.width * 0.72, wave.y + 30, { steps: 10 }); await p.mouse.up();
+// finger-drum the slices on the beat grid of the running groove (it started at t0 + 0.06 s)
+const bar = beat * 4, now = (Date.now() - start) / 1000;
+const base = 0.06 + Math.ceil((now + 0.3 - 0.06) / bar) * bar;
+const SLICE_KEYS = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyQ', 'KeyW', 'KeyE', 'KeyR'];
+const order = [0, 1, 2, 3, 0, 0, 2, 3, 4, 5, 6, 7, 4, 6, 1, 3];
+for (let k = 0; k < order.length; k++) { await at(base + k * e8); await p.keyboard.press(SLICE_KEYS[order[k]]); }
+tc = base + order.length * e8;
 marks.end = tc;
 await at(tc + 3.6);
 marks.total = tc + 3.6;
