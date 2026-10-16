@@ -32,7 +32,7 @@ const ctx = await b.newContext({
   locale: 'en-US',
 });
 await ctx.addInitScript(() => {
-  try { localStorage.setItem('pads12-lang', 'en'); } catch (e) {}
+  try { localStorage.setItem('pads12-lang', 'en'); localStorage.setItem('pads12-game', JSON.stringify({ mode: 'free', introDone: true })); } catch (e) {}
   const orig = AudioNode.prototype.connect;
   AudioNode.prototype.connect = function (t, ...r) {
     const res = orig.call(this, t, ...r);
