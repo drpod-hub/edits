@@ -464,7 +464,22 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
         <option value="groove">Groove psicodélico</option>
         <option value="disco">Disco lento</option>
         <option value="lenta">Lenta e pesada</option>
+        <option value="rnb">R&amp;B</option>
+        <option value="indiepop">Indie Pop</option>
+        <option value="indierock">Indie Rock</option>
+        <option value="hiphop">Hip Hop</option>
+        <option value="trap">Trap</option>
+        <option value="pop">Pop</option>
         <option value="vazio">Vazio</option>
+      </select>
+      <select id="drumKitSel" aria-label="Kit da bateria">
+        <option value="organic">Kit orgânico</option>
+        <option value="rnb">Kit R&amp;B</option>
+        <option value="indie">Kit Indie Pop</option>
+        <option value="rock">Kit Rock</option>
+        <option value="hiphop">Kit Boom bap</option>
+        <option value="trap">Kit Trap 808</option>
+        <option value="pop">Kit Pop</option>
       </select>
       <button class="btn" id="seqClear" type="button">Limpar</button>
     </div>
@@ -1527,6 +1542,30 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
         "x.......x.x.....", "....x......gx...", "x...x...x...x...", "................",
         ".............x..", "..............xx", "....x.......x...", "x...............",
       ]],
+      rnb: ["R&B", 72, 30, [
+        "x..x......x..x..", "....x.......x...", "x.xgx.xgx.xgx.xg", "..............x.",
+        "................", "................", "....x.......x...", "x...............",
+      ]],
+      indiepop: ["Indie Pop", 118, 0, [
+        "x.......x.x.....", "....x.......x...", "x.x.x.x.x.x.x.x.", "................",
+        "................", "................", "..x...x...x...x.", "x...............",
+      ]],
+      indierock: ["Indie Rock", 128, 0, [
+        "x.....x.x.......", "....x.......x...", "x.x.x.x.x.x.x.x.", "................",
+        "............xx..", "..............xx", "................", "x...............",
+      ]],
+      hiphop: ["Hip Hop", 90, 18, [
+        "x......x..x.....", "....x.......x...", "x.x.x.x.x.x.x.x.", "................",
+        "................", "................", "......x.......x.", "................",
+      ]],
+      trap: ["Trap", 140, 0, [
+        "x......x..x.....", "........x.......", "x.x.x.xxx.x.xxxx", "................",
+        "................", "................", "............x...", "x...............",
+      ]],
+      pop: ["Pop", 112, 0, [
+        "x...x...x...x...", "....x.......x...", "x.x.x.x.x.x.x.x.", "..x...x...x...x.",
+        "................", "................", "....x.......x...", "x...............",
+      ]],
       vazio: ["Vazio", 100, 0, Array(8).fill("................")],
     };
     const parse = (rows) => rows.map((r) => [...r].map((ch) => (ch === "x" ? 1 : ch === "g" ? 2 : 0)));
@@ -1684,12 +1723,12 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       if (mode !== "drums") return;
       $("lcdPad").textContent = "BATERIA";
       $("lcdKey").textContent = bpm + " BPM";
-      $("lcdName").textContent = (lastHit >= 0 ? (custom[lastHit] ? custom[lastHit].name : KIT[lastHit][0]) : PRESETS[preset][0]).toUpperCase();
+      $("lcdName").textContent = (lastHit >= 0 ? pieceName(lastHit) : PRESETS[preset][0]).toUpperCase();
       $("lcdFile").textContent = playing && cur >= 0 ? `passo ${String(cur + 1).padStart(2, "0")}/16 · tempo ${Math.floor(cur / 4) + 1}` : "parado · Espaço toca";
       $("lcdLen").textContent = `SWING ${swing}%`;
     }
     function save() { savePrefs(); }
-    function prefs() { return { grid, bpm, swing, preset, humanize, phaser, mix }; }
+    function prefs() { return { grid, bpm, swing, preset, humanize, phaser, mix, drumKit: kitId }; }
     function load(p) {
       if (!p) return;
       if (Array.isArray(p.grid) && p.grid.length === 8) grid = p.grid.map((r) => Array.from({ length: 16 }, (_, s) => [0, 1, 2].includes(r[s]) ? r[s] : 0));
@@ -1716,6 +1755,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     $("swing").oninput = (e) => { swing = +e.target.value; $("swingVal").textContent = swing; lcd(); save(); };
     $("presetSel").onchange = (e) => {
       preset = e.target.value; const [label, b, sw, rows] = PRESETS[preset];
+      if (PRESET_KIT[preset] && PRESET_KIT[preset] !== kitId) setKit(PRESET_KIT[preset], true);
       grid = parse(rows); bpm = b; swing = sw; lastHit = -1; syncUi(); lcd(); save();
       status(`Groove: ${label}, ${b} BPM.`);
     };
@@ -1724,7 +1764,8 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     // ---- your own sounds on the drum pieces ----
     // custom[i] replaces the synthesized piece i; it still runs through the same bus.
     const custom = Array(KIT.length).fill(null);
-    const pieceName = (i) => (custom[i] ? custom[i].name : KIT[i][0]);
+    let kitId = "organic", kitNames = {};
+    const pieceName = (i) => (custom[i] ? custom[i].name : kitNames[i] || KIT[i][0]);
     const ROW_CAT = [0, 1, 4, 5, 9, 8, 6, 11]; // drum row -> Kit category (kick, snare, hat, open hat, hi tom, low tom, perc, fx/crash)
     let selDrum = 0;
     function paintName(i) {
@@ -1790,6 +1831,81 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
         }
       } catch (e) {}
     })();
+    // ---- genre kits: per-row synth recipes; rows a kit leaves out use the organic piece ----
+    const rimshot = (oc, out) => {
+      const o = oc.createOscillator(); o.type = "square"; o.frequency.value = 1700;
+      o.connect(filt(oc, "bandpass", 1700, 4)).connect(env(oc, 0.9, 0.04)).connect(out); o.start(0); o.stop(0.1);
+    };
+    const snap = (oc, out) => { burst(oc, out, "bandpass", 2200, 4, 0.9, 0.03); burst(oc, out, "bandpass", 3500, 2, 0.4, 0.06, 0.005); };
+    const clap = (oc, out) => { [0, 0.01, 0.021].forEach((t) => burst(oc, out, "bandpass", 1400, 1.2, 0.9, 0.012, t)); burst(oc, out, "bandpass", 1400, 1, 0.8, 0.2, 0.03); };
+    const KITS = {
+      organic: {},
+      rnb: { names: { 1: "Aro", 6: "Estalo" }, rows: {
+        0: [0.6, (oc, out) => tone(oc, out, "sine", 95, 45, 0.12, 1, 0.45)],
+        1: [0.15, (oc, out) => {
+          const o = oc.createOscillator(); o.type = "triangle"; o.frequency.value = 420;
+          o.connect(filt(oc, "bandpass", 1800, 3)).connect(env(oc, 0.9, 0.05)).connect(out); o.start(0); o.stop(0.12);
+          burst(oc, out, "bandpass", 2500, 2, 0.35, 0.04);
+        }],
+        2: [0.08, (oc, out) => { metal(oc, out, 0.035, 8000, 0.08); burst(oc, out, "highpass", 9000, 0.7, 0.18, 0.025); }],
+        6: [0.2, snap],
+      } },
+      indie: { rows: {
+        0: [0.4, (oc, out) => { tone(oc, out, "sine", 130, 52, 0.07, 1, 0.25); burst(oc, out, "bandpass", 3500, 0.8, 0.35, 0.01); }],
+        1: [0.35, (oc, out) => { tone(oc, out, "triangle", 230, 200, 0.04, 0.55, 0.1); burst(oc, out, "highpass", 1800, 0.7, 0.6, 0.2); }],
+        2: [0.1, (oc, out) => { metal(oc, out, 0.05, 7500, 0.13); burst(oc, out, "highpass", 9000, 0.7, 0.25, 0.04); }],
+      } },
+      rock: { rows: {
+        0: [0.5, (oc, out) => { tone(oc, out, "sine", 140, 55, 0.06, 1, 0.35); burst(oc, out, "bandpass", 4000, 0.7, 0.6, 0.015); }],
+        1: [0.45, (oc, out) => { tone(oc, out, "triangle", 180, 160, 0.05, 0.8, 0.2); burst(oc, out, "bandpass", 2500, 0.6, 0.85, 0.3); burst(oc, out, "highpass", 5000, 0.7, 0.3, 0.15); }],
+        3: [0.7, (oc, out) => { metal(oc, out, 0.6, 6500, 0.12); burst(oc, out, "highpass", 7000, 0.7, 0.25, 0.55); }],
+        4: [0.6, (oc, out) => tone(oc, out, "sine", 170, 120, 0.25, 1, 0.5)],
+        5: [0.9, (oc, out) => tone(oc, out, "sine", 95, 65, 0.35, 1, 0.75)],
+        7: [2.4, (oc, out) => { metal(oc, out, 2.0, 4500, 0.09); burst(oc, out, "highpass", 5000, 0.7, 0.3, 2.0); }],
+      } },
+      hiphop: { names: { 6: "Aro" }, rows: {
+        0: [0.6, (oc, out) => { tone(oc, out, "sine", 105, 42, 0.1, 1, 0.5); burst(oc, out, "lowpass", 900, 0.7, 0.3, 0.02); }],
+        1: [0.4, (oc, out) => { tone(oc, out, "triangle", 165, 150, 0.05, 0.7, 0.16); burst(oc, out, "bandpass", 1500, 0.6, 0.8, 0.24); }],
+        2: [0.1, (oc, out) => { metal(oc, out, 0.05, 6000, 0.09); burst(oc, out, "bandpass", 7000, 1, 0.2, 0.04); }],
+        6: [0.12, rimshot],
+      } },
+      trap: { names: { 0: "808", 1: "Clap", 6: "Estalo" }, rows: {
+        0: [1.4, (oc, out) => {
+          const o = oc.createOscillator(); o.type = "sine";
+          o.frequency.setValueAtTime(170, 0); o.frequency.exponentialRampToValueAtTime(52, 0.06);
+          const sh = oc.createWaveShaper(), c = new Float32Array(256);
+          for (let i = 0; i < 256; i++) { const x = i / 128 - 1; c[i] = Math.tanh(2.5 * x); }
+          sh.curve = c;
+          o.connect(sh).connect(env(oc, 0.9, 1.2, 0, 0.002)).connect(out); o.start(0); o.stop(1.4);
+        }],
+        1: [0.4, clap],
+        2: [0.06, (oc, out) => { metal(oc, out, 0.025, 9000, 0.11); burst(oc, out, "highpass", 10000, 0.7, 0.25, 0.02); }],
+        3: [0.4, (oc, out) => { metal(oc, out, 0.3, 8500, 0.09); burst(oc, out, "highpass", 9500, 0.7, 0.2, 0.28); }],
+        4: [0.6, (oc, out) => tone(oc, out, "sine", 220, 180, 0.1, 0.9, 0.5)],
+        5: [0.8, (oc, out) => tone(oc, out, "sine", 140, 110, 0.1, 0.9, 0.7)],
+        6: [0.15, snap],
+      } },
+      pop: { rows: {
+        0: [0.45, (oc, out) => { tone(oc, out, "sine", 120, 48, 0.08, 1, 0.3); burst(oc, out, "bandpass", 3000, 0.8, 0.4, 0.012); }],
+        1: [0.4, (oc, out) => { tone(oc, out, "triangle", 200, 180, 0.04, 0.55, 0.12); burst(oc, out, "highpass", 1500, 0.7, 0.5, 0.18); [0, 0.01].forEach((t) => burst(oc, out, "bandpass", 1500, 1.2, 0.5, 0.012, t)); }],
+        2: [0.08, (oc, out) => { metal(oc, out, 0.04, 8000, 0.12); burst(oc, out, "highpass", 9000, 0.7, 0.25, 0.03); }],
+      } },
+    };
+    const PRESET_KIT = { groove: "organic", disco: "organic", lenta: "organic", rnb: "rnb", indiepop: "indie", indierock: "rock", hiphop: "hiphop", trap: "trap", pop: "pop" };
+    async function setKit(id, quiet) {
+      if (!KITS[id]) id = "organic";
+      kitId = id; kitNames = KITS[id].names || {};
+      $("drumKitSel").value = id;
+      for (let i = 0; i < KIT.length; i++) paintName(i);
+      const rows = KIT.map((row, i) => (KITS[id].rows && KITS[id].rows[i]) || [row[1], row[2]]);
+      const out = await Promise.all(rows.map(([sec, b]) => render(sec, b)));
+      if (kitId !== id) return;
+      bufs = out;
+      lcd(); save();
+      if (!quiet) status(`${$("drumKitSel").selectedOptions[0].textContent} carregado.`);
+    }
+    $("drumKitSel").onchange = (e) => setKit(e.target.value);
+
     selectDrum(0);
     $("drumReplace").onclick = () => $("drumFile").click();
     $("drumFile").onchange = (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) replaceWith(selDrum, f); };
@@ -1802,7 +1918,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     $("drumKitFile").onchange = (e) => { importKit(e.target.files); e.target.value = ""; };
 
     buildSeq(); applyMix();
-    Promise.all(KIT.map(([, sec, b]) => render(sec, b))).then((b) => { bufs = b; }).catch(() => {});
+    setKit("organic", true).catch(() => {});
 
     function onKey(e) {
       if (e.code === "Space") { e.preventDefault(); if (!e.repeat) (playing ? stop() : play()); return; }
@@ -1814,7 +1930,7 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
     return {
       show() { syncUi(); Keys.startScope(); lcd(); },
       hide() { Keys.stopScope(); },
-      lcd, stop, onKey, prefs, load: (p) => { load(p); syncUi(); applyMix(); },
+      lcd, stop, onKey, prefs, load: (p) => { load(p); syncUi(); applyMix(); if (p && p.drumKit) setKit(p.drumKit, true); },
       hitAt, isPlaying: () => playing, barSeconds: () => (60 / bpm) * 4, bpm: () => bpm,
     };
   })();
@@ -2582,6 +2698,11 @@ body.dragging .device { outline: 3px dashed var(--ink-soft); outline-offset: 6px
       ["Vazio", "Empty", "Vacío"],
       ["Limpar", "Clear", "Borrar"],
       ["Carregar sons", "Load sounds", "Cargar sonidos"],
+      ["Kit orgânico", "Organic kit", "Kit orgánico"],
+      ["Kit da bateria", "Drum kit", "Kit de batería"],
+      ["Aro", "Rim", "Aro"],
+      ["Estalo", "Snap", "Chasquido"],
+      ["{} carregado.", "{} loaded.", "{} cargado."],
       ["Trocar som da peça", "Replace piece sound", "Cambiar sonido de la pieza"],
       ["Som original", "Original sound", "Sonido original"],
       ["Kit {}: {} peças da bateria trocadas.", "Kit {}: {} drum pieces replaced.", "Kit {}: {} piezas de la batería cambiadas."],
