@@ -102,9 +102,13 @@ def placeholder_pcm(seconds, sr=8000):
     return (rng.standard_normal(n) * 0.33 * swell).astype(np.float32)
 
 
-def wave_mask(pcm, cols, height):
-    """Min/max envelope of `pcm` as an L mask (cols x height), centred."""
-    edges = np.linspace(0, len(pcm), cols + 1).astype(int)
+def wave_mask(pcm, cols, height, edges=None):
+    """Min/max envelope of `pcm` as an L mask (cols x height), centred.
+
+    `edges` (cols + 1 sample indices) lets the caller stretch the time axis."""
+    if edges is None:
+        edges = np.linspace(0, len(pcm), cols + 1)
+    edges = np.clip(edges, 0, len(pcm)).astype(int)
     lo = np.zeros(cols, np.float32)
     hi = np.zeros(cols, np.float32)
     for i in range(cols):
@@ -132,9 +136,13 @@ class Timeline:
 
     def __init__(self, cfg, sample_len):
         s = cfg["sample"]
-        self.rate = 2 ** (float(s.get("pitch", 0)) / 12) if not s.get("keep_tempo") else 1.0
         self.pitch_ratio = 2 ** (float(s.get("pitch", 0)) / 12)
-        self.keep_tempo = bool(s.get("keep_tempo"))
+        # Playback speed: follows the pitch like a turntable unless "speed" sets
+        # it separately (time-stretch) or "keep_tempo" pins it to 1.
+        if s.get("speed"):
+            self.rate = float(s["speed"])
+        else:
+            self.rate = 1.0 if s.get("keep_tempo") else self.pitch_ratio
         self.sample_len = sample_len
         self.chops = cfg["chops"]
         lead_default = float(cfg.get("lead_in", 2.0))
@@ -227,7 +235,27 @@ class Renderer:
         self.wave_top = round(H * WAVE_CY - self.wave_h / 2)
         sr = 8000
         seg = pcm[int(self.win0 * sr):int(self.win1 * sr)]
-        self.base_mask = wave_mask(seg, W * 2, self.wave_h)
+
+        # Very short chops would be slivers on a full-track waveform, so the
+        # time axis is locally stretched to give each one a minimum width.
+        # warp_u (true position, 0..1) -> warp_x (drawn position, 0..1).
+        span = self.win1 - self.win0
+        wmin = float(cfg.get("min_chop_width", 0.014))
+        ku, kx = [0.0], [0.0]
+        for c in sorted(cfg["chops"], key=lambda c: c["start"]):
+            ua, ub = (c["start"] - self.win0) / span, (c["end"] - self.win0) / span
+            if ub - ua >= wmin:
+                continue
+            mid, m = (ua + ub) / 2, wmin * 2.5
+            pts = [(ua - m, ua - m), (ua, mid - wmin / 2), (ub, mid + wmin / 2), (ub + m, ub + m)]
+            if pts[0][0] <= ku[-1] or pts[-1][0] >= 1:     # no room to stretch cleanly
+                continue
+            ku += [p[0] for p in pts]
+            kx += [p[1] for p in pts]
+        self.warp_u, self.warp_x = np.array(ku + [1.0]), np.array(kx + [1.0])
+        cols = W * 2
+        edges = np.interp(np.linspace(0, 1, cols + 1), self.warp_x, self.warp_u) * len(seg)
+        self.base_mask = wave_mask(seg, cols, self.wave_h, edges)
         self._masks = {}
         self.colors = [np.array(hex_rgb(c.get("color", DEFAULT_COLORS[i % len(DEFAULT_COLORS)])),
                                 np.float32) for i, c in enumerate(cfg["chops"])]
@@ -289,6 +317,7 @@ class Renderer:
 
         def to_x(src):
             u = (src - self.win0) / (self.win1 - self.win0)
+            u = float(np.interp(u, self.warp_u, self.warp_x)) if 0 <= u <= 1 else u
             return (u * W - W / 2) * zoom + W / 2
 
         if wave_alpha > 0:
@@ -351,7 +380,7 @@ class Renderer:
 
 # ---------------------------------------------------------------- audio
 
-def audio_piece(out, dur, src=None, start=0.0, ratio=1.0, keep_tempo=False,
+def audio_piece(out, dur, src=None, start=0.0, ratio=1.0, speed=None,
                 gain_db=0.0, fade_out=0.02):
     """Write `dur` seconds of 44.1k stereo wav: silence, or `src` from `start`."""
     if not src:
@@ -359,11 +388,12 @@ def audio_piece(out, dur, src=None, start=0.0, ratio=1.0, keep_tempo=False,
              "-t", f"{dur:.4f}", out])
         return
     chain = ["aresample=44100"]
+    speed = ratio if speed is None else speed
     if abs(ratio - 1) > 1e-6:
         chain += [f"asetrate={44100 * ratio:.3f}", "aresample=44100"]
-        if keep_tempo:
-            chain.append(f"atempo={1 / ratio:.6f}")
-    read = dur * (1.0 if keep_tempo else ratio) + 0.5
+    if abs(speed / ratio - 1) > 1e-6:           # stretch back to the wanted speed
+        chain.append(f"atempo={speed / ratio:.6f}")
+    read = dur * speed + 0.5
     chain += ["apad", f"atrim=0:{dur:.4f}", f"volume={gain_db}dB",
               "afade=t=in:d=0.015", f"afade=t=out:st={max(0, dur - fade_out):.4f}:d={fade_out}",
               "aformat=channel_layouts=stereo"]
@@ -382,7 +412,7 @@ def build_audio(cfg, tl, sample_path, song_path, tmp):
         pieces.append(p)
 
     s, song = cfg["sample"], cfg["song"]
-    sk = dict(src=sample_path, ratio=tl.pitch_ratio, keep_tempo=tl.keep_tempo,
+    sk = dict(src=sample_path, ratio=tl.pitch_ratio, speed=tl.rate,
               gain_db=float(s.get("gain_db", 0)))
     for t0, t1, src0 in tl.intro:
         add(t1 - t0, start=src0, **sk)

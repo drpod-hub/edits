@@ -1,0 +1,45 @@
+{
+  "output": "output/sample_body.mp4",
+  "width": 1680,
+  "height": 1080,
+  "fps": 30,
+  "handle": "",
+
+  "sample": {
+    "title": "Rock Your Body",
+    "artist": "Justin Timberlake",
+    "year": 2002,
+    "audio": "assets/audio/rock_your_body.mp3",
+    "pitch": -4,
+    "speed": 0.72,
+    "window": [0, 100]
+  },
+
+  "lead_in": 1.5,
+  "min_chop_width": 0.025,
+  "chops": [
+    {"start": 14.04, "end": 14.80, "color": "#2e2680", "lead_in": 1.5},
+    {"start": 79.70, "end": 81.00, "color": "#a03b58"}
+  ],
+
+  "song": {
+    "title": "Body",
+    "artist": "Don Toliver",
+    "produced_by": [],
+    "audio": "assets/audio/body.mp3",
+    "audio_start": 0
+  },
+
+  "sequence": [
+    {"chop": 0, "dur": 0.85},
+    {"chop": 1, "dur": 3.29},
+    {"chop": 1, "dur": 3.29},
+    {"chop": 1, "dur": 3.29},
+    {"chop": 1, "dur": 2.43},
+    {"chop": 0, "dur": 0.86},
+    {"chop": 1, "dur": 0.82},
+    {"chop": 1, "dur": 2.47}
+  ],
+
+  "outro_seconds": 6
+}

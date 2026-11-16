@@ -61,7 +61,7 @@ In the config:
 
 | Key | What |
 |---|---|
-| `sample` | `title`, `artist`, `year`, `audio`, `pitch` (semitones; speeds the record up/down like a sampler and shows `PITCH: + 1`; add `"keep_tempo": true` to shift pitch only), `window` (`[start, end]` seconds of the track drawn as the waveform; default whole track) |
+| `sample` | `title`, `artist`, `year`, `audio`, `pitch` (semitones; speeds the record up/down like a sampler and shows `PITCH: + 1`; add `"keep_tempo": true` to shift pitch only, or `"speed": 0.72` to set the playback speed separately when the sample was time-stretched), `window` (`[start, end]` seconds of the track drawn as the waveform; default whole track) |
 | `chops` | `start`/`end` in seconds of the original track, `color`, optional `lead_in` (seconds played before the chop) |
 | `song` | `title`, `artist`, `produced_by`, `audio`, `audio_start` (where the beat comes in) |
 | `sequence` | the beat: which `chop` is heard and for how long (`dur`, seconds), in order; optional `offset` into the chop |
@@ -70,4 +70,5 @@ If `song.audio` is missing the beat is rebuilt by replaying the chops; if the
 sample audio is missing too you get a placeholder waveform and silence.
 The chop times in `sample_devil.json` are estimates read off the reference
 video; nudge them once the real track is in. Other knobs: `width`/`height`,
-`fps`, `handle`, `beat_zoom`, `outro_seconds`, `pitch_label_seconds`.
+`fps`, `handle`, `beat_zoom`, `outro_seconds`, `pitch_label_seconds`,
+`min_chop_width` (fraction of the screen a very short chop is stretched to, default 0.014).
