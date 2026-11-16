@@ -1,0 +1,40 @@
+{
+  "output": "output/sample_devil_in_a_new_dress.mp4",
+  "width": 1680,
+  "height": 1080,
+  "fps": 30,
+  "handle": "",
+
+  "sample": {
+    "title": "Will You Love Me Tomorrow?",
+    "artist": "Smokey Robinson",
+    "year": 1973,
+    "audio": "assets/audio/will_you_love_me_tomorrow.mp3",
+    "pitch": 1,
+    "window": [0, 147]
+  },
+
+  "chops": [
+    {"start": 17.6,  "end": 24.6,  "color": "#2e2680"},
+    {"start": 50.9,  "end": 54.5,  "color": "#a03b58", "lead_in": 3.5},
+    {"start": 126.3, "end": 132.6, "color": "#dcae68", "lead_in": 2.1}
+  ],
+
+  "song": {
+    "title": "Devil In A New Dress",
+    "artist": "Kanye West ft. Rick Ross",
+    "produced_by": ["Bink!", "Mike Dean"],
+    "audio": "assets/audio/devil_in_a_new_dress.mp3",
+    "audio_start": 0
+  },
+
+  "sequence": [
+    {"chop": 2, "dur": 7.1},
+    {"chop": 0, "dur": 6.5},
+    {"chop": 2, "dur": 5.25},
+    {"chop": 0, "dur": 3.5},
+    {"chop": 1, "dur": 3.5}
+  ],
+
+  "outro_seconds": 5
+}
