@@ -23,7 +23,7 @@
   "song": {
     "title": "STARS",
     "artist": "Kanye West & Ty Dolla $ign",
-    "produced_by": [],
+    "produced_by": ["Kanye West", "FnZ", "SHDØW", "JPEGMAFIA", "Digital Nas"],
     "audio": "assets/audio/stars.mp3",
     "audio_start": 0
   },

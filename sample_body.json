@@ -25,7 +25,7 @@
   "song": {
     "title": "Body",
     "artist": "Don Toliver",
-    "produced_by": [],
+    "produced_by": ["Travis Scott", "Jaasu", "BNYX", "Jahaan Sweet"],
     "audio": "assets/audio/body.mp3",
     "audio_start": 0
   },
