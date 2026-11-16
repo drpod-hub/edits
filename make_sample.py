@@ -112,8 +112,9 @@ def wave_mask(pcm, cols, height):
         if len(chunk):
             lo[i], hi[i] = chunk.min(), chunk.max()
     peak = max(1e-4, float(np.percentile(np.abs(np.concatenate([lo, hi])), 99.7)))
-    lo = np.clip(lo / peak, -1, 0)
-    hi = np.clip(hi / peak, 0, 1)
+    # Square-root compression: quiet passages stay readable next to loud ones.
+    lo = -np.sqrt(np.clip(-lo / peak, 0, 1))
+    hi = np.sqrt(np.clip(hi / peak, 0, 1))
     ss = 3                                       # vertical supersampling
     hh = height * ss
     mid = hh / 2

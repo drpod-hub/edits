@@ -1,0 +1,40 @@
+{
+  "output": "output/sample_stars.mp4",
+  "width": 1680,
+  "height": 1080,
+  "fps": 30,
+  "handle": "",
+
+  "sample": {
+    "title": "Good Luck",
+    "artist": "Dijon",
+    "year": 2019,
+    "audio": "assets/audio/good_luck.mp3",
+    "pitch": 1.55,
+    "window": [38, 68]
+  },
+
+  "tail": 0,
+  "chops": [
+    {"start": 51.7, "end": 53.3, "color": "#2e2680"},
+    {"start": 53.3, "end": 59.6, "color": "#a03b58", "lead_in": 0}
+  ],
+
+  "song": {
+    "title": "STARS",
+    "artist": "Kanye West & Ty Dolla $ign",
+    "produced_by": [],
+    "audio": "assets/audio/stars.mp3",
+    "audio_start": 0
+  },
+
+  "sequence": [
+    {"chop": 1, "dur": 6.30},
+    {"chop": 0, "dur": 3.79},
+    {"chop": 0, "dur": 3.79},
+    {"chop": 0, "dur": 1.36},
+    {"chop": 1, "dur": 6.40}
+  ],
+
+  "outro_seconds": 6
+}
