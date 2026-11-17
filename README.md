@@ -55,6 +55,7 @@ then the song credit.
 ```bash
 pip install pillow numpy
 python3 make_sample.py sample_devil.json   # -> output/sample_devil_in_a_new_dress.mp4
+python3 make_sample.py sample_body.json --shorts   # vertical 1080x1920 -> output/sample_body_shorts.mp4
 ```
 
 In the config:

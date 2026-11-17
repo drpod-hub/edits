@@ -7,7 +7,7 @@ underneath. The waveform then zooms in and the beat plays, lighting up
 whichever chop is sounding. Finally the waveform fades and the song that used
 the sample is credited.
 
-Usage:  python3 make_sample.py sample_config.json
+Usage:  python3 make_sample.py sample_config.json [--shorts]
 
 Missing audio falls back to a generated placeholder waveform and silence, so
 the layout can be previewed before the tracks are dropped in.
@@ -222,6 +222,20 @@ class Renderer:
         self.cfg, self.tl = cfg, tl
         self.W, self.H = W, H = int(cfg.get("width", 1680)), int(cfg.get("height", 1080))
         s, song = cfg["sample"], cfg["song"]
+        # Layout unit: the frame height in landscape (as in the reference). In a
+        # vertical frame the same block is scaled to the width and centred a
+        # little above the middle, clear of the Shorts/TikTok overlay.
+        U = self.U = H if W >= H else min(H, W * 1.25)
+        cy = H * (0.5 if W >= H else 0.46)
+        self.Y = lambda frac: cy + (frac - 0.5) * U
+
+        def T(runs, **kw):                      # text that never runs off the frame
+            sp = text_sprite(runs, **kw)
+            if sp.width > W * 0.92:
+                k = W * 0.92 / sp.width
+                sp = sp.resize((round(sp.width * k), round(sp.height * k)), Image.LANCZOS)
+            return sp
+
         win = s.get("window") or [0.0, tl.sample_len]
         self.win0, self.win1 = float(win[0]), float(win[1])
 
@@ -231,8 +245,8 @@ class Renderer:
         reach = max(max(abs(c["start"] - mid), abs(c["end"] - mid)) for c in cfg["chops"])
         self.zoom = max(1.0, min(float(cfg.get("beat_zoom", 1.19)), 0.97 * half / max(reach, 1e-6)))
 
-        self.wave_h = round(H * WAVE_H)
-        self.wave_top = round(H * WAVE_CY - self.wave_h / 2)
+        self.wave_h = round(U * WAVE_H)
+        self.wave_top = round(self.Y(WAVE_CY) - self.wave_h / 2)
         sr = 8000
         seg = pcm[int(self.win0 * sr):int(self.win1 * sr)]
 
@@ -262,7 +276,7 @@ class Renderer:
         self.grey = np.array(GREY, np.float32)
 
         # Playhead: a white bar with a soft glow, added on top of the waveform.
-        ph_w, ph_h = max(2, round(H * PLAYHEAD_W)), round(H * PLAYHEAD_H)
+        ph_w, ph_h = max(2, round(U * PLAYHEAD_W)), round(U * PLAYHEAD_H)
         pad = ph_w * 4
         bar = Image.new("L", (ph_w + pad * 2, ph_h + pad * 2), 0)
         ImageDraw.Draw(bar).rounded_rectangle([pad, pad, pad + ph_w - 1, pad + ph_h - 1],
@@ -272,28 +286,28 @@ class Renderer:
                                    np.asarray(glow, np.float32) * 0.55) / 255.0
 
         white = (255, 255, 255)
-        self.t_sample = text_sprite([(s["title"], font("Bold", H * TITLE_SIZE), white)])
-        self.t_sample_by = text_sprite([("by ", font("Regular", H * BY_SIZE), SOFT),
-                                        (s["artist"], font("SemiBold", H * BY_SIZE), white)])
-        self.t_year = (text_sprite([(f"({s['year']})", font("Regular", H * YEAR_SIZE), SOFT)])
+        self.t_sample = T([(s["title"], font("Bold", U * TITLE_SIZE), white)])
+        self.t_sample_by = T([("by ", font("Regular", U * BY_SIZE), SOFT),
+                                        (s["artist"], font("SemiBold", U * BY_SIZE), white)])
+        self.t_year = (T([(f"({s['year']})", font("Regular", U * YEAR_SIZE), SOFT)])
                        if s.get("year") else None)
         pitch = s.get("pitch", 0)
         label = s.get("label") or (f"PITCH: {'+' if pitch > 0 else '−'} {abs(pitch):g}" if pitch else "")
-        self.t_pitch = (text_sprite([(label, font("SemiBold", H * PITCH_SIZE), white)],
-                                    tracking=H * 0.0012) if label else None)
-        self.t_song = text_sprite([(song["title"], font("Bold", H * TITLE_SIZE), white)])
-        self.t_song_by = text_sprite([("by ", font("Regular", H * BY_SIZE), SOFT),
-                                      (song["artist"], font("SemiBold", H * BY_SIZE), white)])
+        self.t_pitch = (T([(label, font("SemiBold", U * PITCH_SIZE), white)],
+                                    tracking=U * 0.0012) if label else None)
+        self.t_song = T([(song["title"], font("Bold", U * TITLE_SIZE), white)])
+        self.t_song_by = T([("by ", font("Regular", U * BY_SIZE), SOFT),
+                                      (song["artist"], font("SemiBold", U * BY_SIZE), white)])
         producers = song.get("produced_by") or []
         if isinstance(producers, str):
             producers = [producers]
         self.t_credits = []
         if producers:
-            self.t_credits.append(text_sprite([("Produced by", font("Regular", H * CREDIT_SIZE * 1.08), SOFT)]))
-            self.t_credits += [text_sprite([(p, font("SemiBold", H * CREDIT_SIZE), white)])
+            self.t_credits.append(T([("Produced by", font("Regular", U * CREDIT_SIZE * 1.08), SOFT)]))
+            self.t_credits += [T([(p, font("SemiBold", U * CREDIT_SIZE), white)])
                                for p in producers]
         handle = cfg.get("handle", "")
-        self.t_handle = (text_sprite([("@" + handle.lstrip("@"), font("SemiBold", H * 0.026), white)])
+        self.t_handle = (T([("@" + handle.lstrip("@"), font("SemiBold", U * 0.026), white)])
                          if handle else None)
 
     def mask(self, zoom):
@@ -308,7 +322,7 @@ class Renderer:
         return self._masks[key]
 
     def frame(self, t):
-        W, H, tl = self.W, self.H, self.tl
+        W, H, tl, Y = self.W, self.H, self.tl, self.Y
         out = np.zeros((H, W, 3), np.float32)
 
         zoom = 1.0 + (self.zoom - 1.0) * ease((t - tl.intro_end) / max(tl.gap + 0.25, 0.3))
@@ -336,7 +350,7 @@ class Renderer:
             if pos is not None:
                 ph = self.playhead
                 x0 = round(to_x(pos) - ph.shape[1] / 2)
-                y0 = round(H * WAVE_CY - ph.shape[0] / 2)
+                y0 = round(Y(WAVE_CY) - ph.shape[0] / 2)
                 xa, xb = max(0, x0), min(W, x0 + ph.shape[1])
                 if xb > xa:
                     region = out[y0:y0 + ph.shape[0], xa:xb]
@@ -348,14 +362,14 @@ class Renderer:
         # Sample title block: on from the start, lifts away when the beat comes in.
         leave = ease((t - tl.intro_end + 0.1) / 0.45)
         if leave < 1:
-            dy = -H * 0.03 * leave
-            paste(img, self.t_sample, W / 2, H * TITLE_Y + dy, 1 - leave)
-            paste(img, self.t_sample_by, W / 2, H * BY_Y + dy, 1 - leave)
+            dy = -self.U * 0.03 * leave
+            paste(img, self.t_sample, W / 2, Y(TITLE_Y) + dy, 1 - leave)
+            paste(img, self.t_sample_by, W / 2, Y(BY_Y) + dy, 1 - leave)
             if self.t_year:
-                paste(img, self.t_year, W / 2, H * YEAR_Y + dy, 1 - leave)
+                paste(img, self.t_year, W / 2, Y(YEAR_Y) + dy, 1 - leave)
         if self.t_pitch:
             hold = min(float(self.cfg.get("pitch_label_seconds", 4.5)), tl.intro_end)
-            paste(img, self.t_pitch, W / 2, H * PITCH_Y, 1 - ease((t - hold) / 0.4))
+            paste(img, self.t_pitch, W / 2, Y(PITCH_Y), 1 - ease((t - hold) / 0.4))
 
         # Song title: fades in under the waveform, then rises for the credits.
         t_in = tl.beat_end - tl.title_lead
@@ -363,14 +377,16 @@ class Renderer:
             rise = ease((t - tl.beat_end - 0.15) / 0.7)
             y = TITLE_Y + (SONG_TITLE_Y - TITLE_Y) * rise
             a = ease((t - t_in) / 0.5)
-            paste(img, self.t_song, W / 2, H * y, a)
-            paste(img, self.t_song_by, W / 2, H * (y + BY_Y - TITLE_Y), a)
+            paste(img, self.t_song, W / 2, Y(y), a)
+            paste(img, self.t_song_by, W / 2, Y(y + BY_Y - TITLE_Y), a)
             for i, sp in enumerate(self.t_credits):
-                paste(img, sp, W / 2, H * (CREDIT_Y + CREDIT_PITCH * i),
+                paste(img, sp, W / 2, Y(CREDIT_Y + CREDIT_PITCH * i),
                       ease((t - tl.beat_end - 1.7) / 0.5))
         if self.t_handle:
-            paste(img, self.t_handle, W - self.t_handle.width / 2 - H * 0.03,
-                  H * 0.955, 0.9)
+            if W >= H:
+                paste(img, self.t_handle, W - self.t_handle.width / 2 - H * 0.03, H * 0.955, 0.9)
+            else:                               # vertical: clear of the Shorts/TikTok buttons
+                paste(img, self.t_handle, W / 2, Y(0.10), 0.9)
 
         fade = ease((tl.total - t) / 0.35)      # dip to black on the last frames
         if fade < 1:
@@ -439,9 +455,14 @@ def build_audio(cfg, tl, sample_path, song_path, tmp):
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    cfg_path = sys.argv[1]
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    cfg_path = args[0]
     with open(cfg_path) as f:
         cfg = json.load(f)
+    if "--shorts" in sys.argv:                  # vertical 9:16 for Shorts / TikTok / Reels
+        cfg["width"], cfg["height"] = 1080, 1920
+        root, ext = os.path.splitext(cfg["output"])
+        cfg["output"] = root + "_shorts" + ext
     if not shutil.which("ffmpeg"):
         sys.exit("ffmpeg not found on PATH")
 
